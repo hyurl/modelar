@@ -1,0 +1,15 @@
+{
+  "name": "modelar",
+  "version": "0.1.0",
+  "description": "An expressive Model with promise functionality and SQL constructor.",
+  "main": "Model.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "promise",
+    "model"
+  ],
+  "author": "Ayon Lee",
+  "license": "MIT"
+}
