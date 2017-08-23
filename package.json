@@ -19,5 +19,9 @@
     "email": "i@hyurl.com",
     "url": "hyurl.com"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyurl/modelar.git"
+  },
   "license": "MIT"
 }
