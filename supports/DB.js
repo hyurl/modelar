@@ -18,8 +18,8 @@ class DB{
 		this.insertId = 0; //inert 语句插入后返回的 ID
 		this.affectedRows = 0; //insert/update/delete 等语句影响的行数
 		this.__data = []; // select 语句查询到的数据
-		this.__config = Object.assign({}, DB.__config, config); //配置信息
-		this.__spec = DB.__getSpec(this.__config); //连接描述符
+		this.__config = Object.assign({}, this.constructor.__config, config); //配置信息
+		this.__spec = this.constructor.__getSpec(this.__config); //连接描述符
 		this.__connection = null; //数据库连接
 
 		if(this.__config.autoConnect)
@@ -80,7 +80,7 @@ class DB{
 	 */
 	connect(){
 		var config = this.__config;
-		var connections = DB.__connections; //引用静态连接
+		var connections = this.constructor.__connections; //引用静态连接
 		if(connections[this.__spec]){
 			//如果连接已存在，则使用已有连接
 			this.__connection = connections[this.__spec];
@@ -122,6 +122,7 @@ class DB{
 		this.bindings = Object.assign([], bindings);
 		//记录查询次数
 		this.queries += 1;
+		this.constructor.queries += 1;
 		DB.queries += 1;
 		//返回最内层 Promise
 		return new Promise((resolve, reject)=>{
@@ -235,7 +236,7 @@ class DB{
 			this.__connection.destroy();
 		//移除连接引用
 		this.__connection = null;
-		delete DB.__connections[this.__spec];
+		delete this.constructor.__connections[this.__spec];
 		return this;
 	}
 

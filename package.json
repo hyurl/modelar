@@ -6,10 +6,18 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "dependencies": {
+    "mysql": "2.14.1",
+    "bcrypt-nodejs": "0.0.3"
+  },
   "keywords": [
     "promise",
     "model"
   ],
-  "author": "Ayon Lee",
+  "author": {
+    "name": "Ayon Lee",
+    "email": "i@hyurl.com",
+    "url": "hyurl.com"
+  },
   "license": "MIT"
 }

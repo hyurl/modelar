@@ -22,7 +22,6 @@ class Model extends Query{
 		this.__searchable = config.searchable || [], //可以用来进行模糊查询的字段
 
 		this.__data = {}; //模型数据
-		this.__events = Object.assign({}, this.constructor.__events); //模型事件
 
 		//设置动态属性，只有在模型类本身没有定义 setter 和 getter 时才定义它们，如果
 		//模型类定义了 setter 和 getter 两者中的一个，那么也应该定义另一个，否则在访
@@ -88,61 +87,6 @@ class Model extends Query{
 		}
 		return this;
 	}
-
-	/**
-	 * 将事件处理器绑定到全局模型中
-	 * @param  {String}   event    事件名称
-	 * @param  {Function} callback 事件被触发时执行的回调函数
-	 * @return {Model}             当前模型类
-	 */
-	static on(event, callback){
-		this.__events = this.__events || {
-			save: [],     //保存事件，在调用 save() 方法保存数据时触发
-			saved: [],    //保存后事件，在调用 save() 方法后触发
-			insert: [],   //插入事件，新数据保存时触发
-			inserted: [], //插入后事件，新数据保存后触发
-			update: [],   //更新事件，数据被更新时触发
-			updated: [],  //更新后事件，数据被更新后触发
-			delete: [],   //删除事件，数据被删除时触发
-			deleted: [],  //删除后事件，数据被删除后触发
-			get: [],      //获取事件，获取到数据时触发
-		};
-		if(this.__events[event] === undefined)
-			this.__events[event] = [];
-		this.__events[event].push(callback);
-		return this;
-	}
-
-	/**
-	 * 将事件处理器绑定到具体的模型中
-	 * @param  {String}   event    事件名称
-	 * @param  {Function} callback 事件被触发时执行的回调函数
-	 * @return {Model}             当前模型实例
-	 */
-	on(event, callback){
-		this.__events = this.__events || {}
-		if(this.__events[event] === undefined)
-			this.__events[event] = [];
-		this.__events[event].push(callback);
-		return this;
-	}
-
-	/**
-	 * 触发事件处理函数
-	 * @param  {String} event 事件名称
-	 * @param  {Mixed}  data  传递给回调函数的参数
-	 * @return {Model}        当前模型实例
-	 */
-	trigger(event, data){
-		if(this.__events[event] instanceof Array){
-			for(var callback of this.__events[event]){
-				callback.call(this, data);
-			}
-		}else if(this.__events[event] instanceof Function){
-			this.__events[event].call(this, data);
-		}
-		return this;
-	}
 	
 	/**
 	 * 保存当前模型，如果模型没有对应的数据库记录，则将其创建
@@ -164,12 +108,10 @@ class Model extends Query{
 	 * @return {Promise}      返回 Promise，回调函数的参数是当前模型实例。
 	 */
 	insert(data = {}){
-		this.assign(data, true).trigger('insert', this); //触发插入事件
+		this.assign(data, true); //触发插入事件
 		return super.insert(this.__data).then(model=>{
 			model.where(model.__primary, model.insertId);
-			return model.get().then(model=>{
-				return model.trigger('inserted', model);
-			});
+			return model.get();
 		});
 	}
 
@@ -184,11 +126,9 @@ class Model extends Query{
 		this.__bindings = [];
 		this.bindings = [];
 		this.where(this.__primary, this.__data[this.__primary]);
-		this.assign(data, true).trigger('update', this); //触发更新事件
+		this.assign(data, true); //触发更新事件
 		return super.update(this.__data).then(model=>{
-			return model.get().then(model=>{
-				return model.trigger('updated', model);
-			});
+			return model.get();
 		});
 	}
 
@@ -201,10 +141,7 @@ class Model extends Query{
 		this.__bindings = [];
 		this.bindings = [];
 		this.where(this.__primary, this.__data[this.__primary]);
-		this.trigger('delete', this); //触发删除事件
-		return super.delete().then(model=>{
-			return model.trigger('deleted', model);
-		});
+		return super.delete();
 	}
 
 	/**
@@ -213,7 +150,7 @@ class Model extends Query{
 	 */
 	get(){
 		return super.get().then(data=>{
-			return this.assign(data).trigger('get', this); //触发获取事件
+			return this.assign(data); //触发获取事件
 		});
 	}
 
@@ -228,8 +165,7 @@ class Model extends Query{
 			for(var i in data){
 				var model = new this.constructor();
 				model.__connection = this.__connection; //引用数据库连接
-				//每一组数据都触发获取事件
-				model.assign(data[i]).trigger('get', model);
+				model.assign(data[i]);
 				models.push(model);
 			}
 			return models;
@@ -540,6 +476,18 @@ class Model extends Query{
 		}
 	}
 }
+
+Model.__events = {
+	save: [],     //保存事件，在调用 save() 方法保存数据时触发
+	saved: [],    //保存后事件，在调用 save() 方法后触发
+	insert: [],   //插入事件，新数据保存时触发
+	inserted: [], //插入后事件，新数据保存后触发
+	update: [],   //更新事件，数据被更新时触发
+	updated: [],  //更新后事件，数据被更新后触发
+	delete: [],   //删除事件，数据被删除时触发
+	deleted: [],  //删除后事件，数据被删除后触发
+	get: [],      //获取事件，获取到数据时触发
+};
 
 Model.auth = null; //保存已登录用户的引用
 

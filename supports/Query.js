@@ -22,51 +22,59 @@ class Query extends DB{
 		this.__limit = ''; //limit 子句
 		this.__union = ""; //union 语句
 		this.__bindings = []; //绑定的参数值，注意该属性不会保存 insert/update 语句中的其他参数值
-		
-		// this.sql = ""; //最终生成的 SQL 语句
-		// this.bindings = []; //保存包括 insert/update 语句在内的所有参数值
-		// this.insertId = 0, //insert 成功后返回的主键 ID
-		// this.affectedRows = 0; //SQL 语句影响的记录行数
+		this.__events = Object.assign({}, this.constructor.__events); //模型事件
 	}
 
 	/**
-	 * 将事件处理器绑定到全局 Query 查询中
+	 * 将事件处理器绑定到全局模型中
 	 * @param  {String}   event    事件名称
 	 * @param  {Function} callback 事件被触发时执行的回调函数
-	 * @return {Query}             Query 类自身
+	 * @return {Model}             当前模型类
 	 */
 	static on(event, callback){
-		this.events = this.events || {
-			insert: [], //插入事件，新数据保存时触发
+		this.__events = this.__events || {
+			insert: [],   //插入事件，新数据保存时触发
 			inserted: [], //插入后事件，新数据保存后触发
-			update: [], //更新事件，数据被更新时触发
-			updated: [], //更新后事件，数据被更新后触发
-			delete: [], //删除事件，数据被删除时触发
-			deleted: [], //删除后事件，数据被删除后触发
-			get: [],    //获取事件，获取到数据时触发
+			update: [],   //更新事件，数据被更新时触发
+			updated: [],  //更新后事件，数据被更新后触发
+			delete: [],   //删除事件，数据被删除时触发
+			deleted: [],  //删除后事件，数据被删除后触发
+			get: [],      //获取事件，获取到数据时触发
 		};
-		if(this.events[event] === undefined)
-			this.events[event] = [];
-		this.events[event].push(callback);
+		if(this.__events[event] === undefined)
+			this.__events[event] = [];
+		this.__events[event].push(callback);
 		return this;
 	}
 
 	/**
-	 * 触发事件处理器
+	 * 将事件处理器绑定到具体的模型中
+	 * @param  {String}   event    事件名称
+	 * @param  {Function} callback 事件被触发时执行的回调函数
+	 * @return {Model}             当前模型实例
+	 */
+	on(event, callback){
+		this.__events = this.__events || {}
+		if(this.__events[event] === undefined)
+			this.__events[event] = [];
+		this.__events[event].push(callback);
+		return this;
+	}
+
+	/**
+	 * 触发事件处理函数
 	 * @param  {String} event 事件名称
 	 * @param  {Mixed}  data  传递给回调函数的参数
-	 * @return {Query}        Query 类自身
+	 * @return {Model}        当前模型实例
 	 */
-	static trigger(event, data){
-		if(this.events){
-			if(this.events[event] instanceof Array){
-				for(var callback of this.events[event]){
-					callback.call(this, data);
-				}
-			}else if(this.events[event] instanceof Function){
-				this.events[event].call(this, data);
+	trigger(event, data){
+		if(this.__events[event] instanceof Array){
+			for(var callback of this.__events[event]){
+				callback.call(this, data);
 			}
-		}	
+		}else if(this.__events[event] instanceof Function){
+			this.__events[event].call(this, data);
+		}
 		return this;
 	}
 
@@ -553,12 +561,12 @@ class Query extends DB{
 		values = values.join(', ');
 		this.__inserts = (isObj ? '('+fields+') ' : '')+'values ('+values+')';
 		this.sql = 'insert into '+this.__table+' '+this.__inserts;
-		Query.trigger('insert', this); //触发事件回调函数
+		this.trigger('insert', this); //触发事件回调函数
 		return this.query(this.sql, bindings).then(db=>{
 			this.bindings = Object.assign([], bindings);
 			this.insertId = db.insertId;
 			this.affectedRows = db.affectedRows;
-			Query.trigger('inserted', this);
+			this.trigger('inserted', this);
 			return this;
 		});
 	}
@@ -579,11 +587,11 @@ class Query extends DB{
 		this.__updates = fields.join(', ');
 		this.sql = 'update '+this.__table+' set '+this.__updates
 				+ (this.__where ? " where "+this.__where : "");
-		Query.trigger('update', this); //触发事件回调函数
+		this.trigger('update', this); //触发事件回调函数
 		return this.query(this.sql, bindings).then(db=>{
 			this.bindings = Object.assign([], bindings);
 			this.affectedRows = db.affectedRows;
-			Query.trigger('updated', this);
+			this.trigger('updated', this);
 			return this;
 		});
 	}
@@ -595,11 +603,11 @@ class Query extends DB{
 	delete(){
 		this.sql = 'delete from '+this.__table
 				+ (this.__where ? " where "+this.__where : "");
-		Query.trigger('delete', this); //触发事件回调函数
+		this.trigger('delete', this); //触发事件回调函数
 		return this.query(this.sql, this.__bindings).then(db=>{
 			this.bindings = Object.assign([], this.__bindings);
 			this.affectedRows = db.affectedRows;
-			Query.trigger('deleted', this);
+			this.trigger('deleted', this);
 			return this;
 		});
 	}
@@ -636,7 +644,7 @@ class Query extends DB{
 		this.__generateSelectSQl();
 		return this.query(this.sql, this.__bindings).then(db=>{
 			this.bindings = Object.assign([], this.__bindings);
-			Query.trigger('get', this); //触发事件回调函数
+			this.trigger('get', this); //触发事件回调函数
 			return db.__data;
 		});
 	}
