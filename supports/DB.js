@@ -4,6 +4,7 @@
 class DB{
 	/**
 	 * 创建一个新的数据库实例
+	 * 
 	 * @param  {Object} config 数据库配置，也可以设置为一个字符串，它将被当作数据库
 	 *                         名称。
 	 */
@@ -17,6 +18,7 @@ class DB{
 		this.queries = 0; //总共运行 SQL 语句的次数
 		this.insertId = 0; //inert 语句插入后返回的 ID
 		this.affectedRows = 0; //insert/update/delete 等语句影响的行数
+
 		this.__data = []; // select 语句查询到的数据
 		this.__config = Object.assign({}, this.constructor.__config, config); //配置信息
 		this.__spec = this.constructor.__getSpec(this.__config); //连接描述符
@@ -28,10 +30,11 @@ class DB{
 
 	/**
 	 * 配置数据库的基本信息
+	 * 
 	 * @param  {Object} config 配置信息
 	 * @return {DB}            DB 类自身
 	 */
-	static config(config = {}){
+	static config(config){
 		this.__config = Object.assign({
 			type: 'mysql', //数据库类型
 			host: 'localhost', //数据库主机
@@ -54,6 +57,7 @@ class DB{
 
 	/**
 	 * 使用一个现有的数据库连接
+	 * 
 	 * @param  {Object} connection 一个数据库连接实例
 	 * @return {DB}                当前 DB 实例
 	 */
@@ -76,6 +80,7 @@ class DB{
 
 	/**
 	 * 连接数据库
+	 * 
 	 * @return {DB} 当前 DB 实例
 	 */
 	connect(){
@@ -113,8 +118,9 @@ class DB{
 
 	/**
 	 * 执行 SQL 语句
+	 * 
 	 * @param  {String}  sql      SQL 语句
-	 * @param  {Array}   bindings 绑定的参数
+	 * @param  {Array}   bindings [可选] 绑定的参数
 	 * @return {Promise}          返回 Promise，回调函数的参数是当前 DB 实例。
 	 */
 	query(sql, bindings = []){
@@ -187,10 +193,12 @@ class DB{
 
 	/**
 	 * 开始事务处理
+	 * 
 	 * @param  {Function} callback 如果设置回调函数，则自动对在函数中运行的 SQL 进行
 	 *                             事务处理，如果未发生错误，则自动提交，如果函数中
-	 *                             抛出了异常，则自动回滚；回调函数支持一个，如果未
-	 *                             设置回调函数，则仅开启事务，需要手动提交和回滚；
+	 *                             抛出了异常，则自动回滚；回调函数支持一个参数，即
+	 *                             当前数据库实例；如果未设置回调函数，则仅开启事务，
+	 *                             需要手动提交和回滚。
 	 * @return {Promise}           返回 Promise，回调函数的参数是当前 DB 实例。
 	 */
 	transaction(callback){
@@ -210,6 +218,7 @@ class DB{
 
 	/**
 	 * 提交事务
+	 * 
 	 * @return {Promise} 返回 Promise，回调函数的参数是当前 DB 实例。
 	 */
 	commit(){
@@ -218,6 +227,7 @@ class DB{
 
 	/**
 	 * 回滚事务
+	 * 
 	 * @return {Promise} 返回 Promise，回调函数的参数是当前 DB 实例。
 	 */
 	rollback(){
@@ -226,6 +236,7 @@ class DB{
 
 	/**
 	 * 关闭当前数据库连接
+	 * 
 	 * @return {DB} 返回当前实例
 	 */
 	close(){
@@ -242,6 +253,7 @@ class DB{
 
 	/**
 	 * 关闭所有数据库连接
+	 * 
 	 * @return {DB} 返回 DB 类自身。
 	 */
 	static close(){
@@ -257,6 +269,6 @@ class DB{
 	}
 }
 
-DB.config(); //初始化配置
+DB.config({}); //初始化配置
 
 module.exports = DB; //导出 Nodejs 模块

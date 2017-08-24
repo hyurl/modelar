@@ -7,12 +7,13 @@ const Query = require('./supports/Query');
 class Model extends Query{
 	/**
 	 * 构造方法
-	 * @param  {Object} data   实例化模型时填充的初始化数据
-	 * @param  {Object} config 设置模型的一些初始化信息，它们可以是：
-	 *                         table:      关联的数据表
-	 *                         fields:     数据表的字段
-	 *                         primary:    主键
-	 *                         searchable: 允许用于搜索(模糊查询)的字段
+	 * 
+	 * @param  {Object} data   [可选] 实例化模型时填充的初始化数据
+	 * @param  {Object} config [可选] 设置模型的一些初始化信息，它们可以是：
+	 *                         - `table`      关联的数据表
+	 *                         - `fields`     数据表的字段
+	 *                         - `primary`    主键
+	 *                         - `searchable` 允许用于搜索(模糊查询)的字段
 	 * @return {Model}
 	 */
 	constructor(data = {}, config = {}){
@@ -50,6 +51,7 @@ class Model extends Query{
 
 	/**
 	 * 获取模型数据的字符串表示
+	 * 
 	 * @return {String} 一个表示模型数据的 JSON 字符串
 	 */
 	toString(){
@@ -58,6 +60,7 @@ class Model extends Query{
 
 	/**
 	 * 获取模型所代表的对象
+	 * 
 	 * @return {Object} 模型数据本身
 	 */
 	valueOf(){
@@ -65,9 +68,9 @@ class Model extends Query{
 	}
 
 	/**
-	 * 将数据分配到 __data 属性中，只有 __fields 配置的字段才可以被分配
+	 * 将数据分配到 `__data` 属性中，只有 `__fields` 配置的字段才可以被分配
 	 * @param  {Object}  data      要分配的数据
-	 * @param  {Boolean} useSetter [可选]使用 setter 处理，默认 false
+	 * @param  {Boolean} useSetter [可选] 使用 setter 处理，默认 false
 	 * @return {Model}   this      当前模型实例
 	 */
 	assign(data, useSetter = false){
@@ -90,6 +93,7 @@ class Model extends Query{
 	
 	/**
 	 * 保存当前模型，如果模型没有对应的数据库记录，则将其创建
+	 * 
 	 * @return {Promise} 返回 Promise，回调函数的参数是当前模型实例。
 	 */
 	save(){
@@ -104,11 +108,12 @@ class Model extends Query{
 
 	/**
 	 * 将模型数据插入数据库中
+	 * 
 	 * @param  {Object}  data [可选] 用 Object 对象表示字段和值的对应关系。
 	 * @return {Promise}      返回 Promise，回调函数的参数是当前模型实例。
 	 */
 	insert(data = {}){
-		this.assign(data, true); //触发插入事件
+		this.assign(data, true);
 		return super.insert(this.__data).then(model=>{
 			model.where(model.__primary, model.insertId);
 			return model.get();
@@ -117,6 +122,7 @@ class Model extends Query{
 
 	/**
 	 * 将更改后的模型数据更新到数据库中
+	 * 
 	 * @param  {Object}  data [可选] 用 Object 对象表示字段和值的对应关系。
 	 * @return {Promise}      返回 Promise，回调函数的参数是当前模型实例。
 	 */
@@ -126,7 +132,7 @@ class Model extends Query{
 		this.__bindings = [];
 		this.bindings = [];
 		this.where(this.__primary, this.__data[this.__primary]);
-		this.assign(data, true); //触发更新事件
+		this.assign(data, true);
 		return super.update(this.__data).then(model=>{
 			return model.get();
 		});
@@ -134,6 +140,7 @@ class Model extends Query{
 
 	/**
 	 * 删除一个的模型的数据库记录
+	 * 
 	 * @return {Promise} 返回 Promise，回调函数的参数是当前模型实例。
 	 */
 	delete(){
@@ -146,16 +153,16 @@ class Model extends Query{
 
 	/**
 	 * 从数据库中获取一个已经存在的模型
+	 * 
 	 * @return {Promise} 返回 Promise，回调函数的参数是当前模型实例。
 	 */
 	get(){
-		return super.get().then(data=>{
-			return this.assign(data); //触发获取事件
-		});
+		return super.get().then(data=>this.assign(data));
 	}
 
 	/**
 	 * 从数据库中获取所有符合查询条件的模型
+	 * 
 	 * @return {Promise} 返回 Promise，回调函数的参数是由所有获取到的模型实例构成
 	 *                   的数组。
 	 */
@@ -173,20 +180,20 @@ class Model extends Query{
 	}
 
 	/**
-	 * 获取多个符合查询条件的模型，与 all() 方法不同，getMany() 可以设置
-	 *           其他的参数来实现更复杂的查询，同时其返回值也提供更加详细的信息。
-	 * @param  {Object} args 用作查询的参数，除了可以设置为数据表字段外，还可以设置
-	 *                       下面这些参数：
-	 *                       page:     按指定的页码获取数据，默认 1
-	 *                       limit:    获取数量的上限，默认 10
-	 *                       orderBy:  按指定的字段排序，默认主键
-	 *                       sequence: 排序方式，可以是 asc(默认), desc 和 rand
-	 *                       keywords: 用作模糊查询的关键字列表，为一个数组或字符串
-	 * @return {Promise}     返回 Promise，回调函数的参数是包含模型和相关信息的
-	 *                       Object 对象，其中包含传入的参数和下面这些属性：
-	 *                       total: 当前查询条件能够获取到的所有数组总数
-	 *                       pages: 当前查询条件可以获取到的所有数据页码数
-	 *                       data:  保存着所有获取到的模型的属性，为一个数组
+	 * 获取多个符合查询条件的模型，与 all() 方法不同，getMany() 可以设置其他的参数
+	 * 来实现更复杂的查询，同时其返回值也提供更加详细的信息。
+	 * @param  {Object}  args [可选] 用作查询的参数，除了可以设置为数据表字段外，还可以设
+	 *                        置下面这些参数：
+	 *                        - `page`     按指定的页码获取数据，默认 1
+	 *                        - `limit`    获取数量的上限，默认 10
+	 *                        - `orderBy`  按指定的字段排序，默认主键
+	 *                        - `sequence` 排序方式，可以是 asc(默认), desc, rand
+	 *                        - `keywords` 用作模糊查询的关键字列表，为一个数组或字符串
+	 * @return {Promise}      返回 Promise，回调函数的参数是包含模型和相关信息的
+	 *                        Object 对象，其中包含传入的参数和下面这些属性：
+	 *                        - `total` 当前查询条件能够获取到的所有数组总数
+	 *                        - `pages` 当前查询条件可以获取到的所有数据页码数
+	 *                        - `data`  保存着所有获取到的模型的属性，为一个数组
 	 */
 	getMany(args = {}){
 		var defaults = {
@@ -396,6 +403,7 @@ class Model extends Query{
 
 	/**
 	 * 定义一对多关联
+	 * 
 	 * @param  {String} model      所关联的模型
 	 * @param  {String} foreignKey 所关联模型的外键名称
 	 * @return {Model}             所关联模型的实例
@@ -407,6 +415,7 @@ class Model extends Query{
 
 	/**
 	 * 定义反向关联的隶属关系
+	 * 
 	 * @param  {String} model      所关联的模型
 	 * @param  {String} foreignKey 所关联模型的外键名称
 	 * @return {Model}             所关联模型的实例
@@ -418,6 +427,7 @@ class Model extends Query{
 
 	/**
 	 * 定义多对多关联
+	 * 
 	 * @param  {String}  model       所关联的模型
 	 * @param  {String}  middleTable 中间表的表名
 	 * @param  {String}  foreignKey1 当前模型指向中间表的外键
@@ -459,16 +469,15 @@ class Model extends Query{
 	[Symbol.iterator](){
 		var keys = Object.keys(this.__data),
 			length = keys.length,
-			index = 0;
+			index = -1;
 		return {
 			next: ()=>{
+				index++;
 				if(index < length){
-					var data = {
+					return {
 						value: [keys[index], this.__data[keys[index]]],
 						done: false,
 					};
-					index++;
-					return data;
 				}else{
 					return {value: undefined, done: true};
 				}
@@ -476,18 +485,6 @@ class Model extends Query{
 		}
 	}
 }
-
-Model.__events = {
-	save: [],     //保存事件，在调用 save() 方法保存数据时触发
-	saved: [],    //保存后事件，在调用 save() 方法后触发
-	insert: [],   //插入事件，新数据保存时触发
-	inserted: [], //插入后事件，新数据保存后触发
-	update: [],   //更新事件，数据被更新时触发
-	updated: [],  //更新后事件，数据被更新后触发
-	delete: [],   //删除事件，数据被删除时触发
-	deleted: [],  //删除后事件，数据被删除后触发
-	get: [],      //获取事件，获取到数据时触发
-};
 
 Model.auth = null; //保存已登录用户的引用
 

@@ -5,7 +5,8 @@ const DB = require('./DB'); //引用 DB 对象
  */
 class Table extends DB{
 	/**
-	 * 创建一个新的数据表实例，并在保存(save)时创建一个新的数据表
+	 * 创建一个新的数据表实例，并在保存时创建一个新的数据表
+	 * 
 	 * @param  {String} table 数据表名称
 	 */
 	constructor(table){
@@ -18,10 +19,11 @@ class Table extends DB{
 
 	/**
 	 * 添加列
+	 * 
 	 * @param  {String}  name   字段名称
 	 * @param  {String}  type   类型
-	 * @param  {Integer} length [可选]数据长度，0 (默认)则表示不设置长度，也可以设
-	 *                          置为一个包含两个长度的数组来限制区间；
+	 * @param  {Number}  length [可选] 数据长度，0 (默认)则表示不设置长度，也可以
+	 *                          设置为一个包含两个长度的数组来限制区间；
 	 * @return {Table}   this   当前实例
 	 */
 	addColumn(name, type, length = 0){
@@ -45,7 +47,7 @@ class Table extends DB{
 				table: '', //外键所在表
 				field: '', //外键字段
 				onUpdate: 'no action', //更新时的行为，可选 no action, set null, cascade, restrict
-				onDelete: 'no action', //删除时行为，可选值同 update
+				onDelete: 'no action', //删除时行为，可选值同 onUpdate
 			}, //外键
 
 		}, {name, type}));
@@ -56,6 +58,7 @@ class Table extends DB{
 
 	/**
 	 * 设置字段为主键
+	 * 
 	 * @return {Table} this 当前实例
 	 */
 	primary(){
@@ -65,6 +68,7 @@ class Table extends DB{
 
 	/**
 	 * 设置字段的值是自增的
+	 * 
 	 * @return {Table} this 当前实例
 	 */
 	autoIncrement(){
@@ -74,6 +78,7 @@ class Table extends DB{
 
 	/**
 	 * 设置值唯一
+	 * 
 	 * @return {Table} this 当前实例
 	 */
 	unique(){
@@ -83,6 +88,7 @@ class Table extends DB{
 
 	/**
 	 * 设置默认值
+	 * 
 	 * @param  {String} value 设置的值
 	 * @return {Table}  this  当前实例
 	 */
@@ -93,6 +99,7 @@ class Table extends DB{
 
 	/**
 	 * 设置字段不为空
+	 * 
 	 * @return {Table} this 当前实例
 	 */
 	notNull(){
@@ -102,6 +109,7 @@ class Table extends DB{
 
 	/**
 	 * 设置数字类型的字段无符号
+	 * 
 	 * @return {Table} this 当前实例
 	 */
 	unsigned(){
@@ -111,6 +119,7 @@ class Table extends DB{
 
 	/**
 	 * 添加注释
+	 * 
 	 * @param  {String} text 注释文本
 	 * @return {Table}  this 当前实例
 	 */
@@ -121,11 +130,12 @@ class Table extends DB{
 
 	/**
 	 * 设置外键约束
-	 * @param  {Mixed}  table    外键引用的表名，也可以设置为一个 Object 对象一次性
+	 * 
+	 * @param  {Any}    table    外键引用的表名，也可以设置为一个 Object 对象一次性
 	 *                           设置所有下面（包括 table 自身）的约束信息
-	 * @param  {String} field    绑定的字段
-	 * @param  {String} onUpdate 在绑定的记录被更新时触发的行为，可选 no action,
-	 *                           set null, cascade, restrict
+	 * @param  {String} field    [可选] 绑定的字段
+	 * @param  {String} onUpdate [可选] 在绑定的记录被更新时触发的行为，可选 
+	 *                           no action, set null, cascade, restrict
 	 * @param  {String} onDelete 在绑定的记录被删除时触发的行为，可选值同 onUpdate
 	 * @return {Table}  this     当前实例
 	 */
@@ -137,6 +147,7 @@ class Table extends DB{
 
 	/**
 	 * 保存数据表
+	 * 
 	 * @return {Promise} 返回 Promise，回调函数的参数是当前 Table 实例。
 	 */
 	save(){

@@ -79,8 +79,9 @@ functionality that this Model has, now we can go into the real depth of it.
     * [Table#save()](#tablesave)
 * [The Query class](#the-query-class)
     * [Query#constructor()](#queryconstructor)
-    * [Query.on()](#queryon)
-    * [Query.trigger()](#querytrigger)
+    * [Query#on()](#queryon)
+    * [Query#trigger()](#querytrigger)
+        * [Event Inheriting](#event-inheriting)
     * [Query#select()](#queryselect)
     * [Query#from()](#queryfrom)
     * [Query#where()](#querywhere)
@@ -96,8 +97,6 @@ functionality that this Model has, now we can go into the real depth of it.
     * [Query#rightJoin()](#queryrightjoin)
     * [Query#fullJoin()](#queryfulljoin)
     * [Query#crossJoin()](#querycrossjoin)
-    * [Query#on()](#queryon)
-    * [Query#orOn()](#queryoron)
     * [Query#orderBy()](#queryorderby)
     * [Query#random()](#queryrandom)
     * [Query#groupBy()](#querygroupby)
@@ -134,15 +133,16 @@ $ npm install modelar
 
 ### Dependencies
 
-Actually there are no dependencies for this module to base on, but, if you 
-want to use it, you need to install some of these packages on you own:
+Modelar requires some dependencies in you project, `MySQL` and `BCrypt` 
+will be automatically installed for you when you install Modelar, but if 
+you need `SQLite` support, you have to install it manually by doing this:
 
-* mysql
-* sqlite3
-* bcrypt-nodejs
+```sh
+$ npm install sqlite3
+```
 
 MySQL and SQLite is the only databases that this module currently supports, 
-and BCrypt is used to encrypt user passwords for the User model, only if you use it. You just need to install what you need, and leave others away.
+You just need to install what you need, and leave others behind.
 
 ## The DB class
 
@@ -154,7 +154,7 @@ the DB, see what abilities it brings to us.
 
 **parameters:**
 
-- `config` **[optional]** An object that sets the configuration for the current instance, or a string that sets only the database name.
+- `config` *[optional]* An object that sets the configuration for the current instance, or a string that sets only the database name.
 
 ```javascript
 var db = new DB({
@@ -274,7 +274,7 @@ automatically.
 
 **parameters:**
 - `sql` The SQL statement prepared to execute.
-- `binding` **[optional]** The data binds to the SQL.
+- `binding` *[optional]* The data binds to the SQL.
 
 **return:**
 
@@ -337,7 +337,7 @@ db.query("delete from users where `id` = ?", [1]).then(db=>{
 
 **parameters:**
 
-- `callback` **[optional]** If a callback function is passed, the codes in it will be automatically handled by transaction.
+- `callback` *[optional]* If a callback function is passed, the codes in it will be automatically handled by transaction.
 
 **return:**
 
@@ -449,7 +449,7 @@ var table = new Table("users");
 
 - `name` The field name of the column.
 - `type` Sets the type of the column.
-- `length` **[optional]** The length of data that this column can store with, it could be a number that sets the maximum length or an array that sets the interval between minimum and maximum lengths.
+- `length` *[optional]* The length of data that this column can store with, it could be a number that sets the maximum length or an array that sets the interval between minimum and maximum lengths.
 
 **return:**
 Returns the current instance for function chaining.
@@ -589,9 +589,9 @@ table.addColumn("id", "integer").primary().comment("The primary key.");
 **parameters:**
 
 - `table` The foreign table you want to concatenate, also this can be passed as an Object that sets all the arguments bellow, includes `table`.
-- `field` **[optional]** The foreign key on the foreign table.
-- `onUpdate` **[optional]** The action will be triggered when the record is update, it could be `no action` (default), `set null`, `cascade`, `restrict`.
-- `onDelete` **[optional]** The action will be triggered when the record is delete, it could be `no action` (default), `set null`, `cascade`, `restrict`.
+- `field` *[optional]* The foreign key on the foreign table.
+- `onUpdate` *[optional]* The action will be triggered when the record is update, it could be `no action` (default), `set null`, `cascade`, `restrict`.
+- `onDelete` *[optional]* The action will be triggered when the record is delete, it could be `no action` (default), `set null`, `cascade`, `restrict`.
 
 **return:**
 
@@ -632,6 +632,8 @@ table.save().then(table=>{
 });
 ```
 
+[========]
+
 ## The Query class
 
 `Query` is a constructor that generates SQL statements for queries, use some 
@@ -642,7 +644,7 @@ more easier way.
 
 **parameters:**
 
-- `table` **[optional]** The table name that the Query instance binds to.
+- `table` *[optional]* The table name that the Query instance binds to.
 
 ```javascript
 const DB = require("modelar/supports/DB"); //import DB
@@ -656,30 +658,46 @@ DB.config({ //Configure database.
 var query = new Query("users");
 ```
 
-### Query.on()
+### Query#on()
 
-**Binds an event handler to the global query event.**
-
-**parameters:**
+**Binds an event handler to a query instance.**
 
 - `event` The name of event.
-- `callback` A function will be triggered when the event fires, it accepts an argument which is the current instance. 
+- `callback` The function will be triggered when the event fires, it accepts an argument which is the current instance. 
 
 **return:**
 
-Returns the Query class itself for function chaining.
+Returns the current instance for function chaining.
 
 ```javascript
 const Query = require('modelar/supports/Query');
 
+var query = new Query("users");
+query.on('insert', query=>{
+    //Do stuffs here...
+});
+
+//Alternatively, there is a static method Query.on(), which allows you to 
+//bind event handlers to all the queries.
+
 Query.on('insert', query=>{
-    console.log(query.sql); //Print out the sql statement about to run.
+    //Do stuffs here...
 });
 ```
 
-### Query.trigger()
+The following lists all the events that are pre-defined:
 
-**Trigger the event handler when an event fires.**
+- `insert` This event will be fired when data are about to be inserted.
+- `inserted` This event will be fired when data are inserted successfully.
+- `update` This event will be fired when data are about to be updated.
+- `updated` This event will be fired when data are updated successfully.
+- `delete` This event will be fired when data are about to be deleted.
+- `deleted` This event will be fired when data are deleted successfully.
+- `get` This event will be fired when data are fetched from the database.
+
+### Query#trigger()
+
+**Trigger an event handler to execute in a particular scenario.**
 
 **parameters:**
 
@@ -688,10 +706,35 @@ Query.on('insert', query=>{
 
 **return:**
 
-Returns the Query class itself for function chaining.
+Returns the current instance for function chaining.
 
-This method is internally used in  Query class itself, so there will be no 
-examples since you don't need to call it at all.
+Generally, this method should be called inside a query method, which is the 
+pre-defined events do. Here is an example of how:
+
+```javascript
+const Model = require("modelar"); //Since Model extends Query
+
+class Post extends Model{
+    //Do other stuffs...
+    
+    //Define a like method for Post class.
+    like(){
+        //Do stuffs here...
+        this.trigger('like', this); //Trigger the event handler of like.
+        //Do other stuffs here...
+    }
+}
+```
+
+#### Event Inheriting
+
+You may have already figured out what this feature is and what it's for, 
+when you set an event handler to the Query class by using the static method 
+`Query.on()`, this handler will be inherited by all its instances and its 
+subclasses, and subclasses' instances. This is a good feature, but make 
+sure to use it right. Event handlers will be inherited by subclasses, but 
+will not affect sibling classes, and that prevent them apart from each 
+other.
 
 ### Query#select()
 
@@ -741,8 +784,8 @@ stuffs other than selects.**
 **parameters:**
 
 - `field` Can be an field name, or an Object that sets multiple conditions at one time, or pass a callback function to set a nested where clause for the SQL statement. The callback function requires an argument, which will be a new query instance.
-- `operator` **[optional]** The operator that used to define condition, if `value` is not passed, this argument will replace the `value`, and the operator will be `=`.
-- `value` **[optional]** The value that this where clause needs to check.
+- `operator` *[optional]* The operator that used to define condition, if `value` is not passed, this argument will replace the `value`, and the operator will be `=`.
+- `value` *[optional]* The value that this where clause needs to check.
 
 **return:**
 
@@ -876,9 +919,9 @@ This is similar to `Query#whereNull()` with `not`.
 **parameters:**
 
 - `table` The table name you want to join with.
-- `field1` The field in the main table that needs to check, or an Object that sets multiple conditions at one time. Or pass a callback function to generate a nested clause, the only argument that passed to the function is a new query instance with `Query#on()` / `Query#orOn()` abilities.
-- `operator` **[optional]** The operator that used to define condition, if `field2` is not passed, this argument will replace the `field2`, and the operator will be `=`.
-- `field2` **[optional]** The field in the `table` that needs to check.
+- `field1` The field in the main table that needs to check.
+- `operator` The operator that used to define condition, if `field2` is not passed, this argument will replace the `field2`, and the operator will be `=`.
+- `field2` *[optional]* The field in the `table` that needs to check.
 
 **return:**
 
@@ -919,34 +962,6 @@ This is similar to `Query#join()` with `full join`.
 **Sets the the cross join clause of the SQL statement.**
 This is similar to `Query#join()` with `cross join`.
 
-### Query#on()
-
-**Sets the on condition in a nested join clause.**
-
-**parameters:**
-
-- `field1` The field in the main table that needs to check.
-- `operator` The operator that used to define condition, if `field2` is not passed, this argument will replace the `field2`, and the operator will be `=`.
-- `field2` **[optional]** The field in the `table` that needs to check.
-
-This method is only available when in a callback function, if you call it 
-outside the callback, it could just make problems.
-
-```javascript
-var query = new Query("users");
-
-query.join('roles', _query=>{
-    //must call `on()` in a callback function.
-    _query.on('user.id', '=', 'role.user_id');
-});
-//select * from `users` inner join `roles` on (user.id = role.user_id)
-```
-
-### Query#orOn()
-
-**Sets the or on condition in a nested join clause.**
-This is similar to `Query#on()` with `or` condition.
-
 ### Query#orderBy()
 
 **Sets the order by condition of the SQL statement.**
@@ -954,7 +969,7 @@ This is similar to `Query#on()` with `or` condition.
 **parameters:**
 
 - `field` The field name that `order by` based on.
-- `sequence` **[optional]** Sets the sequence, it could be `asc` or `desc`.
+- `sequence` *[optional]* Sets the sequence, it could be `asc` or `desc`.
 
 **return:**
 
@@ -1035,7 +1050,7 @@ query.select("name", "sum(money)")
 **parameters:**
 
 - `offset` The start point of records, begins from 0. If `length` is not set, this argument will replace `length` and `offset` will be `0`.
-- `length` **[optional]** How many counts of records that the query will fetch, default is `0`, which means no limit at all. 
+- `length` *[optional]* How many counts of records that the query will fetch, default is `0`, which means no limit at all. 
 
 **return:**
 
@@ -1070,7 +1085,7 @@ query.select('name').distinct(); //select distinct `name` from `users`
 **parameters:**
 
 - `query` A SQL statement or a Query instance.
-- `all` **[optional]** Sets an `union all` clause, default is `false`.
+- `all` *[optional]* Sets an `union all` clause, default is `false`.
 
 **return:**
 
@@ -1234,8 +1249,8 @@ query.count().then(count=>{
 
 **parameters:**
 
-- `page` **[optional]** The current page, default is `1`.
-- `limit` **[optional]** The limit of per page, default is `10`.
+- `page` *[optional]* The current page, default is `1`.
+- `limit` *[optional]* The limit of per page, default is `10`.
 
 **return:**
 
@@ -1262,6 +1277,8 @@ query.where("id", ">", 0).paginate(1, 15).then(info=>{
 });
 ```
 
+[========]
+
 ## The Model Class
 
 Now we go to the most important part of this module, the Model, this Model 
@@ -1270,17 +1287,17 @@ gives you the ability to handle data in a very easy way. It extends from
 functionalities that makes data operation more easier.
 
 Since this class is the super class of all models, and every subclass must 
-extends it, so that they could success its functionalities, and instantiate 
-Model itself is not necessary, so I will show you the example of how to 
-create a new subclass, and how to use it, I will use the default subclass 
-`User` as an example.
+extends it, so that they could inherit its functionalities, and instantiate 
+Model itself is not necessary, so I will just show you the example of how 
+to create a new subclass, and how to use it, I will use the default 
+subclass `User` as an example.
 
 ### Model.constructor()
 
 **parameters:**
 
-- `data` **[optional]** The initial data that put to the model.
-- `config` **[optional]** Some configurations of the model, it can be some of these information carried in an object:
+- `data` *[optional]* The initial data that put to the model.
+- `config` *[optional]* Some configurations of the model, it can be some of these information carried in an object:
     - `table` The database table that this model binds to.
     - `primary` The primary key of this model.
     - `fields` The table fields that this model has.
@@ -1393,7 +1410,7 @@ possible to access all the information that an object carries, no matter what.
 **parameters:**
 
 - `data` The data that needs to assigned.
-- `useSetter` **[optional]** Use setter (if any) to process the data, default is `false`.
+- `useSetter` *[optional]* Use setter (if any) to process the data, default is `false`.
 
 **return:**
 
@@ -1440,82 +1457,6 @@ user.assign({
     email: 'i@hyurl.com',
     password: '12345',
 });
-```
-
-### Model#on()
-
-**Binds an event handler to a particular model instance.**
-
-- `event` The name of event.
-- `callback` The function will be triggered when the event fires, it accepts an argument which is the current instance. 
-
-**return:**
-
-Returns the current instance for function chaining.
-
-```javascript
-const User = require('modelar/User');
-
-var user = new User();
-user.on('insert', user=>{
-    //Do stuffs here...
-});
-
-//Alternatively, there is a static method Model.on(), which allows you to 
-//bind event handlers to the global Models.
-const Model = require('modelar');
-
-Model.on('insert', model=>{
-    //Do stuffs here...
-});
-
-//Or bind the handler to global Users.
-User.on('insert', user=>{
-    //Do stuffs here...
-})
-```
-
-The following lists all the events that are pre-defined:
-
-- `save` This event will be fired when `save()` is called.
-- `saved` This event will be fired after `save()` is called.
-- `insert` This event will be fired when a model is about to be inserted.
-- `inserted` This event will be fired when a model is inserted successfully.
-- `update` This event will be fired when a model is about to be updated.
-- `updated` This event will be fired when a model is updated successfully.
-- `delete` This event will be fired when a model is about to be deleted.
-- `deleted` This event will be fired when a model is deleted successfully.
-- `get` This event will be fired when a model is fetched from the database.
-
-### Model#trigger()
-
-**Trigger an event handler to execute in a particular scenario.**
-
-**parameters:**
-
-- `event` The name of event.
-- `data` The only argument passes to the event handler.
-
-**return:**
-
-Returns the current instance for function chaining.
-
-Generally, this method should be called inside a model method, which is the 
-pre-defined events do. Here is an example of how:
-
-```javascript
-const Model = require("modelar");
-
-class Post extends Model{
-    //Do other stuffs...
-    
-    //Define a like method for Post class.
-    like(){
-        //Do stuffs here...
-        this.trigger('like', this); //Trigger the event handler of like.
-        //Do other stuffs here...
-    }
-}
 ```
 
 ### Model#save()
@@ -1566,7 +1507,7 @@ easier to fetch data, and it also returns more information.
 
 **parameters:**
 
-- `args` **[optional]** An object that carries information for searching data. They can be one or several table fields, and one or several key-value pairs of these:
+- `args` *[optional]* An object that carries information for searching data. They can be one or several table fields, and one or several key-value pairs of these:
     - `page` The current page, default is `1`.
     - `limit` The top limit of per page, default is `10`.
     - `orderBy` Ordered by a particular field, default is the primary key.

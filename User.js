@@ -1,5 +1,8 @@
 const Model = require('./Model');
 
+/**
+ * 用户管理模型，除了继承自 Model 类的方法，还包括 `login()` 和 `logout()` 方法。
+ */
 class User extends Model{
 	constructor(data = {}, config = {}){
 		super(data, Object.assign({
@@ -33,10 +36,11 @@ class User extends Model{
 	}
 
 	/**
-	 * 用户登录，如果登录成功，则将登录用户添加到全局的 Model.auth 静态属性
-	 *         中，如果登录失败，则抛出错误信息。该方法不会将登录信息保存到 session 
-	 *         或者其他的存储环境，这需要使用者自己去实现；在恢复登录信息时，只需要将
-	 *         获取到的用户模型保存到 Model.auth 属性中即可。
+	 * 用户登录，如果登录成功，则将登录用户添加到全局的 Model.auth 静态属性中，如果
+	 * 登录失败，则抛出错误信息。该方法不会将登录信息保存到 session 或者其他的存储环
+	 * 境，这需要使用者自己去实现；在恢复登录信息时，只需要将获取到的用户模型保存到 
+	 * Model.auth 属性中即可。
+	 * 
 	 * @param  {Object}  args 登录参数，包含任何可用于登录的字段，和一个 `password`
 	 *                        字段，如果不提供任何登录字段，那么应该提供一个 `user`
 	 *                        字段用于泛字段登录，它将尝试所有登录字段的可能性。
@@ -86,8 +90,9 @@ class User extends Model{
 	}
 
 	/**
-	 * 登出用户，该方法将 Model.auth 设置为 null 来清空登录信息，如果需要
-	 *          清除 session 等，则需要使用者自己去实现。
+	 * 登出用户，该方法将 Model.auth 设置为 null 来清空登录信息，如果需要清除 
+	 * session 等，则需要使用者自己去实现。
+	 * 
 	 * @return {Promise} 返回 Promise，回调函数的参数是登录用户的模型实例。
 	 */
 	static logout(){
