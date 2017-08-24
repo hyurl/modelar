@@ -421,7 +421,6 @@ and the later closes all the connections that DB holds, so that you don't
 need to close every connection one at a time, just call `DB.close()` at the 
 very end of the program, and that will be fine.
 
-[========]
 
 ## The Table Class
 
@@ -631,8 +630,6 @@ table.save().then(table=>{
     console.log(err);
 });
 ```
-
-[========]
 
 ## The Query class
 
@@ -1276,8 +1273,6 @@ query.where("id", ">", 0).paginate(1, 15).then(info=>{
     console.log(err);
 });
 ```
-
-[========]
 
 ## The Model Class
 
