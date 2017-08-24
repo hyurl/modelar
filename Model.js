@@ -224,10 +224,10 @@ class Model extends Query{
 			var keywords = args.keywords;
 			//转义 %
 			if(typeof keywords == 'string'){
-				keywords = [keywords.replace('%', '[%]').replace('\\', '\\\\')];
+				keywords = [keywords.replace('%', '[%]')];
 			}else{
 				for(var i in keywords){
-					keywords[i] = keywords[i].replace('%', '[%]').replace('\\', '\\\\');
+					keywords[i] = keywords[i].replace('%', '[%]');
 				}
 			}
 			//构造嵌套的查询条件
