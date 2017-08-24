@@ -222,13 +222,10 @@ class Model extends Query{
 		//设置关键字查询
 		if(args.keywords && this.__searchable){
 			var keywords = args.keywords;
-			//转义 %
-			if(typeof keywords == 'string'){
-				keywords = [keywords.replace('%', '[%]')];
-			}else{
-				for(var i in keywords){
-					keywords[i] = keywords[i].replace('%', '[%]');
-				}
+			if(typeof keywords == 'string') keywords = [keywords];
+			for(var i in keywords){
+				//转义字符
+				keywords[i] = keywords[i].replace('%', '\%').replace("\\", "\\\\");
 			}
 			//构造嵌套的查询条件
 			this.where((query)=>{

@@ -7,14 +7,14 @@ DB.config({
     database: 'test',
 })
 
-class Role extends User{
-
-}
-
-Model.on('insert', ()=>{})
-Role.on('login',()=>{})
-
-console.log(Role.__events);
+User.getMany({
+    keywords: 'Ayon%Lee'
+}).then(info=>{
+    console.log(info);
+    User.close();
+}).catch(err=>{
+    console.log(err);
+})
 
 // User.get(1).then(info=>{
 //     for(var [k, v] of info)
