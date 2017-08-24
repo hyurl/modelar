@@ -1524,7 +1524,7 @@ information of these:
 - `data` An array that carries all models that suits the given conditions.
 
 ```javascript
-const User = require("modelar/User);
+const User = require("modelar/User");
 
 var user = new User();
 user.getMany({
