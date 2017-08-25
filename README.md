@@ -158,7 +158,7 @@ the DB, see what abilities it brings to us.
 
 **parameters:**
 
-- `config` *[optional]* An object that sets the configuration for the current 
+- `[config]` An object that sets the configuration for the current 
     instance, or a string that sets only the database name.
 
 ```javascript
@@ -284,7 +284,7 @@ automatically.
 
 **parameters:**
 - `sql` The SQL statement prepared to execute.
-- `binding` *[optional]* The data binds to the SQL.
+- `[binding]` The data binds to the SQL.
 
 **return:**
 
@@ -347,7 +347,7 @@ db.query("delete from users where `id` = ?", [1]).then(db=>{
 
 **parameters:**
 
-- `callback` *[optional]* If a callback function is passed, the codes in it 
+- `[callback]` If a callback function is passed, the codes in it 
     will be automatically handled by transaction.
 
 **return:**
@@ -459,9 +459,9 @@ var table = new Table("users");
 
 - `name` The field name of the column.
 - `type` Sets the type of the column.
-- `length` *[optional]* The length of data that this column can store with, 
+- `[length]` The length of data that this column can store with, 
     it could be a number that sets the maximum length or an array that sets 
-    the interval between minimum and maximum lengths.
+    the range between minimum and maximum lengths.
 
 **return:**
 Returns the current instance for function chaining.
@@ -602,13 +602,11 @@ table.addColumn("id", "integer").primary().comment("The primary key.");
 
 - `table` The foreign table you want to concatenate, also this can be passed 
     as an Object that sets all the arguments bellow, includes `table`.
-- `field` *[optional]* The foreign key on the foreign table.
-- `onUpdate` *[optional]* The action will be triggered when the record is 
-    update, it could be `no action` (default), `set null`, `cascade`, 
-    `restrict`.
-- `onDelete` *[optional]* The action will be triggered when the record is 
-    delete, it could be `no action` (default), `set null`, `cascade`, 
-    `restrict`.
+- `[field]` The foreign key on the foreign table.
+- `[onUpdate]` The action will be triggered when the record is update, it 
+    could be `no action` (default), `set null`, `cascade`, `restrict`.
+- `[onDelete]` The action will be triggered when the record is delete, it 
+    could be `no action` (default), `set null`, `cascade`, `restrict`.
 
 **return:**
 
@@ -659,7 +657,7 @@ more easier way.
 
 **parameters:**
 
-- `table` *[optional]* The table name that the Query instance binds to.
+- `[table]` The table name that the Query instance binds to.
 
 ```javascript
 const DB = require("modelar/supports/DB"); //import DB
@@ -806,10 +804,10 @@ stuffs other than selects.**
     one time, or pass a callback function to set a nested where clause for 
     the SQL statement. The callback function requires an argument, which will 
     be a new query instance.
-- `operator` *[optional]* The operator that used to define condition, if 
-    `value` is not passed, this argument will replace the `value`, and the 
-    operator will be `=`.
-- `value` *[optional]* The value that this where clause needs to check.
+- `[operator]` The operator that used to define condition, if `value` is 
+    not passed, this argument will replace the `value`, and the operator 
+    will be `=`.
+- `[value]` The value that this where clause needs to check.
 
 **return:**
 
@@ -948,7 +946,7 @@ This is similar to `Query#whereNull()` with `not`.
 - `operator` The operator that used to define condition, if `field2` is not 
     passed, this argument will replace the `field2`, and the operator will be 
     `=`.
-- `field2` *[optional]* The field in the `table` that needs to check.
+- `[field2]` The field in the `table` that needs to check.
 
 **return:**
 
@@ -996,7 +994,7 @@ This is similar to `Query#join()` with `cross join`.
 **parameters:**
 
 - `field` The field name that `order by` based on.
-- `sequence` *[optional]* Sets the sequence, it could be `asc` or `desc`.
+- `[sequence]` Sets the sequence, it could be `asc` or `desc`.
 
 **return:**
 
@@ -1079,8 +1077,8 @@ query.select("name", "sum(money)")
 
 - `offset` The start point of records, begins from 0. If `length` is not set, 
     this argument will replace `length` and `offset` will be `0`.
-- `length` *[optional]* How many counts of records that the query will fetch, 
-    default is `0`, which means no limit at all. 
+- `[length]` How many counts of records that the query will fetch, default is 
+    `0`, which means no limit at all. 
 
 **return:**
 
@@ -1115,7 +1113,7 @@ query.select('name').distinct(); //select distinct `name` from `users`
 **parameters:**
 
 - `query` A SQL statement or a Query instance.
-- `all` *[optional]* Sets an `union all` clause, default is `false`.
+- `[all]` Sets an `union all` clause, default is `false`.
 
 **return:**
 
@@ -1280,8 +1278,8 @@ query.count().then(count=>{
 
 **parameters:**
 
-- `page` *[optional]* The current page, default is `1`.
-- `limit` *[optional]* The limit of per page, default is `10`.
+- `[page]` The current page, default is `1`.
+- `[limit]` The limit of per page, default is `10`.
 
 **return:**
 
@@ -1325,9 +1323,9 @@ subclass `User` as an example.
 
 **parameters:**
 
-- `data` *[optional]* The initial data that put to the model.
-- `config` *[optional]* Some configurations of the model, it can be some of 
-    these information carried in an object:
+- `[data]` The initial data that put to the model.
+- `[config]` Some configurations of the model, it can be some of these 
+    information carried in an object:
     - `table` The database table that this model binds to.
     - `primary` The primary key of this model.
     - `fields` The table fields that this model has.
@@ -1441,8 +1439,7 @@ possible to access all the information that an object carries, no matter what.
 **parameters:**
 
 - `data` The data that needs to assigned.
-- `useSetter` *[optional]* Use setter (if any) to process the data, default 
-    is `false`.
+- `[useSetter]` Use setter (if any) to process the data, default is `false`.
 
 **return:**
 
@@ -1539,9 +1536,8 @@ easier to fetch data, and it also returns more information.
 
 **parameters:**
 
-- `args` *[optional]* An object that carries information for searching data. 
-    They can be one or several table fields, and one or several key-value 
-    pairs of these:
+- `[args]` An object that carries information for searching data. They can be 
+    one or several table fields, and one or several key-value pairs of these:
     - `page` The current page, default is `1`.
     - `limit` The top limit of per page, default is `10`.
     - `orderBy` Ordered by a particular field, default is the primary key.
