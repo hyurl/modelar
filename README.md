@@ -1502,7 +1502,9 @@ easier to fetch data, and it also returns more information.
 
 **parameters:**
 
-- `args` *[optional]* An object that carries information for searching data. They can be one or several table fields, and one or several key-value pairs of these:
+- `args` *[optional]* An object that carries information for searching data. 
+    They can be one or several table fields, and one or several key-value 
+    pairs of these:
     - `page` The current page, default is `1`.
     - `limit` The top limit of per page, default is `10`.
     - `orderBy` Ordered by a particular field, default is the primary key.
