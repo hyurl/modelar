@@ -218,7 +218,7 @@ class Model extends Query{
 			if(args[field] && defaults[field] === undefined){
 				var operator = "=",
 					value = args[field],
-					match = value.match(/^(\<\>|\!\=|\<|\>|\=)\w+/);
+					match = value.match(/^(<>|!=|<|>|=)\w+/);
 				if(match){ //处理带条件运算符的值标记
 					operator = match[1];
 					value = value.substring(operator.length);

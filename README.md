@@ -1545,7 +1545,8 @@ data from the database. So there is an alternative scheme, use static methods
 instead. The Model class provides almost all the methods inherited from Query 
 to be static, some of them are just simple as making a instance and calling 
 the method, some of them provides more features to make programing more 
-efficient. I will make a list to show you the almost-same methods, and give details about more-feature methods.
+efficient. I will make a list to show you the almost-same methods, and give 
+details about more-feature methods.
 
 **These methods are just the same as their instantiated versions:** They 
 all return a model instance which is auto-instantiated.
