@@ -1530,7 +1530,8 @@ var user = new User();
 user.getMany({
     limit: 15, //Set the limit.
     sequence: 'rand', //Set sequence to be random.
-    name: 'hyurl', //Pass a particular field.
+    name: 'hyurl', //Pass a particular field and value.
+    id: '<10', //Pass a value with an operator.
 }).then(info=>{
     console.log(info); //Print out all the information.
 }).catch(err=>{
