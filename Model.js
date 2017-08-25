@@ -215,8 +215,16 @@ class Model extends Query{
 
 		//根据数据表字段设置 where 查询条件
 		for(var field of this.__fields){
-			if(args[field] && defaults[field] === undefined)
-				this.where(field, args[field]);
+			if(args[field] && defaults[field] === undefined){
+				var operator = "=",
+					value = args[field],
+					match = value.match(/^(\<\>|\!\=|\<|\>|\=)\w+/);
+				if(match){ //处理带条件运算符的值标记
+					operator = match[1];
+					value = value.substring(operator.length);
+				}
+				this.where(field, operator, value);
+			}
 		}
 
 		//设置关键字查询
