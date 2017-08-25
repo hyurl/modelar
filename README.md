@@ -43,17 +43,21 @@ functionality that this Model has, now we can go into the real depth of it.
 ## What can this module do?
 
 * **Easy to use**
-    * You can just define a class that extends the Model, and most of the work would be done for you.
+    * You can just define a class that extends the Model, and most of the 
+    work would be done for you.
     * Promise guarantees that all the procedures is in control with one logic.
 * **Expressive and good looking**
     * The attribute of a model is actually a property of the instance.
     * Whole setter and getter supports.
 * **Powerful SQL constructors**
     * This module provides most of the SQL query supports to the Model.
-    * Query class makes SQL Object-Oriented and more easier to generate SQL statements.
+    * Query class makes SQL Object-Oriented and more easier to generate SQL 
+    statements.
 * **Database connection controllable**
-    * The DB class guarantees that there will be only one connection to the same database and reused.
-    * Transaction is very easy to use, the program will automatically commit or rollback for you.
+    * The DB class guarantees that there will be only one connection to the 
+    same database and reused.
+    * Transaction is very easy to use, the program will automatically commit 
+    or rollback for you.
 
 ## Table of Contents
 * [Install](#install)
@@ -154,7 +158,8 @@ the DB, see what abilities it brings to us.
 
 **parameters:**
 
-- `config` *[optional]* An object that sets the configuration for the current instance, or a string that sets only the database name.
+- `config` *[optional]* An object that sets the configuration for the current 
+    instance, or a string that sets only the database name.
 
 ```javascript
 var db = new DB({
@@ -206,14 +211,18 @@ DB.config({
 The all supported configurations are showing bellow:
 
 - `type` Sets the database type that this program use (default: `mysql`);
-- `host` Sets the serve name of the database (only for MySQL, default: `localhost`);
+- `host` Sets the serve name of the database (only for MySQL, default: 
+    `localhost`);
 - `port` Sets the port that host use (only for MySQL, default `3306`);
-- `user` Sets the username that used for logging in to the database (only for MySQL, default: `root`);
+- `user` Sets the username that used for logging in to the database (only for 
+    MySQL, default: `root`);
 - `password` Sets the password for user (only for MySQL);
 - `database` Sets the database name that need to open;
 - `charset` Sets the charset (only for MySQL, default: `utf8`);
-- `timeout` Sets both the connection timeout and query timeout(only for MySQL, default is `5000` misc.);
-- `autoConnect` Automatically opens the connection when the DB is instantiated, default is `false`.
+- `timeout` Sets both the connection timeout and query timeout(only for MySQL, 
+    default is `5000` misc.);
+- `autoConnect` Automatically opens the connection when the DB is 
+    instantiated, default is `false`.
 
 The difference between the `constructor()` and `config()` method is that 
 `constructor()` only sets the configuration for one instance, while 
@@ -225,7 +234,8 @@ The difference between the `constructor()` and `config()` method is that
 
 **parameters:**
 
-- `connection` An existing connection that is created by DB or MySQL, or MySQL pool, or SQLite.
+- `connection` An existing connection that is created by DB or MySQL, or MySQL 
+    pool, or SQLite.
 
 **return:**
 
@@ -337,7 +347,8 @@ db.query("delete from users where `id` = ?", [1]).then(db=>{
 
 **parameters:**
 
-- `callback` *[optional]* If a callback function is passed, the codes in it will be automatically handled by transaction.
+- `callback` *[optional]* If a callback function is passed, the codes in it 
+    will be automatically handled by transaction.
 
 **return:**
 
@@ -448,7 +459,9 @@ var table = new Table("users");
 
 - `name` The field name of the column.
 - `type` Sets the type of the column.
-- `length` *[optional]* The length of data that this column can store with, it could be a number that sets the maximum length or an array that sets the interval between minimum and maximum lengths.
+- `length` *[optional]* The length of data that this column can store with, 
+    it could be a number that sets the maximum length or an array that sets 
+    the interval between minimum and maximum lengths.
 
 **return:**
 Returns the current instance for function chaining.
@@ -587,10 +600,15 @@ table.addColumn("id", "integer").primary().comment("The primary key.");
 
 **parameters:**
 
-- `table` The foreign table you want to concatenate, also this can be passed as an Object that sets all the arguments bellow, includes `table`.
+- `table` The foreign table you want to concatenate, also this can be passed 
+    as an Object that sets all the arguments bellow, includes `table`.
 - `field` *[optional]* The foreign key on the foreign table.
-- `onUpdate` *[optional]* The action will be triggered when the record is update, it could be `no action` (default), `set null`, `cascade`, `restrict`.
-- `onDelete` *[optional]* The action will be triggered when the record is delete, it could be `no action` (default), `set null`, `cascade`, `restrict`.
+- `onUpdate` *[optional]* The action will be triggered when the record is 
+    update, it could be `no action` (default), `set null`, `cascade`, 
+    `restrict`.
+- `onDelete` *[optional]* The action will be triggered when the record is 
+    delete, it could be `no action` (default), `set null`, `cascade`, 
+    `restrict`.
 
 **return:**
 
@@ -660,7 +678,8 @@ var query = new Query("users");
 **Binds an event handler to a query instance.**
 
 - `event` The name of event.
-- `callback` The function will be triggered when the event fires, it accepts an argument which is the current instance. 
+- `callback` The function will be triggered when the event fires, it accepts 
+    an argument which is the current instance. 
 
 **return:**
 
@@ -737,7 +756,10 @@ other.
 
 **parameters:**
 
-- `...fields` Decides which fields that will be fetched when a select query runs, you can pass several arguments to this method, they will be treated as an array that carries multiple fields, or just pass one array to this method, which is the same.
+- `...fields` Decides which fields that will be fetched when a select query 
+    runs, you can pass several arguments to this method, they will be treated 
+    as an array that carries multiple fields, or just pass one array to this 
+    method, which is the same.
 
 **return:**
 
@@ -780,8 +802,13 @@ stuffs other than selects.**
 
 **parameters:**
 
-- `field` Can be an field name, or an Object that sets multiple conditions at one time, or pass a callback function to set a nested where clause for the SQL statement. The callback function requires an argument, which will be a new query instance.
-- `operator` *[optional]* The operator that used to define condition, if `value` is not passed, this argument will replace the `value`, and the operator will be `=`.
+- `field` Can be an field name, or an Object that sets multiple conditions at 
+    one time, or pass a callback function to set a nested where clause for 
+    the SQL statement. The callback function requires an argument, which will 
+    be a new query instance.
+- `operator` *[optional]* The operator that used to define condition, if 
+    `value` is not passed, this argument will replace the `value`, and the 
+    operator will be `=`.
 - `value` *[optional]* The value that this where clause needs to check.
 
 **return:**
@@ -866,7 +893,8 @@ This is similar to `Query#whereIn()` with `not`.
 
 **parameters:**
 
-- `callback` This callback will generate a nested clause in a exists clause, it accepts one argument, which is a new query instance.
+- `callback` This callback will generate a nested clause in a exists clause, 
+    it accepts one argument, which is a new query instance.
 
 **return:**
 
@@ -917,7 +945,9 @@ This is similar to `Query#whereNull()` with `not`.
 
 - `table` The table name you want to join with.
 - `field1` The field in the main table that needs to check.
-- `operator` The operator that used to define condition, if `field2` is not passed, this argument will replace the `field2`, and the operator will be `=`.
+- `operator` The operator that used to define condition, if `field2` is not 
+    passed, this argument will replace the `field2`, and the operator will be 
+    `=`.
 - `field2` *[optional]* The field in the `table` that needs to check.
 
 **return:**
@@ -1003,7 +1033,8 @@ query.random();
 
 **parameters:**
 
-- `...field` The fields list, pass each field as an argument, or just pass the first argument as an array to set multiple fields.
+- `...field` The fields list, pass each field as an argument, or just pass 
+    the first argument as an array to set multiple fields.
 
 **return:**
 
@@ -1046,8 +1077,10 @@ query.select("name", "sum(money)")
 
 **parameters:**
 
-- `offset` The start point of records, begins from 0. If `length` is not set, this argument will replace `length` and `offset` will be `0`.
-- `length` *[optional]* How many counts of records that the query will fetch, default is `0`, which means no limit at all. 
+- `offset` The start point of records, begins from 0. If `length` is not set, 
+    this argument will replace `length` and `offset` will be `0`.
+- `length` *[optional]* How many counts of records that the query will fetch, 
+    default is `0`, which means no limit at all. 
 
 **return:**
 
@@ -1105,7 +1138,8 @@ query.union(query2, true);
 
 **parameters:**
 
-- `data` An Object that represents fields and their values, also it is possible to pass an Array that carries all fields' values.
+- `data` An Object that represents fields and their values, also it is 
+    possible to pass an Array that carries all fields' values.
 
 **return:**
 
@@ -1242,7 +1276,7 @@ query.count().then(count=>{
 
 ### Query#paginate()
 
-**Gets the page information of all the records that suit the given conditions.**
+**Gets the page information of all records that suit the given conditions.**
 
 **parameters:**
 
@@ -1292,7 +1326,8 @@ subclass `User` as an example.
 **parameters:**
 
 - `data` *[optional]* The initial data that put to the model.
-- `config` *[optional]* Some configurations of the model, it can be some of these information carried in an object:
+- `config` *[optional]* Some configurations of the model, it can be some of 
+    these information carried in an object:
     - `table` The database table that this model binds to.
     - `primary` The primary key of this model.
     - `fields` The table fields that this model has.
@@ -1385,7 +1420,8 @@ class User extends  Model{
     //The setter of password, use bcrypt to encrypt data.
     set passwrod(v){
         var bcrypt = require('bcrypt-nodejs');
-        this.__data.password = bcrypt.hashSync(v); //Model's data stores in the __data property.
+        //Model's data stores in the __data property.
+        this.__data.password = bcrypt.hashSync(v);
     }
 
     //The getter of password, always return null.
@@ -1405,7 +1441,8 @@ possible to access all the information that an object carries, no matter what.
 **parameters:**
 
 - `data` The data that needs to assigned.
-- `useSetter` *[optional]* Use setter (if any) to process the data, default is `false`.
+- `useSetter` *[optional]* Use setter (if any) to process the data, default 
+    is `false`.
 
 **return:**
 
@@ -1508,7 +1545,8 @@ easier to fetch data, and it also returns more information.
     - `page` The current page, default is `1`.
     - `limit` The top limit of per page, default is `10`.
     - `orderBy` Ordered by a particular field, default is the primary key.
-    - `sequence` The sequence of how the data are ordered, it could be `asc`, `desc` or `rand`, default is `asc`.
+    - `sequence` The sequence of how the data are ordered, it could be `asc`, 
+    `desc` or `rand`, default is `asc`.
     - `keywords` Keywords for vague searching.
 
 **return:**
@@ -1602,8 +1640,10 @@ User.getMany({sequence: "rand"}).then(result=>{
 information than their instantiate versions do.
 
 - `Model.update()` The only argument passes to it must carry the primary key.
-- `Model.delete()` The only argument passes to it must carry the primary key, or just pass a number, it will be treated as the primary key.
-- `Model.get()` The only argument passes to it can carry any fields of the model, or just pass a number, it will be treated as the primary key.
+- `Model.delete()` The only argument passes to it must carry the primary key, 
+    or just pass a number, it will be treated as the primary key.
+- `Model.get()` The only argument passes to it can carry any fields of the 
+    model, or just pass a number, it will be treated as the primary key.
 
 ```javascript
 const User = require("modelar/User");
