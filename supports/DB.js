@@ -1,5 +1,5 @@
 /**
- * Database connection manager.
+ * Database Connection Manager.
  * 
  * This class holds connections by their specifications, when initiate a new 
  * instance, it will check if there is already an existing one, if there is, 
