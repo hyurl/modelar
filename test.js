@@ -4,20 +4,21 @@ var Model = require('./Model');
 
 //Configure database
 DB.config({
-    database: 'test',
+    type: 'sqlite',
+    database: "D:\\ModPHP\\modphp.db",
 })
-
-User.getMany({
-    keywords: 'Ayon%Lee'
-}).then(info=>{
-    console.log(info);
-    User.close();
-}).catch(err=>{
-    console.log(err);
-})
+User.on('get', user=>{
+    console.log(user.__data);
+}).on('insert', _=>{})
 
 // User.get(1).then(info=>{
-//     for(var [k, v] of info)
-//         console.log(k, v)
-//     User.close(); //Close connection
+//     // console.log(info.__data);
+//     User.close();
+// }).catch(err=>{
+//     console.log(err);
 // })
+
+User.getMany().then(info=>{
+    // console.log(info);
+    User.close(); //Close connection
+})

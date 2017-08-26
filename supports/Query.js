@@ -23,18 +23,8 @@ class Query extends DB{
 		this.__limit = ''; //limit 子句
 		this.__union = ""; //union 语句
 		this.__bindings = []; //select 语句绑定的参数值
-		this.__events = Object.assign({}, this.constructor.__events); //模型事件
-	}
-
-	/**
-	 * 将事件处理器绑定到全局模型中
-	 * 
-	 * @param  {String}   event    事件名称
-	 * @param  {Function} callback 事件被触发时执行的回调函数
-	 * @return {Model}             当前模型类
-	 */
-	static on(event, callback){
-		this.__events = Object.assign({
+		this.__events = Object.assign({ //事件处理器
+			query: [], //SQL 语句运行时触发
 			insert: [],   //插入事件，新数据保存时触发
 			inserted: [], //插入后事件，新数据保存后触发
 			update: [],   //更新事件，数据被更新时触发
@@ -42,43 +32,7 @@ class Query extends DB{
 			delete: [],   //删除事件，数据被删除时触发
 			deleted: [],  //删除后事件，数据被删除后触发
 			get: [],      //获取事件，获取到数据时触发
-		}, this.__events || {});
-		if(this.__events[event] === undefined)
-			this.__events[event] = [];
-		this.__events[event].push(callback);
-		return this;
-	}
-
-	/**
-	 * 将事件处理器绑定到具体的模型中
-	 * 
-	 * @param  {String}   event    事件名称
-	 * @param  {Function} callback 事件被触发时执行的回调函数
-	 * @return {Model}             当前模型实例
-	 */
-	on(event, callback){
-		if(this.__events[event] === undefined)
-			this.__events[event] = [];
-		this.__events[event].push(callback);
-		return this;
-	}
-
-	/**
-	 * 触发事件处理函数
-	 * 
-	 * @param  {String} event 事件名称
-	 * @param  {Any}    data  传递给回调函数的参数
-	 * @return {Model}        当前模型实例
-	 */
-	trigger(event, data){
-		if(this.__events[event] instanceof Array){
-			for(var callback of this.__events[event]){
-				callback.call(this, data);
-			}
-		}else if(this.__events[event] instanceof Function){
-			this.__events[event].call(this, data);
-		}
-		return this;
+		}, this.constructor.__events);
 	}
 
 	/** 自动为字段添加反引号，如果字段名称不符合条件，则不会添加 */
@@ -573,7 +527,10 @@ class Query extends DB{
 	 * @return {Promise} 返回 Promise，回调函数的参数是获取的数据库记录。
 	 */
 	get(){
-		return this.limit(1).__handleSelect().then(data=>data[0]);
+		var promise = this.limit(1).__handleSelect().then(data=>data[0]);
+		if(this.constructor.name == 'Query')
+			this.trigger('get', this); //触发事件回调函数;
+		return promise;
 	}
 
 	/**
@@ -582,7 +539,10 @@ class Query extends DB{
 	 * @return {Promise} 返回 Promise，回调函数的参数是获取的数据库记录。
 	 */
 	all(){
-		return this.__handleSelect();
+		var promise = this.__handleSelect();
+		if(this.constructor.name == 'Query')
+			this.trigger('get', this); //触发事件回调函数;
+		return promise;
 	}
 	
 	/**
@@ -601,7 +561,6 @@ class Query extends DB{
 		this.__generateSelectSQl();
 		return this.query(this.sql, this.__bindings).then(db=>{
 			this.bindings = Object.assign([], this.__bindings);
-			this.trigger('get', this); //触发事件回调函数
 			return db.__data;
 		});
 	}
@@ -633,16 +592,29 @@ class Query extends DB{
 	 */
 	paginate(page = 1, limit = 10){
 		var offset = (page - 1) * limit;
-		return this.limit(offset, limit).all().then(data=>{
-			return this.count().then(total=>{
+		var selects = this.__selects;
+		//先获取记录总数
+		return this.count().then(total=>{
+			if(!total){ //如果没有记录，则直接返回结果
 				return {
 					page,
-					pages: Math.ceil(total / limit),
+					pages: 0,
 					limit,
 					total,
-					data,
-				};
-			});
+					data: [],
+				}
+			}else{ //有记录则继续获取记录
+				this.__selects = selects;
+				return this.limit(offset, limit).all().then(data=>{
+					return {
+						page,
+						pages: Math.ceil(total / limit),
+						limit,
+						total,
+						data,
+					};
+				});
+			}
 		});
 	}
 }

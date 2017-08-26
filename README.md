@@ -185,7 +185,7 @@ expectedly established.
 
 ### DB.config()
 
-**Sets global DB configurations.**
+**Sets global DB configurations for every DB instance.**
 
 **parameters:**
 
@@ -193,7 +193,7 @@ expectedly established.
 
 **return:**
 
-This method returns DB itself for function chaining.
+Returns DB class itself for function chaining.
 
 ```javascript
 const DB = require('modelar/supports/DB'); //Import DB class.
@@ -413,7 +413,7 @@ var db = new DB("test");
 db.query("select * from users where 1").then(db => {
     //Do stuffs here.
     //If there is nothing more to do, you must close the connection, or the 
-    //nodejs will loop untill the server closes the connection.
+    //Nodejs will loop untill the server closes the connection.
     db.close();
 })
 ```
@@ -424,7 +424,7 @@ db.query("select * from users where 1").then(db => {
 
 **return:**
 
-Returns the DB itself for function chaining.
+Returns the DB class itself for function chaining.
 
 The difference between instantiated version of `close()` and static version 
 of `close()` is that the former closes only the current instance connection, 

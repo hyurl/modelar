@@ -11,8 +11,7 @@ class Table extends DB{
 	 */
 	constructor(table){
 		super();
-		this.ddl = ''; //数据库创建语句
-		this.__table = table; //数据表名
+		this.__table = '`'+table+'`'; //数据表名
 		this.__fields = []; //字段列表
 		this.__index = -1; //当前指针位置
 	}
@@ -43,13 +42,12 @@ class Table extends DB{
 			unsigned: false, //无符号
 			unique: false, //值唯一
 			comment: '', //注释
-			foreignKey: {
+			foreignKey: { //外键
 				table: '', //外键所在表
 				field: '', //外键字段
 				onUpdate: 'no action', //更新时的行为，可选 no action, set null, cascade, restrict
 				onDelete: 'no action', //删除时行为，可选值同 onUpdate
-			}, //外键
-
+			},
 		}, {name, type}));
 		return this;
 	}
@@ -151,7 +149,7 @@ class Table extends DB{
 	 * @return {Promise} 返回 Promise，回调函数的参数是当前 Table 实例。
 	 */
 	save(){
-		return this.__generateDDL().query(this.ddl).then(db=>{
+		return this.__generateDDL().query(this.sql).then(db=>{
 			return this;
 		});
 	}
@@ -194,12 +192,12 @@ class Table extends DB{
 			columns.push(column);
 		}
 		//对 DDL 语句进行换行和缩进
-		this.ddl = 'create table `'+this.__table+'` (\n\t'+columns.join(",\n\t");
+		this.sql = 'create table '+this.__table+' (\n\t'+columns.join(",\n\t");
 		if(foreigns.length)
-			this.ddl += ',\n\t'+foreigns.join(',\n\t');
-		this.ddl +='\n)';
+			this.sql += ',\n\t'+foreigns.join(',\n\t');
+		this.sql +='\n)';
 		if(isMysql) //mysql 需要指明数据库引擎和默认字符集
-			this.ddl += ' engine=InnoDB default charset='+this.__config.charset;
+			this.sql += ' engine=InnoDB default charset='+this.__config.charset;
 		return this;
 	}
 }

@@ -24,6 +24,21 @@ class User extends Model{
 			'name',
 			'email',
 		];
+
+		this.__events = Object.assign({ //事件处理器
+			query: [], //查询事件，SQL 语句运行时触发
+			save: [], //保存事件，模型保存时触发
+			saved: [], //保存后事件，模型保存后触发
+			insert: [],   //插入事件，新数据保存时触发
+			inserted: [], //插入后事件，新数据保存后触发
+			update: [],   //更新事件，数据被更新时触发
+			updated: [],  //更新后事件，数据被更新后触发
+			delete: [],   //删除事件，数据被删除时触发
+			deleted: [],  //删除后事件，数据被删除后触发
+			get: [],      //获取事件，获取到数据时触发
+			login: [],    //登录事件，用户登录后触发
+			logout: [],   //登出事件，用户登出后触发
+		}, this.constructor.__events);
 	}
 
 	set password(v){

@@ -21,6 +21,18 @@ class Model extends Query{
 		this.__fields = config.fields || []; //可设置的数据表字段
 		this.__primary = config.primary || ''; //主键
 		this.__searchable = config.searchable || [], //可以用来进行模糊查询的字段
+		this.__events = Object.assign({ //事件处理器
+			query: [], //查询事件，SQL 语句运行时触发
+			save: [], //保存事件，模型保存时触发
+			saved: [], //保存后事件，模型保存后触发
+			insert: [],   //插入事件，新数据保存时触发
+			inserted: [], //插入后事件，新数据保存后触发
+			update: [],   //更新事件，数据被更新时触发
+			updated: [],  //更新后事件，数据被更新后触发
+			delete: [],   //删除事件，数据被删除时触发
+			deleted: [],  //删除后事件，数据被删除后触发
+			get: [],      //获取事件，获取到数据时触发
+		}, this.constructor.__events);
 
 		this.__data = {}; //模型数据
 
@@ -157,7 +169,7 @@ class Model extends Query{
 	 * @return {Promise} 返回 Promise，回调函数的参数是当前模型实例。
 	 */
 	get(){
-		return super.get().then(data=>this.assign(data));
+		return super.get().then(data=>this.assign(data).trigger('get', this));
 	}
 
 	/**
@@ -172,7 +184,7 @@ class Model extends Query{
 			for(var i in data){
 				var model = new this.constructor();
 				model.__connection = this.__connection; //引用数据库连接
-				model.assign(data[i]);
+				model.assign(data[i]).trigger('get', model); //每一个模型都触发事件
 				models.push(model);
 			}
 			return models;
@@ -469,7 +481,7 @@ class Model extends Query{
 		});
 	}
 
-	/*********************** 迭代器接口 **************************/
+	/*********************** Implement Iterator **************************/
 
 	[Symbol.iterator](){
 		var keys = Object.keys(this.__data),
@@ -491,6 +503,6 @@ class Model extends Query{
 	}
 }
 
-Model.auth = null; //保存已登录用户的引用
+Model.auth = null; //This property store the current logged-in user.
 
-module.exports = Model; //导出 NodeJS 模块
+module.exports = Model;
