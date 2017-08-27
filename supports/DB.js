@@ -224,8 +224,8 @@ class DB{
      * @param  {String}  sql      The SQL statement.
      * @param  {Array}   bindings The data bound to the SQL statement.
      * 
-     * @return {Promise} Returns a Promise, and the callback passed to then() 
-     *                   is the current instance.
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
      */
     query(sql, bindings = []){
         this.sql = sql.toLowerCase().trim();
@@ -317,8 +317,8 @@ class DB{
      *                            transaction, that means you have to commit 
      *                            and roll back manually.
      * 
-     * @return {Promise} Returns a Promise, and the callback passed to then() 
-     *                   is the current instance.
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
      */
     transaction(callback = null){
         if(typeof callback == 'function'){

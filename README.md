@@ -1311,7 +1311,7 @@ query.where("id", ">", 0).paginate(1, 15).then(info=>{
 Now we go to the most important part of this module, the Model, this Model 
 gives you the ability to handle data in a very easy way. It extends from 
 `Query`, so has almost all the features that Query has, and other 
-functionalities that makes data operation more easier.
+functionalities that make data operation more easier.
 
 Since this class is the super class of all models, and every subclass must 
 extends it, so that they could inherit its functionalities, and instantiate 
@@ -1415,16 +1415,18 @@ particular fields manually, there is what the `User` does:
 class User extends  Model{
     //Other stuffs...
 
-    //The setter of password, use bcrypt to encrypt data.
+    //The setter of password, use BCrypt to encrypt data.
     set passwrod(v){
         var bcrypt = require('bcrypt-nodejs');
-        //Model's data stores in the __data property.
+        //Model's data are stored in the __data property.
         this.__data.password = bcrypt.hashSync(v);
     }
 
-    //The getter of password, always return null.
+    //The getter of password, always return undefined.
+    //When a getter returns undefined, that means when you call toString() or
+    //valueOf(), or in a for...of loop, this property will be absent.
     get password(){
-        return null;
+        return undefined;
     }
 }
 ```
@@ -1543,21 +1545,21 @@ easier to fetch data, and it also returns more information.
     - `orderBy` Ordered by a particular field, default is the primary key.
     - `sequence` The sequence of how the data are ordered, it could be `asc`, 
     `desc` or `rand`, default is `asc`.
-    - `keywords` Keywords for vague searching.
+    - `keywords` Keywords for vague searching, could be a string or an Array.
 
 **return:**
 
-Returns a promise, and the only argument passes to the callback carries some 
-information of these:
+Returns a promise, and the only argument passes to the callback of `then()` is
+an Object that carries some information of these:
 
 - `page` The current page.
 - `limit` The top limit of per page.
 - `orderBy` Ordered by a particular field.
 - `sequence` The sequence of how the data are ordered.
 - `keywords` Keywords for vague searching.
-- `total` A number of all counts that suits the given conditions.
-- `pages` A number of all pages that suits the given conditions.
-- `data` An array that carries all models that suits the given conditions.
+- `pages` A number of all model pages.
+- `total` A number of all model counts.
+- `data` An Array that carries all fetched models.
 
 ```javascript
 const User = require("modelar/User");

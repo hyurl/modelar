@@ -386,6 +386,37 @@ class Query extends DB{
     }
 
     /**
+     * Sets a where...is null clause for the SQL statement.
+     * 
+     * @param  {String} field  A field name in the table that currently 
+     *                         binds to.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
+     */
+    whereNull(field){
+        return this.__handleWhereNull(field);
+    }
+
+    /**
+     * Sets a where...is not null clause for the SQL statement.
+     * 
+     * @param  {String} field  A field name in the table that currently 
+     *                         binds to.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
+     */
+    whereNotNull(field){
+        return this.__handleWhereNull(field, false);
+    }
+
+    /** Handle where...is (not) null clauses. */
+    __handleWhereNull(field, isNull = true){
+        if(this.__where) this.__where += ' and ';
+        this.__where += this.__backquote(field)+' is '+(isNull ? '' : 'not ')+'null';
+        return this;
+    }
+
+    /**
      * Sets a where...exists clause for the SQL statement.
      * 
      * @param  {Function} callback Pass a callback function to handle nested 
@@ -418,41 +449,10 @@ class Query extends DB{
     /** Handle where...(not) exists clauses. */
     __handleExists(callback, exists = true){
         if(this.__where) this.__where += ' and ';
-        var query = new Query(); //子句实例
+        var query = new Query(); //Create a new instance for nested scope.
         callback.call(query, query);
         this.__where += (exists ? '' : 'not ')+'exists ('+query.sql+')';
         this.__bindings = this.__bindings.concat(query.__bindings);
-        return this;
-    }
-
-    /**
-     * Sets a where...is null clause for the SQL statement.
-     * 
-     * @param  {String} field  A field name in the table that currently 
-     *                         binds to.
-     * 
-     * @return {Query} Returns the current instance for function chaining.
-     */
-    whereNull(field){
-        return this.__handleWhereNull(field);
-    }
-
-    /**
-     * Sets a where...is not null clause for the SQL statement.
-     * 
-     * @param  {String} field  A field name in the table that currently 
-     *                         binds to.
-     * 
-     * @return {Query} Returns the current instance for function chaining.
-     */
-    whereNotNull(field){
-        return this.__handleWhereNull(field, false);
-    }
-
-    /** Handle where...is (not) null clauses. */
-    __handleWhereNull(field, isNull = true){
-        if(this.__where) this.__where += ' and ';
-        this.__where += this.__backquote(field)+' is '+(isNull ? '' : 'not ')+'null';
         return this;
     }
 
@@ -479,7 +479,7 @@ class Query extends DB{
      * @return {Query} Returns the current instance for function chaining.
      */
     random(){
-        switch(this.config.type){
+        switch(this.__config.type){
             case 'sqlite':
                 var rand = 'random()';
             break;
@@ -522,12 +522,15 @@ class Query extends DB{
     }
 
     /**
-     * 设置 limit 子句
+     * Sets a limit clause for the SQL statement.
      * 
-     * @param  {Number} offset 起始点位置，从 0 开始计算；如果未设置 length 参数，
-     *                         则 offset 将会被当作 length，而 offset 则为 0；
-     * @param  {Number} length [可选] 获取数据的最大个数
-     * @return {Query}   this  当前实例
+     * @param  {Number} offset The start point, count from `0`. If `length` is
+     *                         not passed, then this argument will replace it,
+     *                         and the offset will become 0.
+     * @param  {Number} length [optional] The top limit of how many counts 
+     *                         that this query will fetch.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
      */
     limit(offset, length = 0){
         this.__limit = length ? offset+', '+length : offset;
@@ -535,9 +538,9 @@ class Query extends DB{
     }
 
     /**
-     * 设置 distinct 查询唯一值
+     * Sets a distinct condition to get unique results in a select statement.
      * 
-     * @return {Query} this 当前实例
+     * @return {Query} Returns the current instance for function chaining.
      */
     distinct(){
         this.__selects = 'distinct '+this.__selects;
@@ -545,12 +548,13 @@ class Query extends DB{
     }
 
     /**
-     * 合并两个 SQL 语句
+     * Unites two SQL statements into one.
      * 
-     * @param  {Any}     query 可以是一个 SQL 查询语句，也可以是一个 Query 对象;
-     * @param  {Boolean} all   [可选] 是否使用 union all 来进行全合并从而允许重复
-     *                         值，默认 false;
-     * @return {Query}   this  当前实例
+     * @param  {Any}     query Could be a SQL statement, or a Query instance.
+     * @param  {Boolean} all   [optional] Use `union all` to concatenate 
+     *                         results, default is `false`.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
      */
     union(query, all = false){
         if(query instanceof Query){
@@ -563,12 +567,14 @@ class Query extends DB{
     }
 
     /**
-     * 插入新的数据库记录
+     * Inserts a new record in to the database.
      * 
-     * @param  {Object}  data 用 Object 对象表示字段和值的对应关系，也可以设置为一
-     *                        个索引数组而不使用键值对，但要求数组的长度与数据表字
-     *                        段个数相等。
-     * @return {Promise}      返回 Promise，回调函数的参数是当前 Query 实例。
+     * @param  {Any} data An Object that carries fields and their values, or 
+     *                    pass all values in an Array that fulfil all the 
+     *                    fields.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
      */
     insert(data){
         var bindings = [];
@@ -584,21 +590,25 @@ class Query extends DB{
         values = values.join(', ');
         this.__inserts = (isObj ? '('+fields+') ' : '')+'values ('+values+')';
         this.sql = 'insert into '+this.__table+' '+this.__inserts;
-        this.trigger('insert', this); //触发事件回调函数
+        //Fire event and trigger event handlers.
+        this.trigger('insert', this);
         return this.query(this.sql, bindings).then(db=>{
             this.bindings = Object.assign([], bindings);
             this.insertId = db.insertId;
             this.affectedRows = db.affectedRows;
+            //Fire event and trigger event handlers.
             this.trigger('inserted', this);
             return this;
         });
     }
 
     /**
-     * 更新已有的数据库记录
+     * Updates an existing record.
      * 
-     * @param  {Object}  data 用 Object 对象表示字段和值的对应关系
-     * @return {Promise}      返回 Promise，回调函数的参数是当前 Query 实例。
+     * @param  {Object}  data An Object that carries fields and their values.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
      */
     update(data){
         var bindings = [];
@@ -611,68 +621,144 @@ class Query extends DB{
         this.__updates = fields.join(', ');
         this.sql = 'update '+this.__table+' set '+this.__updates
                 + (this.__where ? " where "+this.__where : "");
-        this.trigger('update', this); //触发事件回调函数
+        //Fire event and trigger event handlers.
+        this.trigger('update', this);
         return this.query(this.sql, bindings).then(db=>{
             this.bindings = Object.assign([], bindings);
             this.affectedRows = db.affectedRows;
+            //Fire event and trigger event handlers.
             this.trigger('updated', this);
             return this;
         });
     }
 
     /**
-     * 删除数据库记录
+     * Deletes an existing record.
      * 
-     * @return {Promise} 返回 Promise，回调函数的参数是当前 Query 实例。
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
      */
     delete(){
         this.sql = 'delete from '+this.__table
                 + (this.__where ? " where "+this.__where : "");
-        this.trigger('delete', this); //触发事件回调函数
+        //Fire event and trigger event handlers.
+        this.trigger('delete', this);
         return this.query(this.sql, this.__bindings).then(db=>{
             this.bindings = Object.assign([], this.__bindings);
             this.affectedRows = db.affectedRows;
+            //Fire event and trigger event handlers.
             this.trigger('deleted', this);
             return this;
         });
     }
 
     /**
-     * 获取一条符合条件的数据库记录
+     * Gets a record from the database.
      * 
-     * @return {Promise} 返回 Promise，回调函数的参数是获取的数据库记录。
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the fetched data.
      */
     get(){
         var promise = this.limit(1).__handleSelect().then(data=>data[0]);
+        //Fire event and trigger event handlers only if the current instance 
+        //is an Query instance, not its subclasses' instances.
         if(this.constructor.name == 'Query')
-            this.trigger('get', this); //触发事件回调函数;
+            this.trigger('get', this);
         return promise;
     }
 
     /**
-     * 获取所有符合条件的数据库记录
+     * Gets all records from the database.
      * 
-     * @return {Promise} 返回 Promise，回调函数的参数是获取的数据库记录。
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is all the fetched data 
+     *                   carried in an Array.
      */
     all(){
         var promise = this.__handleSelect();
+        //Fire event and trigger event handlers only if the current instance 
+        //is an Query instance, not its subclasses' instances.
         if(this.constructor.name == 'Query')
-            this.trigger('get', this); //触发事件回调函数;
+            this.trigger('get', this);
         return promise;
     }
     
     /**
-     * 获取所有符合条件的数据库记录数量
+     * Gets all counts of records.
      * 
-     * @return {Promise} 返回 Promise，回调函数的参数是获取的记录数量。
+     * @param {String} field [optional] Count a specified field.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is a Number that counts
+     *                   records.
      */
-    count(){
-        this.__selects = 'count(*) as count';
-        this.__limit = ""; //count 语句不能使用 limit
+    count(field = "*"){
+        this.__selects = 'count('+field+') as count';
+        this.__limit = "";
         return this.__handleSelect().then(data=>data[0].count);
     }
 
-    /** 获取记录。 */
+    /**
+     * Gets the maximum value of a specified field in the table.
+     * 
+     * @param {String} field The specified field.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the maximum value 
+     *                   fetched.
+     */
+    max(field){
+        this.__selects = 'max('+field+') as max';
+        this.__limit = "";
+        return this.__handleSelect().then(data=>data[0].max);
+    }
+
+    /**
+     * Gets the minimum value of a specified field in the table.
+     * 
+     * @param {String} field The specified field.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the minimum value 
+     *                   fetched.
+     */
+    min(field){
+        this.__selects = 'min('+field+') as min';
+        this.__limit = "";
+        return this.__handleSelect().then(data=>data[0].min);
+    }
+
+    /**
+     * Gets the average value of a specified field in the table.
+     * 
+     * @param {String} field The specified field.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the average value 
+     *                   fetched.
+     */
+    avg(field){
+        this.__selects = 'avg('+field+') as avg';
+        this.__limit = "";
+        return this.__handleSelect().then(data=>data[0].avg);
+    }
+
+    /**
+     * Gets the summarized value of a specified field in the table.
+     * 
+     * @param {String} field The specified field.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the summarized value 
+     *                   fetched.
+     */
+    sum(field){
+        this.__selects = 'sum('+field+') as sum';
+        this.__limit = "";
+        return this.__handleSelect().then(data=>data[0].sum);
+    }
+
+    /** Handling select statements. */
     __handleSelect(){
         this.__generateSelectSQl();
         return this.query(this.sql, this.__bindings).then(db=>{
@@ -681,7 +767,7 @@ class Query extends DB{
         });
     }
 
-    /** 生成 select 查询语句。 */
+    /** Generating a select statement. */
     __generateSelectSQl(){
         this.sql = "select "+this.__selects+" from "
                 + (!this.__join ? this.__table : '')
@@ -696,22 +782,59 @@ class Query extends DB{
     }
 
     /**
-     * 获取所有符合条件的数据库记录的分页信息
+     * Processes chunked data with a specified length.
      * 
-     * @param  {Number}  page  [可选] 当前页码
-     * @param  {Number}  limit [可选] 每一页的数据上限
-     * @return {Promise}       返回 Promise，回调函数的参数是包含模型和相关信息的
-     *                         Object 对象，其中包含传入的参数和下面这些属性：
-     *                         - pages: 当前查询条件可以获取到的所有数据页码数
-     *                         - total: 当前查询条件能够获取到的所有数组总数
-     *                         - data:  保存着所有获取到的模型的属性，为一个数组
+     * @param {Number}   length   The top limit of how many records that each 
+     *                            chunk will carry.
+     * @param {Function} callback A function for processing every chunked 
+     *                            data, the only argument passed to it is the 
+     *                            data that current chunk carries.
+     * 
+     * @return {Promise} Returns a Promise, and the only argument passed to
+     *                   the callback of then() is the last chunk of data. If
+     *                   the callback returns `false`, then stop chunking.
+     */
+    chunk(length, callback){
+        var offset = 0,
+            loop = ()=>{
+                return this.limit(offset, length).all().then(data=>{
+                    var ok = callback.call(this, data);
+                    if(data.length === length && ok !== false){
+                        offset += length;
+                        //Running the function recursively.
+                        return loop();
+                    }else{
+                        return data;
+                    }
+                })
+                return this;
+            };
+        return loop();
+    }
+
+    /**
+     * Gets paginated information of all records that suit the given 
+     * conditions.
+     * 
+     * @param  {Number}  page  [optional] The current page, default is `1`.
+     * @param  {Number}  limit [optional] The top limit of per page, default 
+     *                         is `10`.
+     * 
+     * @return {Promise} Returns a Promise, the only argument passes to the 
+     *                   callback of `then()` is an Object that carries the 
+     *                   information, it includes:
+     *                   * `page` The current page.
+     *                   * `limit` The top limit of per page.
+     *                   * `pages` A number of all record pages.
+     *                   * `total` A number of all record counts.
+     *                   * `data` An Array that carries all fetched data.
      */
     paginate(page = 1, limit = 10){
         var offset = (page - 1) * limit;
         var selects = this.__selects;
-        //先获取记录总数
+        //Get all counts of records.
         return this.count().then(total=>{
-            if(!total){ //如果没有记录，则直接返回结果
+            if(!total){ //If there is no record, return immediately.
                 return {
                     page,
                     pages: 0,
@@ -719,7 +842,7 @@ class Query extends DB{
                     total,
                     data: [],
                 }
-            }else{ //有记录则继续获取记录
+            }else{ //If the are records, continue fetching data.
                 this.__selects = selects;
                 return this.limit(offset, limit).all().then(data=>{
                     return {

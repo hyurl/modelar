@@ -179,7 +179,8 @@ class Table extends DB{
      * Saves the table, this method actually creates a new table in the 
      * database.
      * 
-     * @return {Promise} Returns the current instance for function chaining.
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
      */
     save(){
         return this.__generateDDL().query(this.sql).then(db=>{
