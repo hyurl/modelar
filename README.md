@@ -1,3 +1,4 @@
+
 # Modelar
 
 An expressive Model with promise functionality and SQL constructor.
@@ -132,7 +133,7 @@ functionality that this Model has, now we can go into the real depth of it.
 ### Promised Model
 
 ```sh
-$ npm install modelar
+$ npm install modelar --save
 ```
 
 ### Dependencies

@@ -1,12 +1,13 @@
+"use strict";
+
 /**
- * Database Connection Manager.
+ * *Database Connection Manager.*
  * 
- * This class holds connections by their specifications, when initiate a new 
- * instance, it will check if there is already an existing one, if there is, 
- * it will be used instead of creating a new one, this feature guarantees 
- * there will be only one connection to the same database.
+ * This class provides an internal pool for connections, when a connection has
+ * done its job, it could be recycled and retrieved, there for saving the 
+ * resources and speeding up the program.
  */
-class DB{
+class DB {
     /**
      * Creates a new instance with specified configurations.
      * 
@@ -14,22 +15,12 @@ class DB{
      *                         current instance, or a string that sets only 
      *                         the database name.
      */
-    constructor(config = {}){
-        if(typeof config == 'string')
-            config = {database: config};
-        
+    constructor(config = {}) {
+        if (typeof config == 'string')
+            config = { database: config };
+
         this.sql = ''; //The SQL statement the last time execute.
         this.bindings = []; //The binding data the last time execute.
-
-        //Connection state:
-        //0: not connected;
-        //1: connecting;
-        //2: connected;
-        //3: closed.
-        this.status = 0;
-
-        //A count that represents how many queries has been executed.
-        this.queries = 0;
 
         //The ID returned by executing the last insert statement.
         this.insertId = 0;
@@ -41,103 +32,100 @@ class DB{
         //The data fetched by executing a select statement.
         this.__data = [];
 
-        //This Object stores database configurations of the current instance.
+        //This object stores database configurations of the current instance.
         this.__config = Object.assign({}, this.constructor.__config, config);
-        
+
         //The connection specification of the current instance.
-        this.__spec = this.constructor.__getSpec(this.__config);
-        
+        this.__spec = this.__getSpec();
+
         //The database connection of the current instance.
         this.__connection = null;
 
         //Event handlers.
         this.__events = Object.assign({
-            query: [], //This event will be fired when a SQL statement has 
-                       //been successfully executed.
+            //This event will be fired when a SQL statement has been 
+            //successfully executed.
+            query: [],
         }, this.constructor.__events);
+    }
 
-        if(this.__config.autoConnect)
-            this.connect(); //Establish the connection.
+    /** Gets the connect specification by the given configuration. */
+    __getSpec() {
+        var config = this.__config;
+        if (config.type == 'sqlite') { //SQLite
+            return config.type + ':' + config.database;
+        } else if (config.type == 'mysql') { //MySQL
+            return config.type + ':' + config.user + ':' + config.password +
+                '@' + config.host + ':' + config.port +
+                (config.database ? '/' + config.database : '');
+        }
+    }
+
+    /** Adds quote to a specified value. */
+    __quote(value) {
+        return "'" + value.replace(/'/g, "\\'") + "'";
+    }
+
+    /** Adds back-quote to a specified field. */
+    __backquote(field) {
+        var parts = field.split(".");
+        if (field.indexOf(" ") < 0 && field.indexOf("(") < 0 &&
+            field.indexOf("`") < 0 && field != "*" && parts.length === 1) {
+            field = "`" + field + "`";
+        } else if (parts.length === 2) {
+            field = "`" + parts[0] + "`.`" + parts[1] + "`";
+        }
+        return field;
     }
 
     /**
-     * Sets global DB configurations for every DB instance.
+     * Initiate the DB class for every instances.
      * 
-     * @param  {Object} config An Object that carries configurations.
+     * @param  {Object} config An object that carries configurations.
      * 
-     * @return {DB} Returns DB class itself for function chaining.
+     * @return {DB} Returns the class itself for function chaining.
      */
-    static config(config){
-        //This Object stores basic database configurations for every instance.
+    static init(config = {}) {
+        //This object stores basic database configurations for every instance.
         this.__config = Object.assign({
-            type: 'mysql', //Database type.
-            autoConnect: false, //Automatically establish connection after 
-                                //creating an instance.
+            type: 'mysql', //Database type, accept 'mysql' and 'sqlite'.
+            database: '',
             //These properties are only for MySQL:
             host: 'localhost',
             port: 3306,
             user: 'root',
             password: '',
-            database: '',
             charset: 'utf8',
             timeout: 5000, //This property sets both connecting timeout and 
-                           //query timeout.
+            //query timeout.
         }, this.__config || {}, config);
-        
-        //These properties represents the connection state.
-        this.UNOPEN = 0;
-        this.OPENING = 1;
-        this.OPEN = 2;
-        this.CLOSED = 3;
-
-        //The property records how many queries has been executed by all DB
-        //instances.
-        this.queries = 0;
-
-        //This property carries all connections created by every DB instance.
-        this.__connections = {};
 
         //This property carries all event handlers bound by DB.on().
-        this.__events = Object.assign({}, this.constructor.__events);
-        
-        return this;
-    }
+        this.__events = Object.assign({}, this.__events || {});
 
-    /**
-     * Uses an existing connection that is already established.
-     * 
-     * @param  {Object} connection An established connection.
-     * 
-     * @return {DB} Returns DB class itself for function chaining.
-     */
-    static use(connection){
-        var spec = this.__getSpec(this.__config);
-        this.__connections[spec] = connection;
-        return this;
-    }
+        //This property stores those connections that are recycled by calling
+        //db.recycle(), which means they're released and can be reused again. 
+        //When the next time trying to connect a database, the program will 
+        //firstly trying to retrieve a connection from this property, if no 
+        //connections are available, a new one will be created.
+        this.__pool = {};
 
-    /** Gets the connect specification by the given configuration. */
-    static __getSpec(config){
-        if(config.type == 'sqlite'){ //SQLite
-            return config.type+':'+config.database;
-        }else if(config.type == 'mysql'){ //MySQL
-            return config.type+':'+config.user+':'+config.password+'@'
-                              +config.host+':'+config.port
-                              +(config.database ? '/'+config.database : '');
-        }
+        return this;
     }
 
     /**
      * Binds an event handler to all DB instances.
      * 
      * @param  {String}   event    The event name.
-     * @param  {Function} callback A function called when the event fires.
+     * @param  {Function} callback A function called when the event fires, 
+     *                             it accepts one argument, which is a new DB 
+     *                             instance.
      * 
-     * @return {DB} Returns DB class itself for function chaining.
+     * @return {DB} Returns the class itself for function chaining.
      */
-    static on(event, callback){
+    static on(event, callback) {
         // this.__events = this.__events || {};
-        if(this.__events[event] === undefined)
+        if (this.__events[event] === undefined)
             this.__events[event] = [];
         this.__events[event].push(callback);
         return this;
@@ -147,12 +135,14 @@ class DB{
      * Binds an event handler to a particular instance.
      * 
      * @param  {String}   event    The event name.
-     * @param  {Function} callback A function called when the event fires.
+     * @param  {Function} callback A function called when the event fires,
+     *                             it accepts one argument, which is the 
+     *                             current instance.
      * 
-     * @return {DB}  Returns the current instance for function chaining.
+     * @return {DB} Returns the current instance for function chaining.
      */
-    on(event, callback){
-        if(this.__events[event] === undefined)
+    on(event, callback) {
+        if (this.__events[event] === undefined)
             this.__events[event] = [];
         this.__events[event].push(callback);
         return this;
@@ -166,42 +156,36 @@ class DB{
      * 
      * @return {DB} Returns the current instance for function chaining.
      */
-    trigger(event, ...args){
-        if(this.__events[event] instanceof Array){
-            for(var callback of this.__events[event]){
+    trigger(event, ...args) {
+        if (this.__events[event] instanceof Array) {
+            for (let callback of this.__events[event]) {
                 callback.apply(this, args);
             }
-        }else if(this.__events[event] instanceof Function){
+        } else if (this.__events[event] instanceof Function) {
             this.__events[event].apply(this, args);
         }
         return this;
     }
 
     /**
-     * Establish connection to the database.
+     * Make a connection to the database. This method will automatically check 
+     * the connection pool, if there are connections available in the pool, 
+     * the first one will be retrieved; if no connections are available, a new
+     * one will be established.
      * 
      * @return {DB} Returns the current instance for function chaining.
      */
-    connect(){
+    connect() {
         var config = this.__config;
-        var connections = this.constructor.__connections;
-        if(connections[this.__spec]){
-            //If the connection is already established, use it.
-            this.__connection = connections[this.__spec];
-        }else{
-            this.status = 1;
-            var callback = (err)=>{
-                this.status = err ? 0 : 2;
-                if(!err) //Store the connection in global.
-                    connections[this.__spec] = this.__connection;
-            };
-            if(config.type == 'sqlite'){ //SQLite
+        var connections = DB.__pool;
+        if (connections[this.__spec] && connections[this.__spec].length > 0) {
+            //If has available connections, retrieve the first one.
+            this.__connection = connections.shift();
+        } else {
+            if (config.type == 'sqlite') { //SQLite
                 var driver = require('sqlite3'); //Import SQLite.
-                this.__connection = new driver.Database(
-                    config.database, 
-                    callback
-                );
-            }else if(config.type == 'mysql'){ //MySQL
+                this.__connection = new driver.Database(config.database);
+            } else if (config.type == 'mysql') { //MySQL
                 var driver = require('mysql'); //Import MySQL.
                 this.__connection = driver.createConnection({
                     host: config.host,
@@ -212,58 +196,67 @@ class DB{
                     charset: config.charset,
                     connectTimeout: config.timeout,
                 });
-                this.__connection.connect(callback);
+                this.__connection.connect();
             }
         }
         return this;
     }
 
     /**
-     * Executing a SQL statement.
+     * Uses a connection that is already established.
+     * 
+     * @param {Object} db An DB instance with a established connection.
+     * 
+     * @return {DB} Returns the current instance for function chaining.
+     */
+    use(db) {
+        this.__config = db.__config;
+        this.__spec = db.__spec;
+        this.__connection = db.__connection;
+        return this;
+    }
+
+    /**
+     * Executes a SQL statement.
      * 
      * @param  {String}  sql      The SQL statement.
-     * @param  {Array}   bindings The data bound to the SQL statement.
+     * @param  {Array}   bindings [optional] The data bound to the SQL 
+     *                            statement.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the current instance.
      */
-    query(sql, bindings = []){
+    query(sql, bindings = []) {
         this.sql = sql.toLowerCase().trim();
         this.bindings = Object.assign([], bindings);
-        
-        //Record query counts.
-        this.queries += 1;
-        this.constructor.queries += 1;
-        DB.queries += 1;
-
-        return new Promise((resolve, reject)=>{
-            if(this.__connection === null){
+        return new Promise((resolve, reject) => {
+            if (this.__connection === null) {
                 //If connection isn't established, connect automatically.
                 this.connect();
             }
 
-            if(this.__config.type == 'sqlite'){ //SQLite
+            if (this.__config.type == 'sqlite') { //SQLite
                 var _this = this,
                     begin = this.sql.substring(0, this.sql.indexOf(" ")),
                     gets = ['select', 'pragma'];
-                if(gets.includes(begin)){
+                if (gets.includes(begin)) {
                     //Deal with select or pragma statements.
-                    this.__connection.all(sql, bindings, function(err, rows){
-                        if(err){
+                    this.__connection.all(sql, bindings, function(err, rows) {
+                        if (err) {
                             reject(err);
-                        }else{
+                        } else {
                             _this.__data = rows;
                             //Fire event and trigger event handlers.
                             _this.trigger('query', _this);
                             resolve(_this);
                         }
                     });
-                }else{
+                } else {
                     //Deal with other statements like insert/update/delete.
-                    this.__connection.run(sql, bindings, function(err){
-                        if(err){
+                    this.__connection.run(sql, bindings, function(err) {
+                        if (err) {
                             reject(err);
-                        }else{
+                        } else {
                             _this.insertId = this.lastID;
                             _this.affectedRows = this.changes;
                             //Fire event and trigger event handlers.
@@ -272,20 +265,20 @@ class DB{
                         }
                     });
                 }
-            }else if(this.__config.type == 'mysql'){ //MySQL
+            } else if (this.__config.type == 'mysql') { //MySQL
                 this.__connection.query({
                     sql: sql,
                     timeout: this.__config.timeout,
                     values: bindings,
-                }, (err, res)=>{
-                    if(err){
+                }, (err, res) => {
+                    if (err) {
                         reject(err);
-                    }else{
-                        if(res instanceof Array){
+                    } else {
+                        if (res instanceof Array) {
                             //Deal with select or pragma statements, they 
-                            //returns an Array.
+                            //returns an array.
                             this.__data = res;
-                        }else{
+                        } else {
                             //Deal with other statements like insert/update/
                             //delete.
                             this.insertId = res.insertId;
@@ -301,12 +294,12 @@ class DB{
     }
 
     /** An alias of query(). */
-    run(sql, bindings){
+    run(sql, bindings) {
         return this.query(sql, bindings);
     }
 
     /**
-     * Starts a transaction and handle what's in it.
+     * Starts a transaction and handle codes in it.
      * 
      * @param {Function} callback If a function is passed, the codes in it 
      *                            will be automatically handled, that means 
@@ -320,67 +313,85 @@ class DB{
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the current instance.
      */
-    transaction(callback = null){
-        if(typeof callback == 'function'){
-            return this.query('begin').then(()=>{
-                callback.call(this, this);
-            }).then(()=>{
+    transaction(callback = null) {
+        if (typeof callback == 'function') {
+            return this.query('begin').then(() => {
+                return callback.call(this, this);
+            }).then(() => {
                 this.commit();
-            }).catch(err=>{
+                return this;
+            }).catch(err => {
                 this.rollback();
                 throw err;
             });
-        }else{
+        } else {
             return this.query('begin');
         }
     }
 
     /** Commits the transaction when things going well. */
-    commit(){
+    commit() {
         return this.query('commit');
     }
 
     /** Rolls the transaction back when things going not well. */
-    rollback(){
+    rollback() {
         return this.query('rollback');
     }
 
     /**
-     * Closes the connection the current instance holds.
+     * Closes the connection that current instance holds.
      * 
      * @return {DB} Returns the current instance for function chaining.
      */
-    close(){
-        this.status = 3;
-        if(this.__config.type == 'sqlite') //SQLite
+    close() {
+        if (this.__config.type == 'sqlite') //SQLite
             this.__connection.close();
-        else if(this.__config.type == 'mysql') //MySQL
+        else if (this.__config.type == 'mysql') //MySQL
             this.__connection.destroy();
-        
-        //Remove the connection quote.
+
+        //Remove the connection reference.
         this.__connection = null;
-        delete this.constructor.__connections[this.__spec];
         return this;
     }
 
     /**
-     * Closes all the connections that DB holds.
+     * Recycles the connection that current instance holds.
      * 
-     * @return {DB} Returns the DB class itself for function chaining.
+     * @return {DB} Returns the current instance for function chaining.
      */
-    static close(){
-        var connections = this.__connections;
-        for(var spec in connections){
-            if(typeof connections[spec].destroy == 'function') //MySQL
-                connections[spec].destroy();
-            else if(typeof connections[spec].close == 'function') //SQLite
-                connections[spec].close();
-            delete connections[spec]; //Remove the connection quote.
+    recycle() {
+        var connections = DB.__pool[this.__spec];
+        if (!connections)
+            connections = [];
+        connections.push(this.connection);
+        this.__connection = null;
+        return this;
+    }
+
+    /**
+     * Destroys all recycled connections that DB holds.
+     * 
+     * @return {DB} Returns the class itself for function chaining.
+     */
+    static destroy() {
+        for (let spec in this.__pool) {
+            if (this.__pool[spec] instanceof Array) {
+                for (let connection of this.__pool[spec]) {
+                    if (typeof connection.destroy == 'function') //MySQL
+                        connection.destroy();
+                    else if (typeof connection.close == 'function') //SQLite
+                        connection.close();
+                    else
+                        connection = null;
+                }
+            }
+            delete this.__pool[spec]; //Remove the connection reference.
         }
         return this;
     }
 }
 
-DB.config({}); //Initiate configuration.
+DB.init(); //Initiate configuration.
 
 module.exports = DB;

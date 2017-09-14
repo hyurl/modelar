@@ -1,129 +1,139 @@
+"use strict";
+
 const Model = require('./Model');
+const bcrypt = require('bcrypt-nodejs');
 
 /**
- * 用户管理模型，除了继承自 Model 类的方法，还包括 `login()` 和 `logout()` 方法。
+ * *User Model.*
+ * 
+ * This model is used to manage user data, it provides a login() method that 
+ * allows you sign in the website.
  */
-class User extends Model{
-    constructor(data = {}, config = {}){
+class User extends Model {
+    constructor(data = {}, config = {}) {
         super(data, Object.assign({
             table: 'users',
             primary: 'id',
-            fields: [ //允许批量赋值的字段
+            fields: [
                 'id',
                 'name',
                 'email',
                 'password',
             ],
-            searchable: [ //允许搜索的字段
+            searchable: [
                 'name',
                 'email',
             ]
         }, config));
 
-        this.__loginable = [ //允许用作登录的字段
+        //This property defines which fields can be used for logging-in.
+        this.__loginable = [
             'name',
             'email',
         ];
 
-        this.__events = Object.assign({ //事件处理器
-            query: [], //查询事件，SQL 语句运行时触发
-            save: [], //保存事件，模型保存时触发
-            saved: [], //保存后事件，模型保存后触发
-            insert: [],   //插入事件，新数据保存时触发
-            inserted: [], //插入后事件，新数据保存后触发
-            update: [],   //更新事件，数据被更新时触发
-            updated: [],  //更新后事件，数据被更新后触发
-            delete: [],   //删除事件，数据被删除时触发
-            deleted: [],  //删除后事件，数据被删除后触发
-            get: [],      //获取事件，获取到数据时触发
-            login: [],    //登录事件，用户登录后触发
-            logout: [],   //登出事件，用户登出后触发
+        this.__events = Object.assign({
+            query: [],
+            insert: [],
+            inserted: [],
+            update: [],
+            updated: [],
+            save: [],
+            saved: [],
+            delete: [],
+            deleted: [],
+            get: [],
+            //This event will be fired when the user successfully logged in.
+            login: [],
         }, this.constructor.__events);
+
+        //When creating a new user, if no password is provided, use an empty
+        //string as its password.
+        this.on('save', () => {
+            if (this.__data.password === undefined)
+                this.password = "";
+        });
     }
 
     //The setter of password, use BCrypt to encrypt data.
-    set passwrod(v){
-        var bcrypt = require('bcrypt-nodejs');
+    set password(v) {
         //Model's data are stored in the __data property.
         this.__data.password = bcrypt.hashSync(v);
     }
 
     //The getter of password, always return undefined.
     //When a getter returns undefined, that means when you call toString() or
-    //valueOf(), or in a for...of loop, this property will be absent.
-    get password(){
+    //valueOf(), or in a for...of... loop, this property will be absent.
+    get password() {
         return undefined;
     }
 
     /**
-     * 用户登录，如果登录成功，则将登录用户添加到全局的 Model.auth 静态属性中，如果
-     * 登录失败，则抛出错误信息。该方法不会将登录信息保存到 session 或者其他的存储环
-     * 境，这需要使用者自己去实现；在恢复登录信息时，只需要将获取到的用户模型保存到 
-     * Model.auth 属性中即可。
+     * Tries to sign in a user. If succeeded, an `login` event will be fired, 
+     * if failed, throws an error indicates the reason. This method won't 
+     * save user information in session or other storage materials, if you 
+     * want it to, you have to do it yourself.
      * 
-     * @param  {Object}  args 登录参数，包含任何可用于登录的字段，和一个 `password`
-     *                        字段，如果不提供任何登录字段，那么应该提供一个 `user`
-     *                        字段用于泛字段登录，它将尝试所有登录字段的可能性。
-     * @return (Promise}      返回 Promise，回调函数的参数是获取的用户模型实例。
+     * @param {Object} args This parameter can carry one or more `loginable` 
+     *                      fields and values, and a `password` field must be 
+     *                      passed at the same time. If no `loginable` fields 
+     *                      are passed, a `user` must be passed, which means 
+     *                      trying to match all possibilities automatically.
+     * 
+     * @return (Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the user instance 
+     *                   which is logged in.
      */
-    static login(args){
-        if(args.password === undefined){
-            return new Promise(()=>{
-                throw new Error('Login requires a `password`, but none given.');
+    login(args) {
+        if (args.password === undefined) {
+            return new Promise(() => {
+                throw new Error("Login requires a `password`, " +
+                    "but none given.");
             });
         }
         var _args = {};
-        var user = new this();
-        if(args.user === undefined){ //使用明确字段登录
-            for(var k in args){
-                if(user.__loginable.includes(k)){
+        if (args.user === undefined) { //Use a specified field for logging-in.
+            for (var k in args) {
+                if (this.__loginable.includes(k)) {
                     _args[k] = args[k];
                 }
             }
-            if(Object.keys(_args).length === 0){
-                return new Promise(()=>{
-                    throw new Error('Login requires at least one loginable key, but none given.');
+            if (Object.keys(_args).length === 0) {
+                return new Promise(() => {
+                    throw new Error("Login requires at least one loginable " +
+                        "field, but none given.");
                 });
             }
-            user.where(_args); //使用 where 查询
-        }else{ //使用泛字段登录
-            for(var field of user.__loginable){
-                user.orWhere(field, args.user); //使用 or where 查询
+            this.where(_args); //使用 where 查询
+        } else { //Try to match all loginable fields.
+            for (var field of this.__loginable) {
+                this.orWhere(field, args.user);
             }
         }
 
-        return user.all().then(users=>{ //获取所有匹配的用户
-            if(users.length === 0)
-                throw new Error(this.name+' was not found by searching the given data.');
-
-            var bcrypt = require('bcrypt-nodejs'); //载入 bcrypt
-            for(var _user of users){ //逐一校验每个用户的密码
-                if(bcrypt.compareSync(args.password, _user.__data.password)){
-                    user.__data = _user.__data
-                    Model.auth = user; //将登录用户的实例保存到 Model 全局中
-                    _user.trigger('login', user); //触发 login 事件
-                    return user; //返回密码匹配的用户
+        return this.all().then(users => { //Get all matched users.
+            if (users.length === 0) {
+                throw new Error(this.constructor.name +
+                    " was not found by searching " +
+                    "the given data.");
+            }
+            for (var _user of users) {
+                //Try to match password for every user, until the first one 
+                //matched.
+                var password = _user.__data.password;
+                if (bcrypt.compareSync(args.password, password)) {
+                    this.__data = _user.__data
+                    this.trigger('login', this); //Fire login event.
+                    return this;
                 }
             }
-            throw new Error("The password you provided didn't match any "+this.name+".");
+            throw new Error("The password you provided didn't match any " +
+                this.constructor.name + ".");
         });
     }
 
-    /**
-     * 登出用户，该方法将 Model.auth 设置为 null 来清空登录信息，如果需要清除 
-     * session 等，则需要使用者自己去实现。
-     * 
-     * @return {Promise} 返回 Promise，回调函数的参数是登录用户的模型实例。
-     */
-    static logout(){
-        return new Promise((resolve, reject)=>{
-            if(!Model.auth)
-                throw new Error('No '+this.name+' is logged in.');
-            this.trigger('logout', Model.auth);
-            resolve(Model.auth);
-            reject();
-            Model.auth = null;
-        });
+    static login(args) {
+        return (new this()).login(args);
     }
 }
 

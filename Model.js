@@ -1,13 +1,22 @@
+"use strict";
+
 const Query = require('./supports/Query');
 
 /**
- * Model Wrapper
+ * *Model Wrapper.*
  * 
- * This class extends from Query class, there for has all the features the 
+ * This class extends from Query class, there for has all the features that 
  * Query has, and features that Query doesn't have, which makes data operation
  * more easier and efficient.
+ * 
+ * Also, this class implements some useful API of ES2015, like `toString()`, 
+ * `valueOf()`, `toJSON()`, and `Symbol.iterator`. You can call 
+ * `model.toString()` or `JSON.stringify(model)` to generate a JSON string of 
+ * the model, and call `model.valueOf()` to get the data of the model. If you
+ * want to list out all properties of the model data, put the model in a 
+ * for...of... loop, like `for(let [field, value] of model)`.
  */
-class Model extends Query{
+class Model extends Query {
     /**
      *  Creates a new instance.
      * 
@@ -16,90 +25,107 @@ class Model extends Query{
      *                         they could be:
      *                         * `table` The table name that the instance 
      *                         	 binds to.
-     *                         * `fields` Fields of the table in an Array.
+     *                         * `fields` Fields of the table in an array.
      *                         * `primary` The primary key of the table.
-     *                         * `searchable` An Array that carries all 
+     *                         * `searchable` An array that carries all 
      *                            searchable fields, they could be used when 
-     *                            calling `Model.getMany()`.
+     *                            calling `model.getMany()`.
      * @return {Model}
      */
-    constructor(data = {}, config = {}){
+    constructor(data = {}, config = {}) {
         super(config.table); //Bind the table name.
         this.__fields = config.fields || []; //Fields of the table.
         this.__primary = config.primary || ''; //The primary key.
-        this.__searchable = config.searchable || [], //Searchable fields.
-
-        //Event handlers.
-        this.__events = Object.assign({
-            query: [],    //This event will be fired when a SQL statement has 
-                          //been successfully executed.
-            save: [],     //This event will be fired when a model is about to 
-                          //be saved.
-            saved: [],    //This event will be fired when a model is 
-                          //successfully saved.
-            insert: [],   //This event will be fired when a new record is 
-                          //about to be inserted into the database.
-            inserted: [], //This event will be fired when a new record is 
-                          //successfully inserted into the database.
-            update: [],   //This event will be fired when a record is about 
-                          //to be updated.
-            updated: [],  //This event will be fired when a record is 
-                          //successfully updated.
-            delete: [],   //This event will be fired when a record is about 
-                          //to be deleted.
-            deleted: [],  //This event will be fired when a record is 
-                          //successfully deleted.
-            get: [],      //This event will be fired when a record is 
-                          //successfully fetched from the database.
-        }, this.constructor.__events);
+        this.__searchable = config.searchable || []; //Searchable fields.
 
         //This property carries the data of the model.
         this.__data = {};
 
+        //Event handlers.
+        this.__events = Object.assign({
+            //This event will be fired when the SQL statement has been 
+            //successfully executed.
+            query: [],
+            //This event will be fired when a new model is about to be 
+            //inserted into the database.
+            insert: [],
+            //This event will be fired when a new model is successfully 
+            //inserted into the database.
+            inserted: [],
+            //This event will be fired when a model is about to be updated.
+            update: [],
+            //This event will be fired when a model is successfully updated.
+            updated: [],
+            //This event will be fired when a model is about to be saved.
+            save: [],
+            //This event will be fired when a model is successfully saved.
+            saved: [],
+            //This event will be fired when a model is about to be deleted.
+            delete: [],
+            //This event will be fired when a model is successfully deleted.
+            deleted: [],
+            //This event will be fired when a model is successfully fetched 
+            //from the database.
+            get: [],
+        }, this.constructor.__events);
+
+        //This property stores pivot-tables' relationships.
+        //Format:
+        // {
+        //     pivot_table: ["foreignKey1", "foreignKey2"]
+        // }
+        //`pivot_table` is the name of the pivot table.
+        //`foreignKey1` is a foreign key that points to the current model's 
+        //primary key.
+        //`foreignKey2` is a foreign key points to the associated model's 
+        //primary key.
+        this.__pivots = {};
+
         //Define setters and getters of pseudo-properties for the model, only 
         //if they are not defined.
-        for(var field of this.__fields){
-            var hasGetter = this.__lookupGetter__(field) instanceof Function,
+        for (let field of this.__fields) {
+            let hasGetter = this.__lookupGetter__(field) instanceof Function,
                 hasSetter = this.__lookupSetter__(field) instanceof Function,
                 isProp = this.hasOwnProperty(field);
-            if(!hasGetter && !hasSetter && !isProp){
-                eval(`Object.defineProperty(this, '${field}', {
-                    get: ()=>{ //getter
-                        return this.__data['${field}'] || null
+            if (!hasGetter && !hasSetter && !isProp) {
+                Object.defineProperty(this, field, {
+                    //Getter
+                    get: () => this.__data[field] || null,
+                    //Setter
+                    set: (v) => {
+                        //Primary key cannot be set through pseudo-property.
+                        if (field != this.__primary)
+                            this.__data[field] = v;
                     },
-                    set: (v)=>{ //setter
-                        if('${field}' != this.__primary)
-                            this.__data['${field}'] = v
-                    },
-                })`);
+                });
             }
         }
 
-        //Assign data to the the instance.
+        //Assign data to the instance.
+        delete data[this.__primary]; //Filter primary key.
         this.assign(data, true);
-        delete this.__data[this.__primary]; //Filter primary key.
     }
 
     /**
      * Assigns data to the model instance.
      * 
-     * @param  {Object}  data      The data in a Object needs to be assigned.
-     * @param  {Boolean} useSetter [optional] Use setter to process the data, 
-     *                             default is `false`.
+     * @param  {Object}  data      The data in a object needs to be assigned.
+     * @param  {Boolean} useSetter [optional] Use setters (if any) to process 
+     *                             the data, default is `false`.
      * 
      * @return {Model} Returns the current instance for function chaining.
      */
-    assign(data, useSetter = false){
-        if(this.__data instanceof Array){
-            //__data extends from DB class, so it could be an Array.
+    assign(data, useSetter = false) {
+        if (this.__data instanceof Array) {
+            //__data extends from DB class, so it could be an array.
             this.__data = {};
         }
-        for(var key in data){
-            if(this.__fields.includes(key)){
+        for (let key in data) {
+            if (this.__fields.includes(key)) {
                 //Only accept those fields that `__fields` sets.
-                if(useSetter){
-                    var set = this.__lookupSetter__(key);
-                    if(set instanceof Function && set.name.includes(' ')){
+                if (useSetter) {
+                    let set = this.__lookupSetter__(key);
+                    if (set instanceof Function && set.name.includes(' ')) {
                         set.call(this, data[key]); //Calling setter
                         continue;
                     }
@@ -109,18 +135,19 @@ class Model extends Query{
         }
         return this;
     }
-    
+
     /**
-     * Saves the current model, if there is not record in the database, then 
-     * it will be automatically inserted.
+     * Saves the current model, if there is not record in the database, it 
+     * will be automatically inserted.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the current instance.
      */
-    save(){
-        this.trigger('save', this); //触发保存事件
-        var promise = this.__data[this.__primary] ? this.update() : this.insert();
-        return promise.then(model=>{
+    save() {
+        this.trigger('save', this); //Trigger the save event.
+        var exists = this.__data[this.__primary],
+            promise = exists ? this.update() : this.insert();
+        return promise.then(model => {
             return this.trigger('saved', model);
         });
     }
@@ -130,16 +157,14 @@ class Model extends Query{
     /**
      * Inserts the current model as a new record into the database.
      * 
-     * @param  {Any} data An Object that carries fields and their values, or 
-     *                    pass all values in an Array the fulfil all the 
-     *                    fields.
+     * @param  {Any} data An object that carries fields and their values.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the current instance.
      */
-    insert(data = {}){
+    insert(data = {}) {
         this.assign(data, true);
-        return super.insert(this.__data).then(model=>{
+        return super.insert(this.__data).then(model => {
             model.where(model.__primary, model.insertId);
             return model.get(); //Get real data from database.
         });
@@ -148,19 +173,19 @@ class Model extends Query{
     /**
      * Updates the current model.
      * 
-     * @param  {Object}  data An Object that carries fields and their values.
+     * @param  {Object}  data An object that carries fields and their values.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the current instance.
      */
-    update(data = {}){
+    update(data = {}) {
         this.__where = "";
         this.__limit = "";
         this.__bindings = [];
         this.bindings = [];
         this.where(this.__primary, this.__data[this.__primary]);
         this.assign(data, true);
-        return super.update(this.__data).then(model=>{
+        return super.update(this.__data).then(model => {
             return model.get(); //Get real data from database.
         });
     }
@@ -168,55 +193,82 @@ class Model extends Query{
     /**
      * Deletes the current model.
      * 
+     * @param {Number} id [optional] The value of the model's primary key.
+     * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the current instance.
      */
-    delete(){
-        this.__where = "";
-        this.__bindings = [];
-        this.bindings = [];
-        this.where(this.__primary, this.__data[this.__primary]);
-        return super.delete();
+    delete(id = 0) {
+        if (id == 0) {
+            this.__where = "";
+            this.__bindings = [];
+            this.bindings = [];
+            this.where(this.__primary, this.__data[this.__primary]);
+            return super.delete();
+        } else {
+            return this.get(id).then(model => {
+                return model.delete();
+            });
+        }
     }
 
     /**
      * Gets a model from the database.
      * 
+     *  @param {Number} id [optional] The value of the model's primary key.
+     * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the fetched data.
+     *                   to the callback of `then()` is the fetched model.
      */
-    get(){
-        return super.get().then(data=>this.assign(data).trigger('get', this));
+    get(id = 0) {
+        if (id == 0) {
+            return super.get().then(data => {
+                if (!data || Object.keys(data).length === 0) {
+                    //If no model is retrieved, throw an error.
+                    throw new Error("No " + this.constructor.name +
+                        " was found by searching the given data.");
+                } else {
+                    return this.assign(data).trigger('get', this);
+                }
+            });
+        } else {
+            return this.where(this.__primary, id).get();
+        }
     }
 
     /**
      * Gets all models from the database.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is all the fetched data 
-     *                   carried in an Array.
+     *                   to the callback of `then()` is all fetched models 
+     *                   carried in an array.
      */
-    all(){
-        return super.all().then(data=>{
-            var models = [];
-            for(var i in data){
-                var model = new this.constructor();
-                model.__connection = this.__connection; //quote the connection
-                //Assign data and trigger event handlers for every model.
-                model.assign(data[i]).trigger('get', model);
-                models.push(model);
+    all() {
+        return super.all().then(data => {
+            if (data.length === 0) {
+                //If no models are retrieved, throw an error.
+                throw new Error("No " + this.constructor.name +
+                    " was found by searching the given data.");
+            } else {
+                var models = [];
+                for (let i in data) {
+                    let model = new this.constructor();
+                    //Assign data and trigger event handlers for every model.
+                    model.use(this).assign(data[i]).trigger('get', model);
+                    models.push(model);
+                }
+                return models;
             }
-            return models;
         });
     }
 
     /**
-     * Gets multiple models that suit the given condition, unlike 
-     * `Model.all()`, this method accepts other arguments in a simpler way to 
-     * generate sophisticated SQL statement and fetch data with paginated 
+     * Gets multiple models that suit the given condition. Unlike 
+     * `model.all()`, this method accepts other arguments in a simpler way to 
+     * generate sophisticated SQL statement and fetch models with paginated 
      * information.
      * 
-     * @param  {Object}  args [optional] An Object carries key-value pairs 
+     * @param  {Object}  args [optional] An object carries key-value pairs 
      *                        information for fields, and it also accepts 
      *                        these properties:
      *                        * `page` The current page, default is `1`.
@@ -228,10 +280,10 @@ class Model extends Query{
      *                          ordered, it could be `asc`, `desc` or `rand`, 
      *                          default is `asc`.
      *                        * `keywords` Keywords for vague searching, it 
-     *                          could be a string or an Array.
+     *                          could be a string or an array.
      * 
-     * @return {Promise} Returns a promise, and the only argument passes to 
-     *                   the callback of `then()` is an Object that carries 
+     * @return {Promise} Returns a Promise, and the only argument passes to 
+     *                   the callback of `then()` is an object that carries 
      *                   some information of these:
      *                   * `page` The current page.
      *                   * `limit` The top limit of per page.
@@ -240,33 +292,33 @@ class Model extends Query{
      *                   * `keywords` Keywords for vague searching.
      *                   * `pages` A number of all model pages.
      *                   * `total` A number of all model counts.
-     *                   * `data` An Array that carries all fetched models.
+     *                   * `data` An array that carries all fetched models.
      */
-    getMany(args = {}){
+    getMany(args = {}) {
         var defaults = {
-                page: 1,
-                limit: 10,
-                orderBy: this.__primary,
-                sequence: 'asc',
-                keywords: '',
-            };
+            page: 1,
+            limit: 10,
+            orderBy: this.__primary,
+            sequence: 'asc',
+            keywords: '',
+        };
         args = Object.assign(defaults, args);
-        
+
         //Set basic query conditions.
         var offset = (args.page - 1) * args.limit;
         this.limit(offset, args.limit);
-        if(args.sequence !== 'asc' && args.sequence != 'desc')
+        if (args.sequence !== 'asc' && args.sequence != 'desc')
             this.random(); //随机排序
         else
             this.orderBy(args.orderBy, args.sequence);
 
         //Set where clause for fields.
-        for(var field of this.__fields){
-            if(args[field] && defaults[field] === undefined){
-                var operator = "=",
+        for (let field of this.__fields) {
+            if (args[field] && defaults[field] === undefined) {
+                let operator = "=",
                     value = args[field],
-                    match = value.match(/^(<>|!=|<|>|=)\w+/);
-                if(match){ //Handle values which start with an operator.
+                    match = value.match(/^(<>|!=|<=|>=|<|>|=)\w+/);
+                if (match) { //Handle values which start with an operator.
                     operator = match[1];
                     value = value.substring(operator.length);
                 }
@@ -275,19 +327,20 @@ class Model extends Query{
         }
 
         //Set where clause by using keywords in a vague searching senario.
-        if(args.keywords && this.__searchable){
+        if (args.keywords && this.__searchable) {
             var keywords = args.keywords;
-            if(typeof keywords == 'string') keywords = [keywords];
-            for(var i in keywords){
+            if (typeof keywords == 'string') keywords = [keywords];
+            for (let i in keywords) {
                 //Escape special characters.
-                keywords[i] = keywords[i].replace('%', '\%').replace("\\", "\\\\");
+                keywords[i] = keywords[i].replace('%', '\%')
+                    .replace("\\", "\\\\");
             }
             //Construct nested conditions.
-            this.where((query)=>{
-                for(var field of this.__searchable){
-                    query.orWhere((query)=>{
-                        for(var keyword of keywords){
-                            query.orWhere(field, 'like', '%'+keyword+'%');
+            this.where((query) => {
+                for (let field of this.__searchable) {
+                    query.orWhere((query) => {
+                        for (let keyword of keywords) {
+                            query.orWhere(field, 'like', '%' + keyword + '%');
                         }
                     });
                 }
@@ -295,23 +348,53 @@ class Model extends Query{
         }
 
         //Get paginated information.
-        return this.paginate(args.page, args.limit).then(info=>{
+        return this.paginate(args.page, args.limit).then(info => {
             return Object.assign(args, info);
         });
     }
 
-    /***************************** Static Wrappers ****************************/
+    /*************************** Static Wrappers ****************************/
+
+    /**
+     * Uses a connection that is already established.
+     * 
+     * @param {Object} db An DB instance with a established connection.
+     * 
+     * @return {DB} Returns the current instance for function chaining.
+     */
+    static use(db) {
+        return (new this()).use(db);
+    }
+
+    /**
+     * Starts a transaction and handle codes in it.
+     * 
+     * @param {Function} callback If a function is passed, the codes in it 
+     *                            will be automatically handled, that means 
+     *                            if the program goes well, the transaction 
+     *                            will be automatically committed, otherwise 
+     *                            it will automatically roll backed. If no 
+     *                            function is passed, it just start the 
+     *                            transaction, that means you have to commit 
+     *                            and roll back manually.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
+     */
+    static transaction(callback = null) {
+        return (new this()).transaction(callback);
+    }
 
     /**
      * Sets the fields that need to be fetched.
      * 
      * @param  {Any} fields A list of all target fields, each one passed as an
      *                      argument. Or just pass the first argument as an 
-     *                      Array that carries all the field names.
+     *                      array that carries all the field names.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static select(...fields){
+    static select(...fields) {
         return (new this()).select(fields);
     }
 
@@ -331,7 +414,7 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static join(table, field1, operator, field2){
+    static join(table, field1, operator, field2) {
         return (new this()).join(table, field1, operator, field2);
     }
 
@@ -351,7 +434,7 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static leftJoin(table, field1, operator, field2){
+    static leftJoin(table, field1, operator, field2) {
         return (new this()).leftJoin(table, field1, operator, field2);
     }
 
@@ -371,7 +454,7 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static rightJoin(table, field1, operator, field2){
+    static rightJoin(table, field1, operator, field2) {
         return (new this()).rightJoin(table, field1, operator, field2);
     }
 
@@ -391,7 +474,7 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static fullJoin(table, field1, operator, field2){
+    static fullJoin(table, field1, operator, field2) {
         return (new this()).fullJoin(table, field1, operator, field2);
     }
 
@@ -411,14 +494,14 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static crossJoin(table, field1, operator, field2){
+    static crossJoin(table, field1, operator, field2) {
         return (new this()).crossJoin(table, field1, operator, field2);
     }
 
     /**
      * Set a where clause for the SQL statement.
      * 
-     * @param  {Any}    field    This could be a field name, or an Object that
+     * @param  {Any}    field    This could be a field name, or an object that
      *                           sets multiple `=` (equal) conditions for the 
      *                           clause. Or pass a callback function to 
      *                           generate nested conditions, the only argument
@@ -434,7 +517,7 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static where(field, operator, value){
+    static where(field, operator, value) {
         return (new this()).where(field, operator, value);
     }
 
@@ -443,12 +526,12 @@ class Model extends Query{
      * 
      * @param  {String} field A field name in the table that currently 
      *                        binds to.
-     * @param  {Array}  range An Array that carries only two elements which
+     * @param  {Array}  range An array that carries only two elements which
      *                        represent the start point and the end point.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static whereBetween(field, range){
+    static whereBetween(field, range) {
         return (new this()).whereBetween(field, range);
     }
 
@@ -457,12 +540,12 @@ class Model extends Query{
      * 
      * @param  {String} field A field name in the table that currently 
      *                        binds to.
-     * @param  {Array}  range An Array that carries only two elements which
+     * @param  {Array}  range An array that carries only two elements which
      *                        represent the start point and the end point.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static whereNotBetween(field, range){
+    static whereNotBetween(field, range) {
         return (new this()).whereNotBetween(field, range);
     }
 
@@ -471,11 +554,16 @@ class Model extends Query{
      * 
      * @param  {String} field  A field name in the table that currently 
      *                         binds to.
-     * @param  {Array}  values An Array that carries all possible values.
+     * @param  {Any}    values An array that carries all possible values. Or 
+     *                         pass a callback function to handle nested 
+     *                         SQL statement, the only argument passed to 
+     *                         the callback is a new Query instance, so
+     *                         that you can use its features to generate 
+     *                         a SQL statement.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static whereIn(field, values){
+    static whereIn(field, values) {
         return (new this()).whereIn(field, values);
     }
 
@@ -484,11 +572,16 @@ class Model extends Query{
      * 
      * @param  {String} field  A field name in the table that currently 
      *                         binds to.
-     * @param  {Array}  values An Array that carries all possible values.
+     * @param  {Any}    values An array that carries all possible values. Or 
+     *                         pass a callback function to handle nested 
+     *                         SQL statement, the only argument passed to 
+     *                         the callback is a new Query instance, so
+     *                         that you can use its features to generate 
+     *                         a SQL statement.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static whereNotIn(field, values){
+    static whereNotIn(field, values) {
         return (new this()).whereNotIn(field, values);
     }
 
@@ -500,7 +593,7 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static whereNull(field){
+    static whereNull(field) {
         return (new this()).whereNull(field);
     }
 
@@ -512,7 +605,7 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static whereNotNull(field){
+    static whereNotNull(field) {
         return (new this()).whereNotNull(field);
     }
 
@@ -527,7 +620,7 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static whereExists(callback){
+    static whereExists(callback) {
         return (new this()).whereExists(callback);
     }
 
@@ -542,7 +635,7 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static whereNotExists(callback){
+    static whereNotExists(callback) {
         return (new this()).whereNotExists(callback);
     }
 
@@ -556,7 +649,7 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static orderBy(field, sequence = ""){
+    static orderBy(field, sequence = "") {
         return (new this()).orderBy(field, sequence);
     }
 
@@ -565,7 +658,7 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static random(){
+    static random() {
         return (new this()).random();
     }
 
@@ -574,11 +667,11 @@ class Model extends Query{
      * 
      * @param  {Any} fields A list of all target fields, each one passed as an
      *                      argument. Or just pass the first argument as an
-     *                      Array that carries all the field names.
+     *                      array that carries all the field names.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static groupBy(...fields){
+    static groupBy(...fields) {
         return (new this()).groupBy(fields);
     }
 
@@ -588,7 +681,7 @@ class Model extends Query{
      * @param  {String} raw  A SQL clause to define comparing conditions.
      * @return {Query}  this 当前实例
      */
-    static having(raw){
+    static having(raw) {
         return (new this()).having(raw);
     }
 
@@ -603,7 +696,7 @@ class Model extends Query{
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static limit(offset, length = 0){
+    static limit(offset, length = 0) {
         return (new this()).limit(offset, length);
     }
 
@@ -611,10 +704,10 @@ class Model extends Query{
      * Gets all models from the database.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is all the fetched data 
-     *                   carried in an Array.
+     *                   to the callback of `then()` is all fetched models 
+     *                   carried in an array.
      */
-    static all(){
+    static all() {
         return (new this()).all();
     }
 
@@ -627,7 +720,7 @@ class Model extends Query{
      *                   to the callback of `then()` is a Number that counts
      *                   records.
      */
-    static count(field = "*"){
+    static count(field = "*") {
         return (new this()).count(field);
     }
 
@@ -640,7 +733,7 @@ class Model extends Query{
      *                   to the callback of `then()` is the maximum value 
      *                   fetched.
      */
-    static max(field){
+    static max(field) {
         return (new this()).max(field);
     }
 
@@ -653,7 +746,7 @@ class Model extends Query{
      *                   to the callback of `then()` is the minimum value 
      *                   fetched.
      */
-    static min(field){
+    static min(field) {
         return (new this()).min(field);
     }
 
@@ -666,7 +759,7 @@ class Model extends Query{
      *                   to the callback of `then()` is the average value 
      *                   fetched.
      */
-    static avg(field){
+    static avg(field) {
         return (new this()).avg(field);
     }
 
@@ -679,7 +772,7 @@ class Model extends Query{
      *                   to the callback of `then()` is the summarized value 
      *                   fetched.
      */
-    static sum(field){
+    static sum(field) {
         return (new this()).sum(field);
     }
 
@@ -696,7 +789,7 @@ class Model extends Query{
      *                   the callback of then() is the last chunk of data. If
      *                   the callback returns `false`, then stop chunking.
      */
-    static chunk(length, callback){
+    static chunk(length, callback) {
         return (new this()).chunk(length, callback);
     }
 
@@ -709,25 +802,61 @@ class Model extends Query{
      *                         is `10`.
      * 
      * @return {Promise} Returns a Promise, the only argument passes to the 
-     *                   callback of `then()` is an Object that carries the 
+     *                   callback of `then()` is an object that carries the 
      *                   information, it includes:
      *                   * `page` The current page.
      *                   * `limit` The top limit of per page.
      *                   * `pages` Represents all pages.
      *                   * `total` Represents all counts of data.
-     *                   * `data`  Carries all fetched data in an Array.
+     *                   * `data`  Carries all fetched data in an array.
      */
-    static paginate(page = 1, limit = 10){
+    static paginate(page = 1, limit = 10) {
         return (new this()).paginate(page, limit);
     }
 
     /**
-     * Gets multiple models that suit the given condition, unlike 
+     * Inserts a new model in to the database.
+     * 
+     * @param  {Object} data An object that carries fields and their values.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
+     */
+    static insert(data) {
+        return (new this(data)).insert();
+    }
+
+    /**
+     * Deletes an existing model.
+     * 
+     *  @param {Number} id [optional] The value of the model's primary key.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
+     */
+    static delete(args) {
+        return (new this()).delete(args);
+    }
+
+    /**
+     * Gets a model from the database.
+     * 
+     * @param {Number} id [optional] The value of the model's primary key.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the fetched data.
+     */
+    static get(args) {
+        return (new this()).get(args);
+    }
+
+    /**
+     * Gets multiple models that suit the given condition. Unlike 
      * `Model.all()`, this method accepts other arguments in a simpler way to 
-     * generate sophisticated SQL statement and fetch data with paginated 
+     * generate sophisticated SQL statement and fetch models with paginated 
      * information.
      * 
-     * @param  {Object}  args [optional] An Object carries key-value pairs 
+     * @param  {Object}  args [optional] An object carries key-value pairs 
      *                        information for fields, and it also accepts 
      *                        these properties:
      *                        * `page` The current page, default is `1`.
@@ -739,10 +868,10 @@ class Model extends Query{
      *                          ordered, it could be `asc`, `desc` or `rand`, 
      *                          default is `asc`.
      *                        * `keywords` Keywords for vague searching, it 
-     *                          could be a string or an Array.
+     *                          could be a string or an array.
      * 
      * @return {Promise} Returns a promise, and the only argument passes to 
-     *                   the callback of `then()` is an Object that carries 
+     *                   the callback of `then()` is an object that carries 
      *                   some information of these:
      *                   * `page` The current page.
      *                   * `limit` The top limit of per page.
@@ -751,120 +880,10 @@ class Model extends Query{
      *                   * `keywords` Keywords for vague searching.
      *                   * `pages` A number of all model pages.
      *                   * `total` A number of all model counts.
-     *                   * `data` An Array that carries all fetched models.
+     *                   * `data` An array that carries all fetched models.
      */
-    static getMany(args = {}){
+    static getMany(args = {}) {
         return (new this()).getMany(args);
-    }
-
-    /**
-     * Inserts a new model in to the database.
-     * 
-     * @param  {Object} data An Object that carries fields and their values.
-     * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the current instance.
-     */
-    static insert(data){
-        return (new this(data)).insert();
-    }
-
-    /**
-     * Updates an existing model.
-     * 
-     * @param  {Object}  data An Object that carries fields and their values,
-     *                        unlike the instance version, this argument must 
-     *                        carry the primary key.
-     * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the current instance.
-     */
-    static update(data){
-        var model = new this();
-        if(!data[model.__primary]){
-            //If the primary key is missing, then throw an error.
-            return new Promise(()=>{
-                throw new Error(model.constructor.name
-                    +'.update() expects the primary key `'
-                    +model.__primary+'`, which is missing.');
-            });
-        }
-        return this.get(data[model.__primary]).then(model=>{
-            return model.update(data);
-        });
-    }
-
-    /**
-     * Deletes an existing model.
-     * 
-     * @param {Any} data An Object that carries the primary key and its value,
-     *                   or just pass a Number, it will be treated as the 
-     *                   primary key.
-     * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the current instance.
-     */
-    static delete(args){
-        var model = new this();
-        if(typeof args == 'number'){
-            //If a Number is passed, treat as the primary key.
-            var id = args;
-            args = {};
-            args[model.__primary] = id;
-        }
-        if(!args[model.__primary]){
-            //If the primary key is missing, then throw an error.
-            return new Promise(()=>{
-                throw new Error(model.constructor.name
-                    +'.delete() expects the primary key `'
-                    +model.__primary+'`, which is missing.');
-            });
-        }
-        return this.get(args[model.__primary]).then((model)=>{
-            return model.delete();
-        });
-    }
-
-    /**
-     * Gets a model from the database.
-     * 
-     * @param  {Any}  data An Object that carries fields and their values, or 
-     *                     just pass a Number, it will be treated as the
-     *                     primary key.
-     * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the fetched data.
-     */
-    static get(args){
-        var model = new this();
-        if(typeof args == 'number'){
-            //If a Number is passed, treat as the primary key.
-            var id = args;
-            args = {};
-            args[model.__primary] = id;
-        }else{
-            //Use Model.assign() to filter illegal properties.
-            args = Object.assign({}, model.assign(args, true).__data);
-        }
-
-        if(Object.keys(args).length){
-            return model.where(args).get().then(model=>{
-                if(Object.keys(model.__data).length === 0){
-                    //If no model is retrieved, throw an error.
-                    throw new Error(model.constructor.name
-                        +' was not found by searching the given arguments.');
-                }else{
-                    return model;
-                }
-            });
-        }else{
-            //If no legal property has passed, then throw an error.
-            return new Promise(()=>{
-                throw new Error(model.constructor.name
-                    +'.get() requires at least one element of model fields, '
-                    +'but none given.');
-            });
-        }
     }
 
     /**************************** Associations *****************************/
@@ -872,129 +891,267 @@ class Model extends Query{
     /**
      * Defines a has (many) association.
      * 
-     * @param  {Model}  Model      The associated model class.
+     * @param  {Model}  Model      A model class that needs to be associated.
      * @param  {String} foreignKey A foreign key in the associated model.
      * 
      * @return {Model} Returns the associated model instance so you can use 
      *                 its features to handle data.
      */
-    has(Model, foreignKey){
-        return Model.where(foreignKey, this.__data[this.__primary]);
+    has(Model, foreignKey) {
+        return Model.use(this).where(foreignKey, this.__data[this.__primary]);
+    }
+
+    /**
+     * Defines a has-(many)-through association.
+     * 
+     * @param {Model}  Model       A model class that needs to be associated.
+     * @param {Model}  MiddleModel The class of the middle model. 
+     * @param {String} foreignKey1 A foreign key in the associated model.
+     * @param {String} foreignKey2 A foreign key in the middle model.
+     * 
+     * @return {Model} Returns the associated model instance so you can use 
+     *                 its features to handle data.
+     */
+    hasThrough(Model, MiddleModel, foreignKey1, foreignKey2) {
+        var model = new Model,
+            _model = new MiddleModel;
+        return model.use(this).whereIn(foreignKey1, query => {
+            query.select(_model.__primary).from(_model.__table)
+                .where(foreignKey2, this.__data[this.__primary]);
+        });
     }
 
     /**
      * Defines a belongs-to association.
      * 
-     * @param  {Model}  Model      The associated model class.
+     * @param  {Model}  Model      A model class that needs to be associated.
      * @param  {String} foreignKey A foreign key in the current model.
      * 
      * @return {Model} Returns the associated model instance so you can use 
      *                 its features to handle data.
      */
-    belongsTo(Model, foreignKey){
-        model = new Model();
+    belongsTo(Model, foreignKey) {
+        var model = (new Model).use(this);
         return model.where(model.__primary, this.__data[foreignKey]);
     }
 
     /**
-     * 定义多对多关联
+     * Defines a many-to-many association.
      * 
-     * @param  {String}  model       所关联的模型
-     * @param  {String}  middleTable 中间表的表名
-     * @param  {String}  foreignKey1 当前模型指向中间表的外键
-     * @param  {String}  foreignKey2 所关联模型指向中间表的外键
-     * @return {Promise}             返回 Promise，回调函数的参数是所有关联到的模型
-     *                               实例组成的数组，每一个模型都被添加一个 pivot
-     *                               属性，可以用来获取中间表的数据；当前模型则添加
-     *                               一个 pivots 属性来保存所有的中间表数据。
+     * @param  {Model}  Model      A model class that needs to be associated.
+     * @param  {String} pivotTable The name of the pivot table.
+     * 
+     * @return {Model} Returns the associated model instance so you can use 
+     *                 its features to handle data.
      */
-    // belongsToMany(model, middleTable, foreignKey1, foreignKey2){
-    //     var query = (new Query(middleTable)); //获取一个 Query 实例
-    //     //获取中间表数据
-    //     return query.where(foreignKey1, this.__data[this.__primary]).all().then(data=>{
-    //         this.pivots = data; //为当前模型添加 pivots 属性
-    //         var ids = [];
-    //         for(var i in data){
-    //             ids.push(data[i][foreignKey2]); //获取所有关联模型的 ID
-    //         }
+    belongsToMany(Model, pivotTable) {
+        var pivot = this.__pivots[pivotTable],
+            model = new Model;
+        return model.use(this).whereIn(model.__primary, query => {
+            query.select(pivot[1]).from(pivotTable)
+                .where(pivot[0], this.__data[this.__primary]);
+        });
+    }
 
-    //         //获取关联模型数据
-    //         model = typeof model == 'string' ? (new require('./'+model)) : new model();
-    //         return model.whereIn(model.__primary, ids).all().then(models=>{
-    //             var primary = models[0]._primary;
-    //             for(var i in models){
-    //                 for(var pivot of data){
-    //                     if(pivot[foreignKey2] == models[i][primary]){
-    //                         models[i].pivot = pivot; //为关联模型添加 pivot 属性
-    //                         break;
-    //                     }
-    //                 }
-    //             }
-    //             return models;
-    //         });
-    //     });
-    // }
+    /**
+     * Associates the current model to another model.
+     * 
+     * @param {String} foreignKey A foreign key in the current model.
+     * @param {Model}  model      A model that needs to be associated.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
+     */
+    associate(foreignKey, model) {
+        this.__data[foreignKey] = model.__data[model.__primary];
+        return this.save();
+    }
+
+    /**
+     * Removes an association of the current model.
+     * 
+     * @param {String} foreignKey A foreign key in the current model.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
+     */
+    dissociate(foreignKey) {
+        this.__data[foreignKey] = null;
+        return this.save();
+    }
+
+    /**
+     * Updates associations in a pivot table.
+     * 
+     * @param {String} pivotTable The name of the pivot table.
+     * @param {Array}  models     An array carries all models that needs to 
+     *                            be associated, or an array carries all IDs 
+     *                            of models that needs to be associated.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
+     */
+    attach(pivotTable, models) {
+        var id1 = this.__data[this.__primary],
+            pivot = this.__pivots[pivotTable];
+
+        //Handle procedure in a transaction.
+        return this.transaction(() => {
+            let ids = [];
+            for (let model of models) {
+                if (typeof model == "number")
+                    ids.push(model);
+                else
+                    ids.push(model.__data[model.__primary]);
+            }
+            var query = (new Query(pivotTable)).use(this);
+            return query.where(pivot[0], id1).all().then(data => {
+                let _ids = [],
+                    deletes = [];
+                for (let single of data) {
+                    let id2 = single[pivot[1]];
+                    _ids.push(id2);
+                    if (!ids.includes(id2)) {
+                        //Get foreign keys that needs to be deleted.
+                        deletes.push(id2);
+                    }
+                }
+                let __ids = [];
+                for (let id of ids) {
+                    if (!_ids.includes(id))
+                        __ids.push(id);
+                }
+                let i = -1,
+                    //Insert association records within a recursive loop.
+                    loop = (_query = null) => {
+                        if (!__ids.length) return this;
+                        let _data = {};
+                        _data[pivot[0]] = id1;
+                        _data[pivot[1]] = __ids.splice(i += 1, 1)[0];
+                        if (!_query)
+                            _query = (new Query(pivotTable)).use(this);
+                        return _query.insert(_data).then(_query => {
+                            return loop(_query);
+                        });
+                    };
+                if (deletes.length) {
+                    //Delete association records which are not in the provided
+                    //models.
+                    let _query = (new Query(pivotTable)).use(this);
+                    return _query.where(pivot[0], id1)
+                        .whereIn(pivot[1], deletes)
+                        .delete().then(_query => {
+                            return loop(_query);
+                        });
+                } else if (ids.length) {
+                    return loop();
+                } else {
+                    return this;
+                }
+            });
+        })
+    }
+
+    /**
+     * Deletes associations in a pivot table.
+     * 
+     * @param {String} pivotTable The name of the pivot table.
+     * @param {Array}  models     [optional] An array carries all models that 
+     *                            needs to be dissociated, or an array carries 
+     *                            all IDs of models that needs to be
+     *                            dissociated. If this parameter is not 
+     *                            provided, delete all associations of the 
+     *                            current model in the pivot table.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *                   to the callback of `then()` is the current instance.
+     */
+    detach(pivotTable, models = []) {
+        var id1 = this.__data[this.__primary],
+            pivot = this.__pivots[pivotTable],
+            query = (new Query(pivotTable)).use(this);
+        if (models.length > 0) {
+            //Delete association records which are in the provided models.
+            let ids = [];
+            for (let model of models) {
+                if (typeof model == "number")
+                    ids.push(model);
+                else
+                    ids.push(model.__data[model.__primary]);
+            }
+            return query.where(pivot[0], id1)
+                .whereIn(pivot[1], ids)
+                .delete()
+                .then(query => this);
+        } else {
+            //Delete all association records.
+            return query.where(pivot[0], id1).delete().then(query => this);
+        }
+        return query;
+    }
+
+    /**
+     * Gets the data that the model represents.
+     * 
+     * @return {Object} The model data in an object.
+     */
+    valueOf() {
+        var data = {};
+        for (let key in this.__data) {
+            let get = this.__lookupGetter__(key);
+            if (get instanceof Function && get.name.includes(' ')) {
+                //Calling getter.
+                let value = get.call(this, this.__data[key]);
+                //Set this property only if getter returns an non-undefined
+                //value.
+                if (value !== undefined)
+                    data[key] = value;
+            } else {
+                data[key] = this.__data[key];
+            }
+        }
+        return data;
+    }
 
     /**
      * Gets the data string in a JSON that the model holds.
      * 
      * @return {String} A JSON string that represents the model data.
      */
-    toString(){
-        return JSON.stringify(this.__getProcessedData());
+    toString() {
+        return JSON.stringify(this);
     }
 
     /**
-     * Gets the data that the model represents.
-     * 
-     * @return {Object} The model data in an Object.
+     * Implements toJSON API
      */
-    valueOf(){
-        return this.__getProcessedData();
+    toJSON() {
+        return this.valueOf();
     }
 
     /**
-     * Implement Iterator
+     * Implements Iterator API
      */
-    [Symbol.iterator](){
-        var data = this.__getProcessedData(),
+    [Symbol.iterator]() {
+        var data = this.valueOf(),
             keys = Object.keys(data),
             length = keys.length,
             index = -1;
         return {
-            next: ()=>{
+            next: () => {
                 index++;
-                if(index < length){
+                if (index < length) {
                     return {
                         value: [keys[index], data[keys[index]]],
                         done: false,
                     };
-                }else{
-                    return {value: undefined, done: true};
+                } else {
+                    return { value: undefined, done: true };
                 }
             }
         }
     }
-
-    /** Gets the data that has been processed by getters. */
-    __getProcessedData(){
-        var data = {};
-        for(var key in this.__data){
-            var get = this.__lookupGetter__(key);
-            if(get instanceof Function && get.name.includes(' ')){
-                var value = get.call(this, this.__data[key]); //Calling getter
-                //Set this property only if getter returns an non-undefined
-                //value.
-                if(value !== undefined)
-                    data[key] = value;
-            }else{
-                data[key] = this.__data[key];
-            }
-        }
-        return data;
-    }
 }
 
-Model.auth = null; //This property store the current logged-in user.
-
+module.exports = Model;
 module.exports = Model;

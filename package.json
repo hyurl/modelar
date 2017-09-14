@@ -1,27 +1,30 @@
 {
-  "name": "modelar",
-  "version": "0.1.0",
-  "description": "An expressive Model with promise functionality and SQL constructor.",
-  "main": "Model.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "mysql": "2.14.1",
-    "bcrypt-nodejs": "0.0.3"
-  },
-  "keywords": [
-    "promise",
-    "model"
-  ],
-  "author": {
-    "name": "Ayon Lee",
-    "email": "i@hyurl.com",
-    "url": "hyurl.com"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/hyurl/modelar.git"
-  },
-  "license": "MIT"
+    "name": "modelar",
+    "version": "0.1.0",
+    "description": "An expressive Model with promise functionality and SQL constructor.",
+    "main": "Model.js",
+    "scripts": {
+        "test": "cd demo && node index.js && exit 1"
+    },
+    "devDependencies": {
+        "sqlite": "^2.8.0"
+    },
+    "dependencies": {
+        "mysql": "^2.14.1",
+        "bcrypt-nodejs": "^0.0.3"
+    },
+    "keywords": [
+        "promise",
+        "model"
+    ],
+    "author": {
+        "name": "Ayon Lee",
+        "email": "i@hyurl.com",
+        "url": "hyurl.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/hyurl/modelar.git"
+    },
+    "license": "MIT"
 }
