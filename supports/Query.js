@@ -51,14 +51,6 @@ class Query extends DB {
         }, this.constructor.__events);
     }
 
-    /** Adds back-quotes to multiple fields. */
-    __backquoteFields(fields) {
-        for (let i in fields) {
-            fields[i] = this.__backquote(fields[i]);
-        }
-        return fields;
-    }
-
     /**
      * Sets what fields that need to be fetched.
      * 
@@ -71,7 +63,7 @@ class Query extends DB {
     select(...fields) {
         if (fields[0] instanceof Array)
             fields = fields[0];
-        fields = this.__backquoteFields(fields);
+        fields = fields.map(field => this.__backquote(field));
         this.__selects = fields.join(", ");
         return this;
     }
@@ -231,15 +223,16 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     where(field, operator, value) {
-        var isFunc = (field instanceof Function);
-        if (field instanceof Object && !isFunc) {
+        if (field instanceof Object && !(field instanceof Function)) {
             for (let key in field) {
                 this.where(key, "=", field[key]);
             }
         } else {
             if (this.__where) this.__where += " and ";
-            if (isFunc) {
+            if (field instanceof Function) {
                 this.__handleNestedWhere(field);
+            } else if (operator instanceof Function) {
+                this.__handleWhereChild(field, operator);
             } else {
                 this.__handleWhere(field, operator, value);
             }
@@ -267,15 +260,16 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     orWhere(field, operator, value) {
-        var isFunc = (field instanceof Function);
-        if (field instanceof Object && !isFunc) {
+        if (field instanceof Object && !(field instanceof Function)) {
             for (let key in field) {
                 this.orWhere(key, "=", field[key]);
             }
         } else {
             if (this.__where) this.__where += " or ";
-            if (isFunc) {
+            if (field instanceof Function) {
                 this.__handleNestedWhere(field);
+            } else if (operator instanceof Function) {
+                this.__handleWhereChild(field, operator);
             } else {
                 this.__handleWhere(field, operator, value);
             }
@@ -303,6 +297,22 @@ class Query extends DB {
             this.__bindings = this.__bindings.concat(query.__bindings);
         }
         return this;
+    }
+
+    /** Handles where... child SQL clauses. */
+    __handleWhereChild(field, callback) {
+        var query = this.__getChildQuery(callback);
+        this.__where += this.__backquote(field) + " = (" +
+            query.sql + ")";
+        this.__bindings = this.__bindings.concat(query.__bindings);
+        return this;
+    }
+
+    /** Gets a child query by a callback function. */
+    __getChildQuery(callback) {
+        var query = new Query(); //Create a new instance for nested scope.
+        callback.call(query, query);
+        return query.__generateSelectSQl(); //Generate SQL statement.
     }
 
     /**
@@ -381,8 +391,8 @@ class Query extends DB {
     /** Handles where...(not ) in... clauses. */
     __handleIn(field, values, isIn = true) {
         if (this.__where) this.__where += " and ";
-        if (typeof values == "function") {
-            return this.__handleNestedIn(field, values, isIn);
+        if (values instanceof Function) {
+            return this.__handleInChild(field, values, isIn);
         } else {
             var _values = Array(values.length).fill("?");
             this.__where += this.__backquote(field) + (isIn ? "" : " not") +
@@ -392,11 +402,9 @@ class Query extends DB {
         }
     }
 
-    /** Handles nested where... (in...) clauses. */
-    __handleNestedIn(field, callback, isIn = true) {
-        var query = new Query(); //Create a new instance for nested scope.
-        callback.call(query, query);
-        query.__generateSelectSQl(); //Generate SQL statement.
+    /** Handles where... (in...) child SQL clauses. */
+    __handleInChild(field, callback, isIn = true) {
+        var query = this.__getChildQuery(callback);
         this.__where += this.__backquote(field) + (isIn ? "" : " not") +
             " in (" + query.sql + ")";
         this.__bindings = this.__bindings.concat(query.__bindings);
@@ -468,9 +476,7 @@ class Query extends DB {
     /** Handles where (not) exists... clauses. */
     __handleExists(callback, exists = true) {
         if (this.__where) this.__where += " and ";
-        var query = new Query(); //Create a new instance for nested scope.
-        callback.call(query, query);
-        query.__generateSelectSQl(); //Generate SQL statement.
+        var query = this.__getChildQuery(callback);
         this.__where += (exists ? "" : "not ") + "exists (" + query.sql + ")";
         this.__bindings = this.__bindings.concat(query.__bindings);
         return this;
@@ -526,7 +532,7 @@ class Query extends DB {
     groupBy(...fields) {
         if (fields[0] instanceof Array)
             fields = fields[0];
-        fields = this.__backquoteFields(fields);
+        fields = fields.map(field => this.__backquote(field));
         this.__groupBy = fields.join(", ");
         return this;
     }

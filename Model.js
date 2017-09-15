@@ -69,21 +69,19 @@ class Model extends Query {
             get: [],
         }, this.constructor.__events);
 
-        //This property stores pivot-tables' relationships.
-        //Format:
-        // {
-        //     pivot_table: ["foreignKey1", "foreignKey2"]
-        // }
-        //`pivot_table` is the name of the pivot table.
-        //`foreignKey1` is a foreign key that points to the current model's 
-        //primary key.
-        //`foreignKey2` is a foreign key points to the associated model's 
-        //primary key.
-        this.__pivots = {};
+        //Define pseudo-properties.
+        this.__defineProperties(this.__fields);
 
-        //Define setters and getters of pseudo-properties for the model, only 
-        //if they are not defined.
-        for (let field of this.__fields) {
+        //Assign data to the instance.
+        delete data[this.__primary]; //Filter primary key.
+        this.assign(data, true);
+    }
+
+    /** 
+     * Defines setters and getters for model fields, if they're not defined.
+     */
+    __defineProperties(fields) {
+        for (let field of fields) {
             let hasGetter = this.__lookupGetter__(field) instanceof Function,
                 hasSetter = this.__lookupSetter__(field) instanceof Function,
                 isProp = this.hasOwnProperty(field);
@@ -100,10 +98,6 @@ class Model extends Query {
                 });
             }
         }
-
-        //Assign data to the instance.
-        delete data[this.__primary]; //Filter primary key.
-        this.assign(data, true);
     }
 
     /**
@@ -893,12 +887,45 @@ class Model extends Query {
      * 
      * @param  {Model}  Model      A model class that needs to be associated.
      * @param  {String} foreignKey A foreign key in the associated model.
+     * @param  {String} typeKey    [optional] A field name that stores the 
+     *                             current model name when you are defining 
+     *                             a polymorphic association.
      * 
      * @return {Model} Returns the associated model instance so you can use 
      *                 its features to handle data.
      */
-    has(Model, foreignKey) {
-        return Model.use(this).where(foreignKey, this.__data[this.__primary]);
+    has(Model, foreignKey, typeKey = "") {
+        var model = Model.use(this)
+            .where(foreignKey, this.__data[this.__primary]);
+        if (typeKey) {
+            model.where(typeKey, this.constructor.name);
+        }
+        return model;
+    }
+
+    /**
+     * Defines a belongs-to association.
+     * 
+     * @param  {Model}  Model      A model class that needs to be associated.
+     * @param  {String} foreignKey A foreign key in the current model.
+     * @param  {String} typeKey    [optional] A field name that stores the 
+     *                             current model name when you are defining 
+     *                             a polymorphic association.
+     * 
+     * @return {Model} Returns the associated model instance so you can use 
+     *                 its features to handle data.
+     */
+    belongsTo(Model, foreignKey, typeKey = "") {
+        var model = (new Model).use(this);
+        model.__caller = this;
+        model.__foreignKey = foreignKey;
+        model.__typeKey = typeKey;
+        if (typeKey) {
+            if (Model.name != this.__data[typeKey]) {
+                return model.where(model.__primary, null);
+            }
+        }
+        return model.where(model.__primary, this.__data[foreignKey]);
     }
 
     /**
@@ -921,69 +948,103 @@ class Model extends Query {
         });
     }
 
-    /**
-     * Defines a belongs-to association.
-     * 
-     * @param  {Model}  Model      A model class that needs to be associated.
-     * @param  {String} foreignKey A foreign key in the current model.
-     * 
-     * @return {Model} Returns the associated model instance so you can use 
-     *                 its features to handle data.
-     */
-    belongsTo(Model, foreignKey) {
-        var model = (new Model).use(this);
-        return model.where(model.__primary, this.__data[foreignKey]);
+    belongsToThrough(Model, MiddleModel, foreignKey1, foreignKey2) {
+        var model = new Model,
+            _model = new MiddleModel;
+        return model.use(this).where(model.__primary, query => {
+            query.select(foreignKey1).from(_model.__table)
+                .where(_model.__primary, this.__data[foreignKey2]);
+        });
+    }
+
+    hasVia(Model, pivotTable, foreignKey1, foreignKey2, typeKey = "") {
+        return this.__handleVia(
+            Model, pivotTable, foreignKey1, foreignKey2, typeKey, true);
     }
 
     /**
      * Defines a many-to-many association.
      * 
-     * @param  {Model}  Model      A model class that needs to be associated.
-     * @param  {String} pivotTable The name of the pivot table.
+     * @param {Model}  Model       A model class that needs to be associated.
+     * @param {String} pivotTable  The name of the pivot table.
+     * @param {String} foreignKey1 A foreign key in the associated model.
+     * @param {String} foreignKey2 A foreign key in the pivot table.
+     * @param {String} typeKey     [optional] A field name that stores the 
+     *                             current model name when you are defining 
+     *                             a polymorphic association.
      * 
      * @return {Model} Returns the associated model instance so you can use 
      *                 its features to handle data.
      */
-    belongsToMany(Model, pivotTable) {
-        var pivot = this.__pivots[pivotTable],
-            model = new Model;
+    belongsToVia(Model, pivotTable, foreignKey1, foreignKey2, typeKey = "") {
+        return this.__handleVia(
+            Model, pivotTable, foreignKey1, foreignKey2, typeKey, false);
+    }
+
+    __handleVia(Model, pivotTable, foreignKey1, foreignKey2, typeKey, has) {
+        var model = new Model;
+        model.__caller = this;
+        model.__pivot = [pivotTable, foreignKey1, foreignKey2, typeKey];
         return model.use(this).whereIn(model.__primary, query => {
-            query.select(pivot[1]).from(pivotTable)
-                .where(pivot[0], this.__data[this.__primary]);
+            query.select(model.__pivot[2]).from(model.__pivot[0])
+                .where(model.__pivot[1], this.__data[this.__primary]);
+            if (model.__pivot[3]) {
+                if (has)
+                    query.where(model.__pivot[3], this.constructor.name);
+                else
+                    query.where(model.__pivot[3], model.constructor.name);
+            }
         });
     }
 
     /**
      * Associates the current model to another model.
      * 
-     * @param {String} foreignKey A foreign key in the current model.
+     * This method can only be called after calling `model.belongsTo()`.
+     * 
      * @param {Model}  model      A model that needs to be associated.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the current instance.
      */
-    associate(foreignKey, model) {
-        this.__data[foreignKey] = model.__data[model.__primary];
-        return this.save();
+    associate(model) {
+        var target = this.__caller;
+        target.__data[this.__foreignKey] = model.__data[model.__primary];
+        if (this.__typeKey)
+            target.__data[this.__typeKey] = this.constructor.name;
+        return target.save().then(target => {
+            return target;
+        });
     }
 
     /**
      * Removes an association of the current model.
      * 
+     * This method can only be called after calling `model.belongsTo()`.
+     * 
      * @param {String} foreignKey A foreign key in the current model.
+     * @param {String} typeKey  [optional] A field name that stores the 
+     *                            associated model name when you are defining 
+     *                            a polymorphic association.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the current instance.
      */
-    dissociate(foreignKey) {
-        this.__data[foreignKey] = null;
-        return this.save();
+    dissociate() {
+        var target = this.__caller;
+        target.__data[this.__foreignKey] = null;
+        if (this.__typeKey)
+            target.__data[this.__typeKey] = null;
+        return target.save().then(target => {
+            return target;
+        });
     }
 
     /**
      * Updates associations in a pivot table.
      * 
-     * @param {String} pivotTable The name of the pivot table.
+     * This method can only be called after calling `model.belongsToVia()`.
+     * 
      * @param {Array}  models     An array carries all models that needs to 
      *                            be associated, or an array carries all IDs 
      *                            of models that needs to be associated.
@@ -991,25 +1052,28 @@ class Model extends Query {
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the current instance.
      */
-    attach(pivotTable, models) {
-        var id1 = this.__data[this.__primary],
-            pivot = this.__pivots[pivotTable];
+    attach(models) {
+        var target = this.__caller,
+            id1 = target.__data[target.__primary],
+            ids = [];
+        for (let model of models) {
+            if (typeof model == "number")
+                ids.push(model);
+            else
+                ids.push(model.__data[model.__primary]);
+        }
 
         //Handle procedure in a transaction.
         return this.transaction(() => {
-            let ids = [];
-            for (let model of models) {
-                if (typeof model == "number")
-                    ids.push(model);
-                else
-                    ids.push(model.__data[model.__primary]);
-            }
-            var query = (new Query(pivotTable)).use(this);
-            return query.where(pivot[0], id1).all().then(data => {
+            var query = new Query(this.__pivot[0]);
+            query.use(this).where(this.__pivot[1], id1);
+            if (this.__pivot[3])
+                query.where(this.__pivot[3], this.constructor.name);
+            return query.all().then(data => {
                 let _ids = [],
                     deletes = [];
                 for (let single of data) {
-                    let id2 = single[pivot[1]];
+                    let id2 = single[this.__pivot[2]];
                     _ids.push(id2);
                     if (!ids.includes(id2)) {
                         //Get foreign keys that needs to be deleted.
@@ -1021,41 +1085,42 @@ class Model extends Query {
                     if (!_ids.includes(id))
                         __ids.push(id);
                 }
-                let i = -1,
+                let _query = (new Query(this.__pivot[0])).use(this),
                     //Insert association records within a recursive loop.
-                    loop = (_query = null) => {
-                        if (!__ids.length) return this;
-                        let _data = {};
-                        _data[pivot[0]] = id1;
-                        _data[pivot[1]] = __ids.splice(i += 1, 1)[0];
-                        if (!_query)
-                            _query = (new Query(pivotTable)).use(this);
-                        return _query.insert(_data).then(_query => {
-                            return loop(_query);
+                    loop = (query) => {
+                        let data = {};
+                        data[this.__pivot[1]] = id1;
+                        data[this.__pivot[2]] = __ids.shift();
+                        if (this.__pivot[3])
+                            data[this.__pivot[3]] = this.constructor.name;
+                        return query.insert(data).then(query => {
+                            return __ids.length ? loop(query) : target;
                         });
                     };
                 if (deletes.length) {
                     //Delete association records which are not in the provided
                     //models.
-                    let _query = (new Query(pivotTable)).use(this);
-                    return _query.where(pivot[0], id1)
-                        .whereIn(pivot[1], deletes)
+                    _query.where(this.__pivot[1], id1);
+                    if (this.__pivot[3])
+                        _query.where(this.__pivot[3], this.constructor.name);
+                    return _query.whereIn(this.__pivot[2], deletes)
                         .delete().then(_query => {
-                            return loop(_query);
+                            return __ids.length ? loop(_query) : target;
                         });
-                } else if (ids.length) {
-                    return loop();
+                } else if (__ids.length) {
+                    return loop(_query);
                 } else {
-                    return this;
+                    return target;
                 }
             });
-        })
+        });
     }
 
     /**
-     * Deletes associations in a pivot table.
+     * Deletes associations in a pivot table. 
      * 
-     * @param {String} pivotTable The name of the pivot table.
+     * This method can only be called after calling `model.belongsToVia()`.
+     * 
      * @param {Array}  models     [optional] An array carries all models that 
      *                            needs to be dissociated, or an array carries 
      *                            all IDs of models that needs to be
@@ -1066,10 +1131,13 @@ class Model extends Query {
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the current instance.
      */
-    detach(pivotTable, models = []) {
-        var id1 = this.__data[this.__primary],
-            pivot = this.__pivots[pivotTable],
-            query = (new Query(pivotTable)).use(this);
+    detach(models = []) {
+        var target = this.__caller,
+            id1 = target.__data[target.__primary],
+            query = new Query(this.__pivot[0]);
+        query.use(this).where(this.__pivot[1], id1);
+        if (this.__pivot[3])
+            query.where(this.__pivot[3], this.constructor.name);
         if (models.length > 0) {
             //Delete association records which are in the provided models.
             let ids = [];
@@ -1079,15 +1147,13 @@ class Model extends Query {
                 else
                     ids.push(model.__data[model.__primary]);
             }
-            return query.where(pivot[0], id1)
-                .whereIn(pivot[1], ids)
+            return query.whereIn(this.__pivot[2], ids)
                 .delete()
-                .then(query => this);
+                .then(query => target);
         } else {
             //Delete all association records.
-            return query.where(pivot[0], id1).delete().then(query => this);
+            return query.delete().then(query => target);
         }
-        return query;
     }
 
     /**
@@ -1123,14 +1189,14 @@ class Model extends Query {
     }
 
     /**
-     * Implements toJSON API
+     * Implements toJSON API.
      */
     toJSON() {
         return this.valueOf();
     }
 
     /**
-     * Implements Iterator API
+     * Implements Iterator API.
      */
     [Symbol.iterator]() {
         var data = this.valueOf(),
@@ -1153,5 +1219,4 @@ class Model extends Query {
     }
 }
 
-module.exports = Model;
 module.exports = Model;

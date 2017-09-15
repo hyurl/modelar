@@ -234,6 +234,8 @@ class DB {
                 //If connection isn't established, connect automatically.
                 this.connect();
             }
+            //Fire event and trigger event handlers.
+            this.trigger('query', this);
 
             if (this.__config.type == 'sqlite') { //SQLite
                 var _this = this,
@@ -247,7 +249,7 @@ class DB {
                         } else {
                             _this.__data = rows;
                             //Fire event and trigger event handlers.
-                            _this.trigger('query', _this);
+                            // _this.trigger('query', _this);
                             resolve(_this);
                         }
                     });
@@ -260,7 +262,7 @@ class DB {
                             _this.insertId = this.lastID;
                             _this.affectedRows = this.changes;
                             //Fire event and trigger event handlers.
-                            _this.trigger('query', _this);
+                            // _this.trigger('query', _this);
                             resolve(_this);
                         }
                     });
@@ -285,7 +287,7 @@ class DB {
                             this.affectedRows = res.affectedRows;
                         }
                         //Fire event and trigger event handlers.
-                        this.trigger('query', this);
+                        // this.trigger('query', this);
                         resolve(this);
                     }
                 });
@@ -315,11 +317,11 @@ class DB {
      */
     transaction(callback = null) {
         if (typeof callback == 'function') {
-            return this.query('begin').then(() => {
-                return callback.call(this, this);
-            }).then(() => {
+            return this.query('begin').then(db => {
+                return callback.call(db, db);
+            }).then(db => {
                 this.commit();
-                return this;
+                return db;
             }).catch(err => {
                 this.rollback();
                 throw err;
