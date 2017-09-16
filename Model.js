@@ -1275,7 +1275,7 @@ class Model extends Query {
             foreignKey1 = pivotTable + "." + this.__pivot[1],
             foreignKey2 = pivotTable + "." + this.__pivot[2],
             primary = this.__table + "." + this.__primary;
-        if (fields instanceof Array)
+        if (fields[0] instanceof Array)
             fields = fields[0];
         fields = fields.map(field => pivotTable + "." + field);
         fields.unshift(this.__table + ".*");
