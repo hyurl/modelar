@@ -1,7 +1,7 @@
 {
     "name": "modelar",
     "version": "0.1.0",
-    "description": "An expressive Model with promise functionality and SQL constructor.",
+    "description": "An expressive Model with Promise functionality and Query constructor.",
     "main": "Model.js",
     "scripts": {
         "test": "cd demo && node index.js && exit 1"
@@ -10,12 +10,18 @@
         "sqlite": "^2.8.0"
     },
     "dependencies": {
+        "sqlite": "^2.8.0",
         "mysql": "^2.14.1",
         "bcrypt-nodejs": "^0.0.3"
     },
     "keywords": [
         "promise",
-        "model"
+        "model",
+        "database",
+        "query constructor",
+        "model associations",
+        "event listener",
+        "es2015"
     ],
     "author": {
         "name": "Ayon Lee",
