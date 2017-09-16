@@ -369,9 +369,9 @@ class Model extends Query {
     }
 
     /**
-     * Starts a transaction and handle codes in it.
+     * Starts a transaction and handle actions in it.
      * 
-     * @param {Function} callback If a function is passed, the codes in it 
+     * @param {Function} callback If a function is passed, the code in it 
      *                            will be automatically handled, that means 
      *                            if the program goes well, the transaction 
      *                            will be automatically committed, otherwise 
