@@ -214,7 +214,13 @@ class Query extends DB {
      *                           instance with its features.
      * @param  {String} operator Condition operator, if the `value` isn't 
      *                           passed, then this argument will replace it,
-     *                           and the operator will become an `=`.
+     *                           and the operator will become an `=`. It is 
+     *                           also possible to pass this argument a 
+     *                           callback function to generate a child-SQL 
+     *                           statement, the only argument passed to the 
+     *                           callback is a new Query instance, so that you
+     *                           can use its features to generate a SQL
+     *                           statement.
      * @param  {Any}    value    [optional] A value that needs to be compared 
      *                           with `field`. If this argument is missing, 
      *                           then `operator` will replace it, and the 
@@ -251,7 +257,13 @@ class Query extends DB {
      *                           instance with its features.
      * @param  {String} operator Condition operator, if the `value` isn't 
      *                           passed, then this argument will replace it,
-     *                           and the operator will become an `=`.
+     *                           and the operator will become an `=`. It is 
+     *                           also possible to pass this argument a 
+     *                           callback function to generate a child-SQL 
+     *                           statement, the only argument passed to the 
+     *                           callback is a new Query instance, so that you
+     *                           can use its features to generate a SQL
+     *                           statement.
      * @param  {Any}    value    [optional] A value that needs to be compared 
      *                           with `field`. If this argument is missing, 
      *                           then `operator` will replace it, and the 
@@ -299,17 +311,17 @@ class Query extends DB {
         return this;
     }
 
-    /** Handles where... child SQL clauses. */
+    /** Handles where... child-SQL statements. */
     __handleWhereChild(field, callback) {
-        var query = this.__getChildQuery(callback);
+        var query = this.__getQueryBy(callback);
         this.__where += this.__backquote(field) + " = (" +
             query.sql + ")";
         this.__bindings = this.__bindings.concat(query.__bindings);
         return this;
     }
 
-    /** Gets a child query by a callback function. */
-    __getChildQuery(callback) {
+    /** Gets a query by a callback function. */
+    __getQueryBy(callback) {
         var query = new Query(); //Create a new instance for nested scope.
         callback.call(query, query);
         return query.__generateSelectSQl(); //Generate SQL statement.
@@ -358,11 +370,11 @@ class Query extends DB {
      * @param  {String} field  A field name in the table that currently 
      *                         binds to.
      * @param  {Any}    values An array that carries all possible values. Or 
-     *                         pass a callback function to handle nested 
-     *                         SQL statement, the only argument passed to 
-     *                         the callback is a new Query instance, so
-     *                         that you can use its features to generate 
-     *                         a SQL statement.
+     *                         pass a callback function to generate child-SQL
+     *                         statement, the only argument passed to the 
+     *                         callback is a new Query instance, so that you 
+     *                         can use its features to generate a SQL 
+     *                         statement.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -376,16 +388,16 @@ class Query extends DB {
      * @param  {String} field  A field name in the table that currently 
      *                         binds to.
      * @param  {Any}    values An array that carries all possible values. Or 
-     *                         pass a callback function to handle nested 
-     *                         SQL statement, the only argument passed to 
-     *                         the callback is a new Query instance, so
-     *                         that you can use its features to generate 
-     *                         a SQL statement.
+     *                         pass a callback function to generate child-SQL
+     *                         statement, the only argument passed to the 
+     *                         callback is a new Query instance, so that you 
+     *                         can use its features to generate a SQL 
+     *                         statement.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
     whereNotIn(field, values) {
-        return this.__handleIn(field, values, false)
+        return this.__handleIn(field, values, false);
     }
 
     /** Handles where...(not ) in... clauses. */
@@ -402,9 +414,9 @@ class Query extends DB {
         }
     }
 
-    /** Handles where... (in...) child SQL clauses. */
+    /** Handles where...in... child-SQL statements. */
     __handleInChild(field, callback, isIn = true) {
-        var query = this.__getChildQuery(callback);
+        var query = this.__getQueryBy(callback);
         this.__where += this.__backquote(field) + (isIn ? "" : " not") +
             " in (" + query.sql + ")";
         this.__bindings = this.__bindings.concat(query.__bindings);
@@ -446,11 +458,11 @@ class Query extends DB {
     /**
      * Sets a where exists... clause for the SQL statement.
      * 
-     * @param  {Function} callback Pass a callback function to handle nested 
-     *                             SQL statement, the only argument passed to 
-     *                             the callback is a new Query instance, so
-     *                             that you can use its features to generate 
-     *                             a SQL statement.
+     * @param  {Function} callback Pass a callback function to generate 
+     *                             child-SQL statement, the only argument 
+     *                             passed to the callback is a new Query 
+     *                             instance, so that you can use its features 
+     *                             to generate a SQL statement.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -461,11 +473,11 @@ class Query extends DB {
     /**
      * Sets a where not exists... clause for the SQL statement.
      * 
-     * @param  {Function} callback Pass a callback function to handle nested 
-     *                             SQL statement, the only argument passed to 
-     *                             the callback is a new Query instance, so
-     *                             that you can use its features to generate 
-     *                             a SQL statement.
+     * @param  {Function} callback Pass a callback function to generate 
+     *                             child-SQL statement, the only argument 
+     *                             passed to the callback is a new Query 
+     *                             instance, so that you can use its features 
+     *                             to generate a SQL statement.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -476,7 +488,7 @@ class Query extends DB {
     /** Handles where (not) exists... clauses. */
     __handleExists(callback, exists = true) {
         if (this.__where) this.__where += " and ";
-        var query = this.__getChildQuery(callback);
+        var query = this.__getQueryBy(callback);
         this.__where += (exists ? "" : "not ") + "exists (" + query.sql + ")";
         this.__bindings = this.__bindings.concat(query.__bindings);
         return this;

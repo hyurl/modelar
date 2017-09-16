@@ -503,7 +503,13 @@ class Model extends Query {
      *                           instance with its features.
      * @param  {String} operator Condition operator, if the `value` isn't 
      *                           passed, then this argument will replace it,
-     *                           and the operator will become an `=`.
+     *                           and the operator will become an `=`. It is 
+     *                           also possible to pass this argument a 
+     *                           callback function to generate a child-SQL 
+     *                           statement, the only argument passed to the 
+     *                           callback is a new Query instance, so that you
+     *                           can use its features to generate a SQL
+     *                           statement.
      * @param  {Any}    value    [optional] A value that needs to be compared 
      *                           with `field`. If this argument is missed, 
      *                           then `operator` will replace it, and the 
@@ -549,11 +555,11 @@ class Model extends Query {
      * @param  {String} field  A field name in the table that currently 
      *                         binds to.
      * @param  {Any}    values An array that carries all possible values. Or 
-     *                         pass a callback function to handle nested 
-     *                         SQL statement, the only argument passed to 
-     *                         the callback is a new Query instance, so
-     *                         that you can use its features to generate 
-     *                         a SQL statement.
+     *                         pass a callback function to generate child-SQL
+     *                         statement, the only argument passed to the 
+     *                         callback is a new Query instance, so that you 
+     *                         can use its features to generate a SQL 
+     *                         statement.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -567,11 +573,11 @@ class Model extends Query {
      * @param  {String} field  A field name in the table that currently 
      *                         binds to.
      * @param  {Any}    values An array that carries all possible values. Or 
-     *                         pass a callback function to handle nested 
-     *                         SQL statement, the only argument passed to 
-     *                         the callback is a new Query instance, so
-     *                         that you can use its features to generate 
-     *                         a SQL statement.
+     *                         pass a callback function to generate child-SQL
+     *                         statement, the only argument passed to the 
+     *                         callback is a new Query instance, so that you 
+     *                         can use its features to generate a SQL 
+     *                         statement.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -606,11 +612,11 @@ class Model extends Query {
     /**
      * Sets a where...exists clause for the SQL statement.
      * 
-     * @param  {Function} callback Pass a callback function to handle nested 
-     *                             SQL statement, the only argument passed to 
-     *                             the callback is a new Query instance, so
-     *                             that you can use its features to generate 
-     *                             a SQL statement.
+     * @param  {Function} callback Pass a callback function to generate 
+     *                             child-SQL statement, the only argument 
+     *                             passed to the callback is a new Query 
+     *                             instance, so that you can use its features 
+     *                             to generate a SQL statement.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -621,11 +627,11 @@ class Model extends Query {
     /**
      * Sets a where...not exists clause for the SQL statement.
      * 
-     * @param  {Function} callback Pass a callback function to handle nested 
-     *                             SQL statement, the only argument passed to 
-     *                             the callback is a new Query instance, so
-     *                             that you can use its features to generate 
-     *                             a SQL statement.
+     * @param  {Function} callback Pass a callback function to generate 
+     *                             child-SQL statement, the only argument 
+     *                             passed to the callback is a new Query 
+     *                             instance, so that you can use its features 
+     *                             to generate a SQL statement.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -887,9 +893,10 @@ class Model extends Query {
      * 
      * @param  {Model}  Model      A model class that needs to be associated.
      * @param  {String} foreignKey A foreign key in the associated model.
-     * @param  {String} typeKey    [optional] A field name that stores the 
-     *                             current model name when you are defining 
-     *                             a polymorphic association.
+     * @param  {String} typeKey    [optional] A field name in the associated 
+     *                             model that stores the current model name 
+     *                             when you are defining a polymorphic 
+     *                             association.
      * 
      * @return {Model} Returns the associated model instance so you can use 
      *                 its features to handle data.
@@ -908,9 +915,9 @@ class Model extends Query {
      * 
      * @param  {Model}  Model      A model class that needs to be associated.
      * @param  {String} foreignKey A foreign key in the current model.
-     * @param  {String} typeKey    [optional] A field name that stores the 
-     *                             current model name when you are defining 
-     *                             a polymorphic association.
+     * @param  {String} typeKey    [optional] A field name in the current model
+     *                             that stores the current model name when you
+     *                             are defining a polymorphic association.
      * 
      * @return {Model} Returns the associated model instance so you can use 
      *                 its features to handle data.
@@ -929,12 +936,14 @@ class Model extends Query {
     }
 
     /**
-     * Defines a has-(many)-through association.
+     * Defines a has (many) association through a middle model.
      * 
      * @param {Model}  Model       A model class that needs to be associated.
      * @param {Model}  MiddleModel The class of the middle model. 
-     * @param {String} foreignKey1 A foreign key in the associated model.
-     * @param {String} foreignKey2 A foreign key in the middle model.
+     * @param {String} foreignKey1 A foreign key in the associated model that 
+     *                             points to the middle model.
+     * @param {String} foreignKey2 A foreign key in the middle model that 
+     *                             points to the current model.
      * 
      * @return {Model} Returns the associated model instance so you can use 
      *                 its features to handle data.
@@ -948,51 +957,94 @@ class Model extends Query {
         });
     }
 
+    /**
+     * Defines a belongs-to association through a middle model.
+     * 
+     * @param {Model}  Model       A model class that needs to be associated.
+     * @param {Model}  MiddleModel The class of the middle model.
+     * @param {String} foreignKey1 A foreign key in the current model that 
+     *                             points to the middle model.
+     * @param {String} foreignKey2 A foreign key in the middle model that 
+     *                             points to the associated model.
+     * 
+     * @return {Model} Returns the associated model instance so you can use 
+     *                 its features to handle data.
+     */
     belongsToThrough(Model, MiddleModel, foreignKey1, foreignKey2) {
         var model = new Model,
             _model = new MiddleModel;
         return model.use(this).where(model.__primary, query => {
-            query.select(foreignKey1).from(_model.__table)
-                .where(_model.__primary, this.__data[foreignKey2]);
+            query.select(foreignKey2).from(_model.__table)
+                .where(_model.__primary, this.__data[foreignKey1]);
         });
     }
 
-    hasVia(Model, pivotTable, foreignKey1, foreignKey2, typeKey = "") {
-        return this.__handleVia(
-            Model, pivotTable, foreignKey1, foreignKey2, typeKey, true);
-    }
-
     /**
-     * Defines a many-to-many association.
+     * Defines a has (many) association via a pivot table.
      * 
      * @param {Model}  Model       A model class that needs to be associated.
      * @param {String} pivotTable  The name of the pivot table.
-     * @param {String} foreignKey1 A foreign key in the associated model.
-     * @param {String} foreignKey2 A foreign key in the pivot table.
-     * @param {String} typeKey     [optional] A field name that stores the 
-     *                             current model name when you are defining 
-     *                             a polymorphic association.
+     * @param {String} foreignKey1 A foreign key in the pivot table that 
+     *                             points to the associated model.
+     * @param {String} foreignKey2 A foreign key in the pivot table that 
+     *                             points to the current model.
+     * @param {String} typeKey     [optional] A field name in the pivot table 
+     *                             that stores the current model name when you
+     *                             are defining a polymorphic association.
+     * 
+     * @return {Model} Returns the associated model instance so you can use 
+     *                 its features to handle data.
+     */
+    hasVia(Model, pivotTable, foreignKey1, foreignKey2, typeKey = "") {
+        var model = new Model;
+        model.__caller = this;
+        model.__pivot = [
+            pivotTable,
+            foreignKey1,
+            foreignKey2,
+            typeKey,
+            this.constructor.name
+        ];
+        return model.use(this).whereIn(model.__primary, query => {
+            query.select(model.__pivot[1]).from(model.__pivot[0])
+                .where(model.__pivot[2], this.__data[this.__primary]);
+            if (model.__pivot[3]) {
+                query.where(model.__pivot[3], model.__pivot[4]);
+            }
+        });
+    }
+
+    /**
+     * Defines a belongs-to (many) association via a pivot table.
+     * 
+     * @param {Model}  Model       A model class that needs to be associated.
+     * @param {String} pivotTable  The name of the pivot table.
+     * @param {String} foreignKey1 A foreign key in the pivot table that 
+     *                             points to the current model.
+     * @param {String} foreignKey2 A foreign key in the pivot table that 
+     *                             points to the associated model.
+     * @param {String} typeKey     [optional] A field name in the pivot table 
+     *                             that stores the associated model name when 
+     *                             you are defining a polymorphic association.
      * 
      * @return {Model} Returns the associated model instance so you can use 
      *                 its features to handle data.
      */
     belongsToVia(Model, pivotTable, foreignKey1, foreignKey2, typeKey = "") {
-        return this.__handleVia(
-            Model, pivotTable, foreignKey1, foreignKey2, typeKey, false);
-    }
-
-    __handleVia(Model, pivotTable, foreignKey1, foreignKey2, typeKey, has) {
         var model = new Model;
         model.__caller = this;
-        model.__pivot = [pivotTable, foreignKey1, foreignKey2, typeKey];
+        model.__pivot = [
+            pivotTable,
+            foreignKey2,
+            foreignKey1,
+            typeKey,
+            Model.name
+        ];
         return model.use(this).whereIn(model.__primary, query => {
-            query.select(model.__pivot[2]).from(model.__pivot[0])
-                .where(model.__pivot[1], this.__data[this.__primary]);
+            query.select(model.__pivot[1]).from(model.__pivot[0])
+                .where(model.__pivot[2], this.__data[this.__primary]);
             if (model.__pivot[3]) {
-                if (has)
-                    query.where(model.__pivot[3], this.constructor.name);
-                else
-                    query.where(model.__pivot[3], model.constructor.name);
+                query.where(model.__pivot[3], model.__pivot[4]);
             }
         });
     }
@@ -1005,7 +1057,7 @@ class Model extends Query {
      * @param {Model}  model      A model that needs to be associated.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the current instance.
+     *                   to the callback of `then()` is the caller instance.
      */
     associate(model) {
         var target = this.__caller;
@@ -1028,7 +1080,7 @@ class Model extends Query {
      *                            a polymorphic association.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the current instance.
+     *                   to the callback of `then()` is the caller instance.
      */
     dissociate() {
         var target = this.__caller;
@@ -1043,14 +1095,14 @@ class Model extends Query {
     /**
      * Updates associations in a pivot table.
      * 
-     * This method can only be called after calling `model.belongsToVia()`.
+     * This method can only be called after calling `model.hasVia()` or 
+     * `model.belongsToVia()`.
      * 
-     * @param {Array}  models     An array carries all models that needs to 
-     *                            be associated, or an array carries all IDs 
-     *                            of models that needs to be associated.
+     * @param {Array} models An array carries all models or IDs that needs to 
+     *                       be associated.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the current instance.
+     *                   to the callback of `then()` is the caller instance.
      */
     attach(models) {
         var target = this.__caller,
@@ -1066,14 +1118,14 @@ class Model extends Query {
         //Handle procedure in a transaction.
         return this.transaction(() => {
             var query = new Query(this.__pivot[0]);
-            query.use(this).where(this.__pivot[1], id1);
+            query.use(this).where(this.__pivot[2], id1);
             if (this.__pivot[3])
-                query.where(this.__pivot[3], this.constructor.name);
+                query.where(this.__pivot[3], this.__pivot[4]);
             return query.all().then(data => {
                 let _ids = [],
                     deletes = [];
                 for (let single of data) {
-                    let id2 = single[this.__pivot[2]];
+                    let id2 = single[this.__pivot[1]];
                     _ids.push(id2);
                     if (!ids.includes(id2)) {
                         //Get foreign keys that needs to be deleted.
@@ -1089,10 +1141,10 @@ class Model extends Query {
                     //Insert association records within a recursive loop.
                     loop = (query) => {
                         let data = {};
-                        data[this.__pivot[1]] = id1;
-                        data[this.__pivot[2]] = __ids.shift();
+                        data[this.__pivot[2]] = id1;
+                        data[this.__pivot[1]] = __ids.shift();
                         if (this.__pivot[3])
-                            data[this.__pivot[3]] = this.constructor.name;
+                            data[this.__pivot[3]] = this.__pivot[4];
                         return query.insert(data).then(query => {
                             return __ids.length ? loop(query) : target;
                         });
@@ -1100,10 +1152,10 @@ class Model extends Query {
                 if (deletes.length) {
                     //Delete association records which are not in the provided
                     //models.
-                    _query.where(this.__pivot[1], id1);
+                    _query.where(this.__pivot[2], id1);
                     if (this.__pivot[3])
-                        _query.where(this.__pivot[3], this.constructor.name);
-                    return _query.whereIn(this.__pivot[2], deletes)
+                        _query.where(this.__pivot[3], this.__pivot[4]);
+                    return _query.whereIn(this.__pivot[1], deletes)
                         .delete().then(_query => {
                             return __ids.length ? loop(_query) : target;
                         });
@@ -1119,25 +1171,24 @@ class Model extends Query {
     /**
      * Deletes associations in a pivot table. 
      * 
-     * This method can only be called after calling `model.belongsToVia()`.
+     * This method can only be called after calling `model.hasVia()` or 
+     * `model.belongsToVia()`.
      * 
-     * @param {Array}  models     [optional] An array carries all models that 
-     *                            needs to be dissociated, or an array carries 
-     *                            all IDs of models that needs to be
-     *                            dissociated. If this parameter is not 
-     *                            provided, delete all associations of the 
-     *                            current model in the pivot table.
+     * @param {Array} models [optional] An array carries all models or IDs 
+     *                       that needs to be dissociated. If this parameter 
+     *                       is not provided, all associations of the caller 
+     *                       model in the pivot table will be deleted.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the current instance.
+     *                   to the callback of `then()` is the caller instance.
      */
     detach(models = []) {
         var target = this.__caller,
             id1 = target.__data[target.__primary],
             query = new Query(this.__pivot[0]);
-        query.use(this).where(this.__pivot[1], id1);
+        query.use(this).where(this.__pivot[2], id1);
         if (this.__pivot[3])
-            query.where(this.__pivot[3], this.constructor.name);
+            query.where(this.__pivot[3], this.__pivot[4]);
         if (models.length > 0) {
             //Delete association records which are in the provided models.
             let ids = [];
@@ -1147,7 +1198,7 @@ class Model extends Query {
                 else
                     ids.push(model.__data[model.__primary]);
             }
-            return query.whereIn(this.__pivot[2], ids)
+            return query.whereIn(this.__pivot[1], ids)
                 .delete()
                 .then(query => target);
         } else {

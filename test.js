@@ -87,6 +87,18 @@ class Tag extends Model {
     }
 }
 
+DB.on("query", db => {
+    console.log(db.sql, db.bindings);
+});
+User.use(db).get(1).then(user => {
+    return user.tags.detach()
+}).catch(err => {
+    console.log(err);
+});
+// Tag.use(db).get(1).then(tag => {
+//     return tag.users.detach();
+// })
+
 // //Get the user of whose ID is 1.
 // User.use(db).get(1).then(user => {
 //     //Print out the user's data.
@@ -187,16 +199,6 @@ class Tag extends Model {
 //         console.log(tags);
 //     })
 // });
-Tag.on("query", tag => {
-    console.log(tag.sql, tag.bindings);
-})
-Tag.use(db).get(1).then(tag => {
-    return tag.users.all().then(users => {
-        console.log(users);
-    })
-}).catch(err => {
-    console.log(err);
-})
 
 // return article.user.associate(user, "user_id").then(article => {
 //     //Print out the article.
