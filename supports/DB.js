@@ -73,7 +73,8 @@ class DB {
             field.indexOf("`") < 0 && field != "*" && parts.length === 1) {
             field = "`" + field + "`";
         } else if (parts.length === 2) {
-            field = "`" + parts[0] + "`.`" + parts[1] + "`";
+            field = this.__backquote(parts[0]) + "." +
+                this.__backquote(parts[1]);
         }
         return field;
     }

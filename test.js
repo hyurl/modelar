@@ -18,58 +18,30 @@ class User extends Model {
         });
     }
 
-    get articles() {
-        return this.has(Article, "user_id");
-    }
-
-    get comments() {
-        return this.has(Comment, "commentable_id", "commentable_type");
+    get roles() {
+        return this.hasVia(Role, "user_role", "role_id", "user_id");
     }
 
     get tags() {
-        return this.hasVia(Tag, "taggables", "tag_id", "taggable_id", "taggable_type");
+        return this.hasVia(
+            Tag, "taggables", "tag_id", "taggable_id", "taggable_type");
     }
 }
 
-class Article extends Model {
+class Role extends Model {
     constructor(data = {}) {
         super(data, {
-            table: "articles",
+            table: "roles",
             primary: "id",
-            fields: ["id", "title", "content", "user_id"],
-            searchable: ["title", "content"]
+            fields: ["id", "name"]
         });
     }
 
-    get user() {
-        return this.belongsTo(User, "user_id");
-    }
-
-    get comments() {
-        return this.has(Comment, "commentable_id", "commentable_type");
-    }
-
-    get tags() {
-        return this.hasVia(Tag, "taggables", "tag_id", "taggable_id", "taggable_type");
-    }
-}
-
-class Comment extends Model {
-    constructor(data = {}) {
-        super(data, {
-            table: "comments",
-            primary: "id",
-            fields: ["id", "content", "commentable_id", "commentable_type"],
-            searchable: ["name"]
-        });
-    }
-
-    get user() {
-        return this.belongsTo(User, "commentable_id");
-    }
-
-    get article() {
-        return this.belongsTo(Article, "commentable_id");
+    get users() {
+        return this.hasVia(User, "user_role", "user_id", "role_id");
+        //Alternatively, you can call:
+        // return this.belongsToVia(User, "user_role", "role_id", "user_id");
+        //But be aware of the different sequence of arguments.
     }
 }
 
@@ -83,132 +55,85 @@ class Tag extends Model {
     }
 
     get users() {
-        return this.belongsToVia(User, "taggables", "tag_id", "taggable_id", "taggable_type");
+        return this.belongsToVia(
+            User, "taggables", "tag_id", "taggable_id", "taggable_type");
     }
 }
 
 DB.on("query", db => {
     console.log(db.sql, db.bindings);
-});
+})
+
+//Get the user of whose ID is 1.
 User.use(db).get(1).then(user => {
-    return user.tags.detach()
+    //Print out the user's data.
+    console.log(user.valueOf());
+
+    //Update associations of user's roles.
+    return user.roles.attach([1, 2, 3]);
+}).then(user => {
+    //Get all roles of the user.
+    return user.roles.all().then(roles => {
+        //Print out all roles.
+        for (let role of roles) {
+            console.log(role.valueOf());
+        }
+
+        return user;
+    });
+}).then(user => {
+    //Update associations of user's tags.
+    return user.tags.attach([1, 2, 3]);
+}).then(user => {
+    //Get all tags of the user.
+    return user.tags.all().then(tags => {
+        //Print out all tags.
+        for (let tag of tags) {
+            console.log(tag.valueOf());
+        }
+    });
 }).catch(err => {
     console.log(err);
 });
-// Tag.use(db).get(1).then(tag => {
-//     return tag.users.detach();
-// })
 
-// //Get the user of whose ID is 1.
-// User.use(db).get(1).then(user => {
-//     //Print out the user's data.
-//     console.log(user.valueOf());
+//Get the role of which ID is 1.
+Role.use(db).get(1).then(role => {
+    //Print out the role.
+    console.log(role.valueOf());
 
-//     //Get all articles of the user.
-//     return user.articles.all().then(articles => {
-//         //Print out all articles' data.
-//         for (let article of articles) {
-//             console.log(article.valueOf());
-//         }
+    //Update associations of the role's users.
+    return role.users.attach([1, 2, 3]);
+}).then(role => {
+    //Get all users of the role.
+    return role.users.all().then(users => {
+        //Print out all users.
+        for (let user of users) {
+            console.log(user.valueOf());
+        }
 
-//         //Get all comments of the user.
-//         return user.comments.all().then(comments => {
-//             //Print out all comments' data.
-//             for (let comment of comments) {
-//                 console.log(comment.valueOf());
-//             }
+        return role;
+    });
+}).catch(err => {
+    console.log(err);
+});
 
-//             return user;
-//         });
-//     });
-// }).catch(err => {
-//     console.log(err);
-// });
+//Get the tag of which ID is 1.
+Tag.use(db).get(1).then(tag => {
+    //print out the tag.
+    console.log(tag.valueOf());
 
-// // //Get the article of which's ID is 1.
-// Article.use(db).get(1).then(article => {
-//     //Print out the article's data.
-//     console.log(article.valueOf());
+    //Update associations of the tag's users.
+    return tag.users.attach([1, 2, 3]);
+}).then(tag => {
+    //Get all users of the tag.
+    return tag.users.all().then(users => {
+        //Print out all users.
+        for (let user of users) {
+            console.log(user.valueOf());
+        }
 
-//     //Get the user the of the article.
-//     return article.user.get().then(user => {
-//         //Print out the user's data.
-//         console.log(user.valueOf());
-
-//         //Get all comments of the article.
-//         return article.comments.all().then(comments => {
-//             //Print out all comments' data.
-//             for (let comment of comments) {
-//                 console.log(comment.valueOf());
-//             }
-
-//             return article;
-//         });
-//     });
-// }).catch(err => {
-//     console.log(err);
-// });
-
-// //Get all comments.
-// Comment.use(db).all().then(comments => {
-//     var index = 0,
-//         //Walk through all comments in a recursive loop.
-//         loop = comment => {
-//             if (comment !== undefined) {
-//                 //Print out the comment's data;
-//                 console.log(comment.valueOf());
-
-//                 index += 1;
-//                 if (comment.commentable_type == "User") {
-//                     //Get the user which the comment belongs to.
-//                     return comment.user.get().then(user => {
-//                         //Print out the user's data;
-//                         console.log(user.valueOf());
-
-//                         return loop(comments[index]);
-//                     });
-//                 } else if (comment.commentable_type == "Article") {
-//                     //Get the article which the comment belongs to.
-//                     return comment.article.get().then(article => {
-//                         //Print out the article's data.
-//                         console.log(article.valueOf());
-
-//                         return loop(comments[index]);
-//                     });
-//                 } else {
-//                     return loop(comments[index]);
-//                 }
-//             } else {
-//                 return comments;
-//             }
-//         };
-
-//     return loop(comments[index]);
-// }).catch(err => {
-//     console.log(err);
-// });
-
-//Get the user of whose ID is 1.
-// User.use(db).get(1).then(user => {
-//     //Create a new article.
-//     var article = new Article;
-//     article.title = "A test article.";
-//     article.content = "Test content.";
-// Article.use(db).get(1).then(user => {
-//     user.tags.all().then(tags => {
-//         console.log(tags);
-//     })
-// });
-
-// return article.user.associate(user, "user_id").then(article => {
-//     //Print out the article.
-//     console.log(article);
-
-//     //Create a comment.
-//     var comment = new Comment;
-//     comment.content = "A test comment to the User.";
-//     return comment.associate(user, "commentable_id", "commentable_type");
-// });
-// }).catch(err => {
-//     console.log(err);
-// });
+        return tag;
+    })
+}).catch(err => {
+    console.log(err);
+});

@@ -41,6 +41,12 @@ class Model extends Query {
         //This property carries the data of the model.
         this.__data = {};
 
+        //This property carries extra data of the model.
+        //When calling model.assign(), those data which are not defined in the
+        //model.__fields will be stored in this property.
+        //When inserting or updating the model, these data won't be affected.
+        this.__extra = {};
+
         //Event handlers.
         this.__events = Object.assign({
             //This event will be fired when the SQL statement has been 
@@ -125,6 +131,8 @@ class Model extends Query {
                     }
                 }
                 this.__data[key] = data[key];
+            } else {
+                this.__extra[key] = data[key];
             }
         }
         return this;
@@ -915,9 +923,10 @@ class Model extends Query {
      * 
      * @param  {Model}  Model      A model class that needs to be associated.
      * @param  {String} foreignKey A foreign key in the current model.
-     * @param  {String} typeKey    [optional] A field name in the current model
-     *                             that stores the current model name when you
-     *                             are defining a polymorphic association.
+     * @param  {String} typeKey    [optional] A field name in the current 
+     *                             model that stores the current model name 
+     *                             when you are defining a polymorphic 
+     *                             association.
      * 
      * @return {Model} Returns the associated model instance so you can use 
      *                 its features to handle data.
@@ -1050,18 +1059,34 @@ class Model extends Query {
     }
 
     /**
-     * Associates the current model to another model.
+     * Makes an association to a specified model.
      * 
      * This method can only be called after calling `model.belongsTo()`.
      * 
-     * @param {Model}  model      A model that needs to be associated.
+     * @param {Model} model A model that needs to be associated or a number 
+     *                      that represents the value of the model's primary 
+     *                      key.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the caller instance.
      */
     associate(model) {
-        var target = this.__caller;
-        target.__data[this.__foreignKey] = model.__data[model.__primary];
+        if (!(this.__caller instanceof Model)) {
+            throw new Error("model.associate() can only be called after " +
+                "calling model.belongsTo().");
+        }
+
+        var target = this.__caller,
+            id = null;
+        if (!isNaN(model)) {
+            id = model;
+        } else if (model instanceof Model) {
+            id = model.__data[model.__primary];
+        } else {
+            throw new Error("The only argument passed to model.associate() " +
+                "must be a number or an instance of Model.");
+        }
+        target.__data[this.__foreignKey] = id;
         if (this.__typeKey)
             target.__data[this.__typeKey] = this.constructor.name;
         return target.save().then(target => {
@@ -1070,7 +1095,7 @@ class Model extends Query {
     }
 
     /**
-     * Removes an association of the current model.
+     * Removes the association bound by `model.associate()`.
      * 
      * This method can only be called after calling `model.belongsTo()`.
      * 
@@ -1083,6 +1108,11 @@ class Model extends Query {
      *                   to the callback of `then()` is the caller instance.
      */
     dissociate() {
+        if (!(this.__caller instanceof Model)) {
+            throw new Error("model.dissociate() can only be called after " +
+                "calling model.belongsTo().");
+        }
+
         var target = this.__caller;
         target.__data[this.__foreignKey] = null;
         if (this.__typeKey)
@@ -1098,21 +1128,32 @@ class Model extends Query {
      * This method can only be called after calling `model.hasVia()` or 
      * `model.belongsToVia()`.
      * 
-     * @param {Array} models An array carries all models or IDs that needs to 
-     *                       be associated.
+     * @param {Array} models An array carries all models or numbers which 
+     *                       represents the values of models' primary keys 
+     *                       that needs to be associated.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the caller instance.
      */
     attach(models) {
+        if (!(models instanceof Array)) {
+            throw new Error("The only argument passed to model.attach() " +
+                "must be an instance of Array.");
+        }
+        if (!(this.__caller instanceof Model)) {
+            throw new Error("model.attach() can only be called after " +
+                "calling model.hasVia() or model.belongsToVia().");
+        }
+
         var target = this.__caller,
             id1 = target.__data[target.__primary],
             ids = [];
         for (let model of models) {
-            if (typeof model == "number")
+            if (!isNaN(model)) {
                 ids.push(model);
-            else
+            } else if (model instanceof Model) {
                 ids.push(model.__data[model.__primary]);
+            }
         }
 
         //Handle procedure in a transaction.
@@ -1174,15 +1215,26 @@ class Model extends Query {
      * This method can only be called after calling `model.hasVia()` or 
      * `model.belongsToVia()`.
      * 
-     * @param {Array} models [optional] An array carries all models or IDs 
-     *                       that needs to be dissociated. If this parameter 
-     *                       is not provided, all associations of the caller 
-     *                       model in the pivot table will be deleted.
+     * @param {Array} models [optional] An array carries all models or numbers
+     *                       which represents the values of models' primary 
+     *                       keys that needs to be associated. If this 
+     *                       parameter is not provided, all associations of 
+     *                       the caller model in the pivot table will be 
+     *                       deleted.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the caller instance.
      */
     detach(models = []) {
+        if (!(models instanceof Array)) {
+            throw new Error("The only argument passed to model.detach() " +
+                "must be an instance of Array.");
+        }
+        if (!(this.__caller instanceof Model)) {
+            throw new Error("model.attach() can only be called after " +
+                "calling model.hasVia() or model.belongsToVia().");
+        }
+
         var target = this.__caller,
             id1 = target.__data[target.__primary],
             query = new Query(this.__pivot[0]);
@@ -1193,18 +1245,45 @@ class Model extends Query {
             //Delete association records which are in the provided models.
             let ids = [];
             for (let model of models) {
-                if (typeof model == "number")
+                if (!isNaN(model)) {
                     ids.push(model);
-                else
+                } else if (model instanceof Model) {
                     ids.push(model.__data[model.__primary]);
+                }
             }
-            return query.whereIn(this.__pivot[1], ids)
-                .delete()
-                .then(query => target);
-        } else {
-            //Delete all association records.
-            return query.delete().then(query => target);
+            if (ids.length)
+                query.whereIn(this.__pivot[1], ids);
         }
+        return query.delete().then(query => target);
+    }
+
+    /**
+     * Gets extra data from the pivot table.
+     * 
+     * This method can only be called after calling `model.hasVia()` or 
+     * `model.belongsToVia()`.
+     * 
+     * @param {Any} fields A list of all target fields, each one passed as an
+     *                     argument, or just pass the first argument as an 
+     *                     array that carries all the field names.
+     * 
+     * @return {Model} Returns the current instance for function chaining.
+     */
+    withPivot(...fields) {
+        var caller = this.__caller,
+            pivotTable = this.__pivot[0],
+            foreignKey1 = pivotTable + "." + this.__pivot[1],
+            foreignKey2 = pivotTable + "." + this.__pivot[2],
+            primary = this.__table + "." + this.__primary;
+        if (fields instanceof Array)
+            fields = fields[0];
+        fields = fields.map(field => pivotTable + "." + field);
+        fields.unshift(this.__table + ".*");
+        this.select(fields)
+            .join(pivotTable, foreignKey1, primary)
+            .where(foreignKey2, caller.__data[caller.__primary])
+            .orderBy(primary);
+        return this;
     }
 
     /**

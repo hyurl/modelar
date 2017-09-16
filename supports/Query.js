@@ -187,19 +187,18 @@ class Query extends DB {
 
     /** Handles join clauses. */
     __handleJoin(table, field1, operator, field2, type = "inner") {
-        if (field2 === undefined) {
+        if (!field2) {
             field2 = operator;
             operator = "=";
         }
         if (!this.__join) { //One join.
-            this.__join = this.__table + " " + type + " join " +
-                this.__backquote(table) + " on " + field1 + " " +
-                operator + " " + field2;
+            this.__join = this.__table;
         } else { //Multiple joins.
-            this.__join = "(" + this.__join + ") " + type + " join " +
-                this.__backquote(table) + " on " + field1 + " " +
-                operator + " " + field2;
+            this.__join = "(" + this.__join + ")";
         }
+        this.__join += " " + type + " join " + this.__backquote(table) +
+            " on " + this.__backquote(field1) + " " + operator + " " +
+            this.__backquote(field2);
         return this;
     }
 
