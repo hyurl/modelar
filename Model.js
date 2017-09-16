@@ -49,8 +49,8 @@ class Model extends Query {
 
         //Event handlers.
         this.__events = Object.assign({
-            //This event will be fired when the SQL statement has been 
-            //successfully executed.
+            //This event will be fired when a SQL statement is about to be
+            //executed.
             query: [],
             //This event will be fired when a new model is about to be 
             //inserted into the database.
@@ -1128,17 +1128,21 @@ class Model extends Query {
      * This method can only be called after calling `model.hasVia()` or 
      * `model.belongsToVia()`.
      * 
-     * @param {Array} models An array carries all models or numbers which 
-     *                       represents the values of models' primary keys 
-     *                       that needs to be associated.
+     * @param {Any} models An array carries all models or numbers which 
+     *                     represents the values of models' primary keys 
+     *                     that needs to be associated. Also, it is possible 
+     *                     to pass this argument an object that its keys
+     *                     represents the values of models' primary keys, and
+     *                     its values sets extra data in the pivot table.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *                   to the callback of `then()` is the caller instance.
      */
     attach(models) {
-        if (!(models instanceof Array)) {
+        var notArray = !(models instanceof Array);
+        if (notArray && !(models instanceof Object)) {
             throw new Error("The only argument passed to model.attach() " +
-                "must be an instance of Array.");
+                "must be an instance of Array or an instance of Object.");
         }
         if (!(this.__caller instanceof Model)) {
             throw new Error("model.attach() can only be called after " +
@@ -1148,64 +1152,126 @@ class Model extends Query {
         var target = this.__caller,
             id1 = target.__data[target.__primary],
             ids = [];
-        for (let model of models) {
-            if (!isNaN(model)) {
-                ids.push(model);
-            } else if (model instanceof Model) {
-                ids.push(model.__data[model.__primary]);
+        if (notArray) {
+            for (var i in models) {
+                if (models.hasOwnProperty(i) && !isNaN(i)) {
+                    ids.push(parseInt(i));
+                }
+            }
+        } else {
+            for (let model of models) {
+                if (!isNaN(model)) {
+                    ids.push(model);
+                } else if (model instanceof Model) {
+                    ids.push(model.__data[model.__primary]);
+                }
             }
         }
 
-        //Handle procedure in a transaction.
-        return this.transaction(() => {
-            var query = new Query(this.__pivot[0]);
-            query.use(this).where(this.__pivot[2], id1);
-            if (this.__pivot[3])
-                query.where(this.__pivot[3], this.__pivot[4]);
-            return query.all().then(data => {
-                let _ids = [],
-                    deletes = [];
-                for (let single of data) {
-                    let id2 = single[this.__pivot[1]];
-                    _ids.push(id2);
-                    if (!ids.includes(id2)) {
-                        //Get foreign keys that needs to be deleted.
-                        deletes.push(id2);
+        var query = new Query(this.__pivot[0]);
+        query.use(this).where(this.__pivot[2], id1);
+        if (this.__pivot[3])
+            query.where(this.__pivot[3], this.__pivot[4]);
+        return query.all().then(data => {
+            let exists = [],
+                deletes = [],
+                inserts = [],
+                updates = [],
+                _data = {};
+            for (let single of data) {
+                let id = single[this.__pivot[1]];
+                exists.push(id);
+                //Store records in an object.
+                _data[id] = single;
+                if (!ids.includes(id)) {
+                    //Get IDs that needs to be deleted.
+                    deletes.push(id);
+                }
+            }
+            for (let id of ids) {
+                if (!exists.includes(id)) {
+                    //Get IDs that needs to be inserted.
+                    inserts.push(id);
+                } else if (notArray) {
+                    //Get IDs that needs to be updated.
+                    for (let i in models[id]) {
+                        if (_data[id][i] !== undefined &&
+                            _data[id][i] != models[id][i]) {
+                            updates.push(id);
+                            break;
+                        }
                     }
                 }
-                let __ids = [];
-                for (let id of ids) {
-                    if (!_ids.includes(id))
-                        __ids.push(id);
-                }
-                let _query = (new Query(this.__pivot[0])).use(this),
-                    //Insert association records within a recursive loop.
-                    loop = (query) => {
-                        let data = {};
-                        data[this.__pivot[2]] = id1;
-                        data[this.__pivot[1]] = __ids.shift();
-                        if (this.__pivot[3])
-                            data[this.__pivot[3]] = this.__pivot[4];
-                        return query.insert(data).then(query => {
-                            return __ids.length ? loop(query) : target;
-                        });
-                    };
-                if (deletes.length) {
-                    //Delete association records which are not in the provided
-                    //models.
-                    _query.where(this.__pivot[2], id1);
+            }
+
+            let _query = (new Query(this.__pivot[0])).use(this),
+                //Insert association records within a recursive loop.
+                doInsert = (query) => {
+                    let id = inserts.shift(),
+                        data = notArray ? models[id] : {};
+                    data[this.__pivot[2]] = id1;
+                    data[this.__pivot[1]] = id;
                     if (this.__pivot[3])
-                        _query.where(this.__pivot[3], this.__pivot[4]);
-                    return _query.whereIn(this.__pivot[1], deletes)
-                        .delete().then(_query => {
-                            return __ids.length ? loop(_query) : target;
+                        data[this.__pivot[3]] = this.__pivot[4];
+                    //Insert a new record.
+                    return query.insert(data).then(query => {
+                        return inserts.length ? doInsert(query) : query;
+                    });
+                },
+                //Update association records within a recursive loop.
+                doUpdate = (query) => {
+                    let id = updates.shift(),
+                        data = notArray ? models[id] : {};
+
+                    //Re-initiate the query.
+                    query.__where = "";
+                    query.__bindings = [];
+                    query.where(
+                        this.__pivot[1], _data[id][this.__pivot[1]]);
+                    query.where(this.__pivot[2], id1);
+                    delete data[this.__pivot[2]];
+                    delete data[this.__pivot[1]];
+                    if (this.__pivot[3]) {
+                        query.where(this.__pivot[3], this.__pivot[4]);
+                        delete data[this.__pivot[3]];
+                    }
+                    //Update the record.
+                    return query.update(data).then(query => {
+                        return updates.length ? doUpdate(query) : query;
+                    });
+                };
+            if (deletes.length || updates.length || inserts.length) {
+                //Handle the procedure in a transaction.
+                return this.transaction(() => {
+                    if (deletes.length) {
+                        //Delete association records which are not in the 
+                        //provided models.
+                        _query.whereIn(this.__pivot[1], deletes);
+                        _query.where(this.__pivot[2], id1);
+                        if (this.__pivot[3])
+                            _query.where(this.__pivot[3], this.__pivot[4]);
+                        return _query.delete().then(_query => {
+                            return updates.length ? doUpdate(_query) : _query;
+                        }).then(_query => {
+                            return inserts.length ? doInsert(_query) : _query;
+                        }).then(_query => {
+                            return target;
                         });
-                } else if (__ids.length) {
-                    return loop(_query);
-                } else {
-                    return target;
-                }
-            });
+                    } else if (updates.length) {
+                        return doUpdate(_query).then(_query => {
+                            return inserts.length ? doInsert(_query) : _query;
+                        }).then(_query => {
+                            return target;
+                        });
+                    } else if (inserts.length) {
+                        return doInsert(_query).then(_query => {
+                            return target;
+                        });
+                    }
+                });
+            } else {
+                return target;
+            }
         });
     }
 
@@ -1281,8 +1347,7 @@ class Model extends Query {
         fields.unshift(this.__table + ".*");
         this.select(fields)
             .join(pivotTable, foreignKey1, primary)
-            .where(foreignKey2, caller.__data[caller.__primary])
-            .orderBy(primary);
+            .where(foreignKey2, caller.__data[caller.__primary]);
         return this;
     }
 

@@ -70,7 +70,14 @@ User.use(db).get(1).then(user => {
     console.log(user.valueOf());
 
     //Update associations of user's roles.
-    return user.roles.attach([1, 2, 3]);
+    // return user.roles.attach([1, 2, 3]);
+    //You may also want to try this out if you have a field `activated` in the
+    //pivot table `user_role`:
+    return user.roles.attach({
+        1: { activated: 1 },
+        2: { activated: 1 },
+        3: { activated: 1 }
+    });
 }).then(user => {
     //Get all roles of the user.
     return user.roles.all().then(roles => {
@@ -82,8 +89,10 @@ User.use(db).get(1).then(user => {
         return user;
     });
 }).then(user => {
-    //Update associations of user's tags.
-    return user.tags.attach([1, 2, 3]);
+    //Associate all tags to the user.
+    return Tag.use(db).all().then(tags => {
+        return user.tags.attach(tags);
+    });
 }).then(user => {
     //Get all tags of the user.
     return user.tags.all().then(tags => {
@@ -97,43 +106,43 @@ User.use(db).get(1).then(user => {
 });
 
 //Get the role of which ID is 1.
-Role.use(db).get(1).then(role => {
-    //Print out the role.
-    console.log(role.valueOf());
+// Role.use(db).get(1).then(role => {
+//     //Print out the role.
+//     console.log(role.valueOf());
 
-    //Update associations of the role's users.
-    return role.users.attach([1, 2, 3]);
-}).then(role => {
-    //Get all users of the role.
-    return role.users.all().then(users => {
-        //Print out all users.
-        for (let user of users) {
-            console.log(user.valueOf());
-        }
+//     //Update associations of the role's users.
+//     return role.users.attach([1, 2, 3]);
+// }).then(role => {
+//     //Get all users of the role.
+//     return role.users.all().then(users => {
+//         //Print out all users.
+//         for (let user of users) {
+//             console.log(user.valueOf());
+//         }
 
-        return role;
-    });
-}).catch(err => {
-    console.log(err);
-});
+//         return role;
+//     });
+// }).catch(err => {
+//     console.log(err);
+// });
 
-//Get the tag of which ID is 1.
-Tag.use(db).get(1).then(tag => {
-    //print out the tag.
-    console.log(tag.valueOf());
+// //Get the tag of which ID is 1.
+// Tag.use(db).get(1).then(tag => {
+//     //print out the tag.
+//     console.log(tag.valueOf());
 
-    //Update associations of the tag's users.
-    return tag.users.attach([1, 2, 3]);
-}).then(tag => {
-    //Get all users of the tag.
-    return tag.users.all().then(users => {
-        //Print out all users.
-        for (let user of users) {
-            console.log(user.valueOf());
-        }
+//     //Update associations of the tag's users.
+//     return tag.users.attach([1, 2, 3]);
+// }).then(tag => {
+//     //Get all users of the tag.
+//     return tag.users.all().then(users => {
+//         //Print out all users.
+//         for (let user of users) {
+//             console.log(user.valueOf());
+//         }
 
-        return tag;
-    })
-}).catch(err => {
-    console.log(err);
-});
+//         return tag;
+//     })
+// }).catch(err => {
+//     console.log(err);
+// });

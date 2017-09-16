@@ -43,8 +43,8 @@ class DB {
 
         //Event handlers.
         this.__events = Object.assign({
-            //This event will be fired when a SQL statement has been 
-            //successfully executed.
+            //This event will be fired when a SQL statement is about to be
+            //executed.
             query: [],
         }, this.constructor.__events);
     }
@@ -249,8 +249,6 @@ class DB {
                             reject(err);
                         } else {
                             _this.__data = rows;
-                            //Fire event and trigger event handlers.
-                            // _this.trigger('query', _this);
                             resolve(_this);
                         }
                     });
@@ -262,8 +260,6 @@ class DB {
                         } else {
                             _this.insertId = this.lastID;
                             _this.affectedRows = this.changes;
-                            //Fire event and trigger event handlers.
-                            // _this.trigger('query', _this);
                             resolve(_this);
                         }
                     });
@@ -287,8 +283,6 @@ class DB {
                             this.insertId = res.insertId;
                             this.affectedRows = res.affectedRows;
                         }
-                        //Fire event and trigger event handlers.
-                        // this.trigger('query', this);
                         resolve(this);
                     }
                 });

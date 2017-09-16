@@ -32,22 +32,26 @@ class Query extends DB {
 
         //Event handlers.
         this.__events = Object.assign({
-            query: [], //This event will be fired when the SQL statement has 
-            //been successfully executed.
-            insert: [], //This event will be fired when a new record is 
-            //about to be inserted into the database.
-            inserted: [], //This event will be fired when a new record is 
-            //successfully inserted into the database.
-            update: [], //This event will be fired when a record is about 
-            //to be updated.
-            updated: [], //This event will be fired when a record is 
-            //successfully updated.
-            delete: [], //This event will be fired when a record is about 
-            //to be deleted.
-            deleted: [], //This event will be fired when a record is 
-            //successfully deleted.
-            get: [], //This event will be fired when a record is 
-            //successfully fetched from the database.
+            //This event will be fired when a SQL statement is about to be
+            //executed.
+            query: [],
+            //This event will be fired when a new model is about to be 
+            //inserted into the database.
+            insert: [],
+            //This event will be fired when a new model is successfully 
+            //inserted into the database.
+            inserted: [],
+            //This event will be fired when a model is about to be updated.
+            update: [],
+            //This event will be fired when a model is successfully updated.
+            updated: [],
+            //This event will be fired when a model is about to be deleted.
+            delete: [],
+            //This event will be fired when a model is successfully deleted.
+            deleted: [],
+            //This event will be fired when a model is successfully fetched 
+            //from the database.
+            get: [],
         }, this.constructor.__events);
     }
 
