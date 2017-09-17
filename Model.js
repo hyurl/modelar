@@ -230,6 +230,12 @@ class Model extends Query {
                     throw new Error("No " + this.constructor.name +
                         " was found by searching the given data.");
                 } else {
+                    //Remove temporary property.
+                    delete this.__caller;
+                    delete this.__foreignKey;
+                    delete this.__typeKey;
+                    delete this.__pivot;
+                    //Assign data and trigger event handlers.
                     return this.assign(data).trigger('get', this);
                 }
             });
@@ -1358,7 +1364,7 @@ class Model extends Query {
      */
     valueOf() {
         var data = {};
-        for (let key in this.__data) {
+        for (let key of this.__fields) {
             let get = this.__lookupGetter__(key);
             if (get instanceof Function && get.name.includes(' ')) {
                 //Calling getter.
@@ -1367,7 +1373,7 @@ class Model extends Query {
                 //value.
                 if (value !== undefined)
                     data[key] = value;
-            } else {
+            } else if (this.__data[key] !== undefined) {
                 data[key] = this.__data[key];
             }
         }
