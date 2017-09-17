@@ -1,6 +1,6 @@
 "use strict";
 
-const Query = require('./supports/Query');
+const Query = require("./supports/Query");
 
 /**
  * *Model Wrapper.*
@@ -35,7 +35,7 @@ class Model extends Query {
     constructor(data = {}, config = {}) {
         super(config.table); //Bind the table name.
         this.__fields = config.fields || []; //Fields of the table.
-        this.__primary = config.primary || ''; //The primary key.
+        this.__primary = config.primary || ""; //The primary key.
         this.__searchable = config.searchable || []; //Searchable fields.
 
         //This property carries the data of the model.
@@ -125,7 +125,7 @@ class Model extends Query {
                 //Only accept those fields that `__fields` sets.
                 if (useSetter) {
                     let set = this.__lookupSetter__(key);
-                    if (set instanceof Function && set.name.includes(' ')) {
+                    if (set instanceof Function && set.name.includes(" ")) {
                         set.call(this, data[key]); //Calling setter
                         continue;
                     }
@@ -146,11 +146,11 @@ class Model extends Query {
      *                   to the callback of `then()` is the current instance.
      */
     save() {
-        this.trigger('save', this); //Trigger the save event.
+        this.trigger("save", this); //Trigger the save event.
         var exists = this.__data[this.__primary],
             promise = exists ? this.update() : this.insert();
         return promise.then(model => {
-            return this.trigger('saved', model);
+            return this.trigger("saved", model);
         });
     }
 
@@ -236,7 +236,7 @@ class Model extends Query {
                     delete this.__typeKey;
                     delete this.__pivot;
                     //Assign data and trigger event handlers.
-                    return this.assign(data).trigger('get', this);
+                    return this.assign(data).trigger("get", this);
                 }
             });
         } else {
@@ -262,7 +262,7 @@ class Model extends Query {
                 for (let i in data) {
                     let model = new this.constructor();
                     //Assign data and trigger event handlers for every model.
-                    model.use(this).assign(data[i]).trigger('get', model);
+                    model.use(this).assign(data[i]).trigger("get", model);
                     models.push(model);
                 }
                 return models;
@@ -307,16 +307,16 @@ class Model extends Query {
             page: 1,
             limit: 10,
             orderBy: this.__primary,
-            sequence: 'asc',
-            keywords: '',
+            sequence: "asc",
+            keywords: "",
         };
         args = Object.assign(defaults, args);
 
         //Set basic query conditions.
         var offset = (args.page - 1) * args.limit;
-        this.limit(offset, args.limit);
-        if (args.sequence !== 'asc' && args.sequence != 'desc')
-            this.random(); //随机排序
+        this.limit(args.limit, offset);
+        if (args.sequence !== "asc" && args.sequence != "desc")
+            this.random();
         else
             this.orderBy(args.orderBy, args.sequence);
 
@@ -336,19 +336,21 @@ class Model extends Query {
 
         //Set where clause by using keywords in a vague searching senario.
         if (args.keywords && this.__searchable) {
-            var keywords = args.keywords;
-            if (typeof keywords == 'string') keywords = [keywords];
+            var keywords = args.keywords,
+                wildcard = this.__config.type == "access" ? "*" : "%";
+            if (typeof keywords == "string") keywords = [keywords];
             for (let i in keywords) {
                 //Escape special characters.
-                keywords[i] = keywords[i].replace('%', '\%')
-                    .replace("\\", "\\\\");
+                keywords[i] = keywords[i].replace("\\", "\\\\")
+                    .replace(wildcard, "\\" + wildcard);
             }
             //Construct nested conditions.
             this.where((query) => {
                 for (let field of this.__searchable) {
                     query.orWhere((query) => {
                         for (let keyword of keywords) {
-                            query.orWhere(field, 'like', '%' + keyword + '%');
+                            keyword = wildcard + keyword + wildcard;
+                            query.orWhere(field, "like", keyword);
                         }
                     });
                 }
@@ -702,16 +704,14 @@ class Model extends Query {
     /**
      * Sets a limit clause for the SQL statement.
      * 
-     * @param  {Number} offset The start point, count from `0`. If `length` is
-     *                         not passed, then this argument will replace it,
-     *                         and the offset will become 0.
-     * @param  {Number} length [optional] The top limit of how many counts 
+     * @param  {Number} length The top limit of how many counts 
      *                         that this query will fetch.
+     * @param  {Number} offset [optional] The start point, count from `0`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    static limit(offset, length = 0) {
-        return (new this()).limit(offset, length);
+    static limit(length, offset = 0) {
+        return (new this()).limit(length, offset);
     }
 
     /**
@@ -1366,7 +1366,7 @@ class Model extends Query {
         var data = {};
         for (let key of this.__fields) {
             let get = this.__lookupGetter__(key);
-            if (get instanceof Function && get.name.includes(' ')) {
+            if (get instanceof Function && get.name.includes(" ")) {
                 //Calling getter.
                 let value = get.call(this, this.__data[key]);
                 //Set this property only if getter returns an non-undefined

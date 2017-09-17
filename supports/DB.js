@@ -16,10 +16,10 @@ class DB {
      *                         the database name.
      */
     constructor(config = {}) {
-        if (typeof config == 'string')
+        if (typeof config == "string")
             config = { database: config };
 
-        this.sql = ''; //The SQL statement the last time execute.
+        this.sql = ""; //The SQL statement the last time execute.
         this.bindings = []; //The binding data the last time execute.
 
         //The ID returned by executing the last insert statement.
@@ -52,22 +52,28 @@ class DB {
     /** Gets the connect specification by the given configuration. */
     __getSpec() {
         var config = this.__config;
-        if (config.type == 'sqlite') { //SQLite
-            return config.type + ':' + config.database;
-        } else if (config.type == 'mysql') { //MySQL
-            return config.type + ':' + config.user + ':' + config.password +
-                '@' + config.host + ':' + config.port +
-                (config.database ? '/' + config.database : '');
+        if (config.type == "sqlite" || config.type == "access") {
+            //SQLite and Access.
+            return config.type + ":" + config.database;
+        } else if (config.type == "mysql" || config.type == "postgres") {
+            //MySQL and PostgreSQL.
+            return config.type + ":" + config.user + ":" + config.password +
+                "@" + config.host + ":" + config.port +
+                (config.database ? "/" + config.database : "");
         }
     }
 
     /** Adds quote to a specified value. */
     __quote(value) {
+        if (typeof value == "number" || value === null)
+            return value;
         return "'" + value.replace(/'/g, "\\'") + "'";
     }
 
     /** Adds back-quote to a specified field. */
     __backquote(field) {
+        if (this.__config.type === "postgres")
+            return field; //PostgreSQL does not need to back-quote.
         var parts = field.split(".");
         if (field.indexOf(" ") < 0 && field.indexOf("(") < 0 &&
             field.indexOf("`") < 0 && field != "*" && parts.length === 1) {
@@ -89,16 +95,19 @@ class DB {
     static init(config = {}) {
         //This object stores basic database configurations for every instance.
         this.__config = Object.assign({
-            type: 'mysql', //Database type, accept 'mysql' and 'sqlite'.
-            database: '',
-            //These properties are only for MySQL:
-            host: 'localhost',
+            //Database type, accept "mysql", "sqlite", "postgres".
+            type: "mysql",
+            database: "",
+            //These properties are only for MySQL and PostgreSQL:
+            host: "localhost",
             port: 3306,
-            user: 'root',
-            password: '',
-            charset: 'utf8',
-            timeout: 5000, //This property sets both connecting timeout and 
-            //query timeout.
+            user: "root",
+            password: "",
+            timeout: 5000,
+            //SSL option supports: { rejectUnauthorized, ca, key, cert }
+            ssl: null,
+            //Charset is only for MySQL.
+            charset: "utf8",
         }, this.__config || {}, config);
 
         //This property carries all event handlers bound by DB.on().
@@ -182,12 +191,21 @@ class DB {
         if (connections[this.__spec] && connections[this.__spec].length > 0) {
             //If has available connections, retrieve the first one.
             this.__connection = connections.shift();
+            //Ping to the database server, make sure the connection is active.
+            if (this.__connection.ping instanceof Function) {
+                this.__connection.ping();
+            }
         } else {
-            if (config.type == 'sqlite') { //SQLite
-                var driver = require('sqlite3'); //Import SQLite.
+            if (config.type == "sqlite") { //SQLite
+                var driver = require("sqlite3"); //Import SQLite.
                 this.__connection = new driver.Database(config.database);
-            } else if (config.type == 'mysql') { //MySQL
-                var driver = require('mysql'); //Import MySQL.
+            } else if (config.type == "access") { //Access
+                var driver = require("node-adodb");
+                var spec = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" +
+                    config.database;
+                this.__connection = driver.open(spec);
+            } else if (config.type == "mysql") { //MySQL
+                var driver = require("mysql"); //Import MySQL.
                 this.__connection = driver.createConnection({
                     host: config.host,
                     port: config.port,
@@ -196,6 +214,16 @@ class DB {
                     database: config.database,
                     charset: config.charset,
                     connectTimeout: config.timeout,
+                });
+                this.__connection.connect();
+            } else if (config.type == "postgres") { //PostgreSQL
+                var driver = require("pg");
+                this.__connection = new driver.Client({
+                    host: config.host,
+                    port: config.port,
+                    user: config.user,
+                    password: config.password,
+                    database: config.database,
                 });
                 this.__connection.connect();
             }
@@ -228,7 +256,7 @@ class DB {
      *                   to the callback of `then()` is the current instance.
      */
     query(sql, bindings = []) {
-        this.sql = sql.toLowerCase().trim();
+        this.sql = sql.trim();
         this.bindings = Object.assign([], bindings);
         return new Promise((resolve, reject) => {
             if (this.__connection === null) {
@@ -236,13 +264,15 @@ class DB {
                 this.connect();
             }
             //Fire event and trigger event handlers.
-            this.trigger('query', this);
+            this.trigger("query", this);
 
-            if (this.__config.type == 'sqlite') { //SQLite
+            var i = this.sql.indexOf(" "),
+                start = this.sql.substring(0, i).toLowerCase();
+
+            if (this.__config.type == "sqlite") { //SQLite
                 var _this = this,
-                    begin = this.sql.substring(0, this.sql.indexOf(" ")),
-                    gets = ['select', 'pragma'];
-                if (gets.includes(begin)) {
+                    gets = ["select", "pragma"];
+                if (gets.includes(start)) {
                     //Deal with select or pragma statements.
                     this.__connection.all(sql, bindings, function(err, rows) {
                         if (err) {
@@ -264,7 +294,7 @@ class DB {
                         }
                     });
                 }
-            } else if (this.__config.type == 'mysql') { //MySQL
+            } else if (this.__config.type == "mysql") { //MySQL
                 this.__connection.query({
                     sql: sql,
                     timeout: this.__config.timeout,
@@ -286,6 +316,69 @@ class DB {
                         resolve(this);
                     }
                 });
+            } else if (this.__config.type == "postgres") { //PostgreSQL
+                //Return the record when inserting.
+                if (start == "insert" && sql.search(/returning\s/) <= 0)
+                    sql += " returning *";
+                //Replace ? to ${n} of the SQL.
+                for (let i in bindings) {
+                    i++;
+                    sql = sql.replace("?", "$" + i);
+                }
+                sql = sql.replace(/`/g, ""); //Drop back-quotes.
+                this.__connection.query(sql, bindings, (err, res) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        if (start != "select" && start != "insert")
+                            this.affectedRows = res.rowCount || 0;
+                        if (start == "insert") {
+                            //Deal with insert statements.
+                            this.insertId = this.__getPostgresInsertId(
+                                res.rows[0], res.fields);
+                        } else {
+                            //Deal with other statements.
+                            this.__data = res.rows.map(row => {
+                                var data = {};
+                                for (let key in row) {
+                                    data[key] = row[key];
+                                }
+                                return data;
+                            });
+                        }
+                        resolve(this);
+                    }
+                });
+            } else if (this.__config.type == "access") { //Access
+                //Replace placeholders to values.
+                for (let value of bindings) {
+                    sql = sql.replace("?", this.__quote(value));
+                }
+                if (start == "select") {
+                    //Deal with select statements.
+                    this.__connection.query(sql).on("fail", err => {
+                        reject(err);
+                    }).on("done", data => {
+                        this.__data = data;
+                        resolve(this);
+                    });
+                } else if (start == "insert") {
+                    //Deal with insert statements.
+                    var sql2 = "select @@Identity AS insertID";
+                    this.__connection.execute(sql, sql2).on("fail", err => {
+                        reject(err);
+                    }).on("done", data => {
+                        this.insertId = data[0].insertId;
+                        resolve(this);
+                    });
+                } else {
+                    //Deal with other statements.
+                    this.__connection.execute(sql).on("fail", err => {
+                        reject(err);
+                    }).on("done", data => {
+                        resolve(this);
+                    });
+                }
             }
         });
     }
@@ -293,6 +386,15 @@ class DB {
     /** An alias of query(). */
     run(sql, bindings) {
         return this.query(sql, bindings);
+    }
+
+    //Gets insertID for PostgreSQL.
+    __getPostgresInsertId(row, fields) {
+        for (let field of fields) {
+            if (field.dataTypeID == 23 || field.name == "id")
+                return row[field.name];
+        }
+        return 0;
     }
 
     /**
@@ -311,8 +413,8 @@ class DB {
      *                   to the callback of `then()` is the current instance.
      */
     transaction(callback = null) {
-        if (typeof callback == 'function') {
-            return this.query('begin').then(db => {
+        if (typeof callback == "function") {
+            return this.query("begin").then(db => {
                 return callback.call(db, db);
             }).then(db => {
                 this.commit();
@@ -322,18 +424,18 @@ class DB {
                 throw err;
             });
         } else {
-            return this.query('begin');
+            return this.query("begin");
         }
     }
 
     /** Commits the transaction when things going well. */
     commit() {
-        return this.query('commit');
+        return this.query("commit");
     }
 
     /** Rolls the transaction back when things going not well. */
     rollback() {
-        return this.query('rollback');
+        return this.query("rollback");
     }
 
     /**
@@ -342,10 +444,12 @@ class DB {
      * @return {DB} Returns the current instance for function chaining.
      */
     close() {
-        if (this.__config.type == 'sqlite') //SQLite
+        if (this.__config.type == "sqlite") //SQLite
             this.__connection.close();
-        else if (this.__config.type == 'mysql') //MySQL
+        else if (this.__config.type == "mysql") //MySQL
             this.__connection.destroy();
+        else if (this.__config.type == "postgres") //PostgreSQL
+            this.__connection.end();
 
         //Remove the connection reference.
         this.__connection = null;
@@ -375,10 +479,12 @@ class DB {
         for (let spec in this.__pool) {
             if (this.__pool[spec] instanceof Array) {
                 for (let connection of this.__pool[spec]) {
-                    if (typeof connection.destroy == 'function') //MySQL
+                    if (typeof connection.destroy == "function") //MySQL
                         connection.destroy();
-                    else if (typeof connection.close == 'function') //SQLite
+                    else if (typeof connection.close == "function") //SQLite
                         connection.close();
+                    else if (typeof connection.end == "function") //PostgreSQL
+                        connection.end();
                     else
                         connection = null;
                 }

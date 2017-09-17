@@ -1,7 +1,7 @@
 "use strict";
 
-const Model = require('./Model');
-const bcrypt = require('bcrypt-nodejs');
+const Model = require("./Model");
+const bcrypt = require("bcrypt-nodejs");
 
 /**
  * *User Model.*
@@ -12,24 +12,24 @@ const bcrypt = require('bcrypt-nodejs');
 class User extends Model {
     constructor(data = {}, config = {}) {
         super(data, Object.assign({
-            table: 'users',
-            primary: 'id',
+            table: "users",
+            primary: "id",
             fields: [
-                'id',
-                'name',
-                'email',
-                'password',
+                "id",
+                "name",
+                "email",
+                "password",
             ],
             searchable: [
-                'name',
-                'email',
+                "name",
+                "email",
             ]
         }, config));
 
         //This property defines which fields can be used for logging-in.
         this.__loginable = [
-            'name',
-            'email',
+            "name",
+            "email",
         ];
 
         this.__events = Object.assign({
@@ -49,7 +49,7 @@ class User extends Model {
 
         //When creating a new user, if no password is provided, use an empty
         //string as its password.
-        this.on('save', () => {
+        this.on("save", () => {
             if (this.__data.password === undefined)
                 this.password = "";
         });
@@ -123,7 +123,7 @@ class User extends Model {
                 var password = _user.__data.password;
                 if (bcrypt.compareSync(args.password, password)) {
                     this.__data = _user.__data
-                    this.trigger('login', this); //Fire login event.
+                    this.trigger("login", this); //Fire login event.
                     return this;
                 }
             }

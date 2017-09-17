@@ -522,16 +522,19 @@ class Query extends DB {
     random() {
         switch (this.__config.type) {
             case "sqlite":
-                var rand = "random()";
+            case "postgres":
+                this.__orderBy = "random()";
                 break;
             case "sqlserve":
-                var rand = "newid()";
+                this.__orderBy = "newid()";
+                break;
+            case "access":
+                this.__orderBy = "Rnd(`ID`)";
                 break;
             default:
-                var rand = "rand()";
+                this.__orderBy = "rand()";
                 break;
         }
-        this.__orderBy = rand;
         return this;
     }
 
@@ -566,16 +569,19 @@ class Query extends DB {
     /**
      * Sets a limit clause for the SQL statement.
      * 
-     * @param  {Number} offset The start point, count from `0`. If `length` is
-     *                         not passed, then this argument will replace it,
-     *                         and the offset will become `0`.
-     * @param  {Number} length [optional] The top limit of how many counts 
+     * @param  {Number} length The top limit of how many counts 
      *                         that this query will fetch.
+     * @param  {Number} offset [optional] The start point, count from `0`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
-    limit(offset, length = 0) {
-        this.__limit = length ? offset + ", " + length : offset;
+    limit(length, offset = 0) {
+        if (this.__config.type == "postgres")
+            this.__limit = offset ? length + " offset " + offset : length;
+        else if (this.__config.type == "access")
+            this.__selects = "top " + length + " " + this.__selects;
+        else
+            this.__limit = offset ? offset + ", " + length : length;
         return this;
     }
 
@@ -809,7 +815,7 @@ class Query extends DB {
     chunk(length, callback) {
         var offset = 0,
             loop = () => {
-                return this.limit(offset, length).all().then(data => {
+                return this.limit(length, offset).all().then(data => {
                     var ok = callback.call(this, data);
                     if (data.length === length && ok !== false) {
                         offset += length;
@@ -857,7 +863,7 @@ class Query extends DB {
                 }
             } else { //If the are records, continue fetching data.
                 this.__selects = selects;
-                return this.limit(offset, length).all().then(data => {
+                return this.limit(length, offset).all().then(data => {
                     return {
                         page,
                         pages: Math.ceil(total / length),
