@@ -366,9 +366,10 @@ class Model extends Query {
     /*************************** Static Wrappers ****************************/
 
     /**
-     * Uses a connection that is already established.
+     * Uses a connection that is already established. If use this method, call
+     * it right after creating the instance.
      * 
-     * @param {Object} db An DB instance with a established connection.
+     * @param {DB} db An DB instance with a established connection.
      * 
      * @return {DB} Returns the current instance for function chaining.
      */

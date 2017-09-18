@@ -16,7 +16,7 @@ class Query extends DB {
      */
     constructor(table = "") {
         super();
-        this.__table = (table ? this.__backquote(table) : "");
+        this.__table = table;
         this.__inserts = ""; //Data of insert statement.
         this.__updates = ""; //Data of update statement.
         this.__selects = "*"; //Data of select statement.
@@ -80,7 +80,7 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     table(table) {
-        this.__table = this.__backquote(table);
+        this.__table = table;
         return this;
     }
 
@@ -196,7 +196,7 @@ class Query extends DB {
             operator = "=";
         }
         if (!this.__join) { //One join.
-            this.__join = this.__table;
+            this.__join = this.__backquote(this.__table);
         } else { //Multiple joins.
             this.__join = "(" + this.__join + ")";
         }
@@ -638,7 +638,8 @@ class Query extends DB {
         values = values.join(", ");
         this.__inserts = (isObj ? "(" + fields + ") " : "") +
             "values (" + values + ")";
-        this.sql = "insert into " + this.__table + " " + this.__inserts;
+        this.sql = "insert into " + this.__backquote(this.__table) + " " +
+            this.__inserts;
         //Fire event and trigger event handlers.
         this.trigger("insert", this);
         return this.query(this.sql, bindings).then(db => {
@@ -668,8 +669,8 @@ class Query extends DB {
         }
         bindings = bindings.concat(this.__bindings);
         this.__updates = fields.join(", ");
-        this.sql = "update " + this.__table + " set " + this.__updates +
-            (this.__where ? " where " + this.__where : "");
+        this.sql = "update " + this.__backquote(this.__table) + " set " +
+            this.__updates + (this.__where ? " where " + this.__where : "");
         //Fire event and trigger event handlers.
         this.trigger("update", this);
         return this.query(this.sql, bindings).then(db => {
@@ -688,7 +689,7 @@ class Query extends DB {
      *                   to the callback of `then()` is the current instance.
      */
     delete() {
-        this.sql = "delete from " + this.__table +
+        this.sql = "delete from " + this.__backquote(this.__table) +
             (this.__where ? " where " + this.__where : "");
         //Fire event and trigger event handlers.
         this.trigger("delete", this);
@@ -898,7 +899,7 @@ class Query extends DB {
         this.sql = "select " +
             (this.__distinct && !isCount ? "distinct " : "") +
             this.__selects + " from " +
-            (!this.__join ? this.__table : "") +
+            (!this.__join ? this.__backquote(this.__table) : "") +
             this.__join +
             (this.__where ? " where " + this.__where : "") +
             (this.__orderBy ? " order by " + this.__orderBy : "") +

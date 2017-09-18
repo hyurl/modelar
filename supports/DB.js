@@ -70,19 +70,20 @@ class DB {
         return "'" + value.replace(/'/g, "\\'") + "'";
     }
 
-    /** Adds back-quote to a specified field. */
-    __backquote(field) {
-        if (this.__config.type === "postgres")
-            return field; //PostgreSQL does not need to back-quote.
-        var parts = field.split(".");
-        if (field.indexOf(" ") < 0 && field.indexOf("(") < 0 &&
-            field.indexOf("`") < 0 && field != "*" && parts.length === 1) {
-            field = "`" + field + "`";
+    /** Adds back-quote to a specified identifier. */
+    __backquote(identifier) {
+        //PostgreSQL uses double-quote while others use back-quote.
+        var quote = this.__config.type === "postgres" ? "\"" : "`",
+            parts = identifier.split(".");
+        if (identifier.indexOf(" ") < 0 && identifier.indexOf("(") < 0 &&
+            identifier.indexOf(quote) < 0 && identifier != "*" &&
+            parts.length === 1) {
+            identifier = quote + identifier + quote;
         } else if (parts.length === 2) {
-            field = this.__backquote(parts[0]) + "." +
+            identifier = this.__backquote(parts[0]) + "." +
                 this.__backquote(parts[1]);
         }
-        return field;
+        return identifier;
     }
 
     /**
@@ -95,14 +96,14 @@ class DB {
     static init(config = {}) {
         //This object stores basic database configurations for every instance.
         this.__config = Object.assign({
-            //Database type, accept "mysql", "sqlite", "postgres".
-            type: "mysql",
+            //Database type, accept "mysql", "sqlite", "postgres", "access".
+            type: "sqlite",
             database: "",
             //These properties are only for MySQL and PostgreSQL:
-            host: "localhost",
-            port: 3306,
-            user: "root",
-            password: "",
+            host: "",
+            port: 0,
+            user: "",
+            password: "", //Password also work with Access.
             timeout: 5000,
             //SSL option supports: { rejectUnauthorized, ca, key, cert }
             ssl: null,
@@ -200,9 +201,17 @@ class DB {
                 var driver = require("sqlite3"); //Import SQLite.
                 this.__connection = new driver.Database(config.database);
             } else if (config.type == "access") { //Access
-                var driver = require("node-adodb");
-                var spec = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" +
-                    config.database;
+                var driver = require("node-adodb"),
+                    index = config.database.lastIndexOf(".") + 1,
+                    ext = config.database.substring(index),
+                    isAccdb = ext = "accdb";
+                if (isAccdb)
+                    var spec = "Provider=microsoft.ace.oledb.12.0;"
+                else
+                    var spec = "Provider=Microsoft.Jet.OLEDB.4.0;";
+                spec += "Data Source=" + config.database + ";";
+                if (config.password)
+                    spec += "Database Password=" + config.password;
                 this.__connection = driver.open(spec);
             } else if (config.type == "mysql") { //MySQL
                 var driver = require("mysql"); //Import MySQL.
@@ -224,6 +233,9 @@ class DB {
                     user: config.user,
                     password: config.password,
                     database: config.database,
+                    connect_timeout: config.timeout,
+                    statement_timeout: config.timeout,
+                    client_encoding: config.charset,
                 });
                 this.__connection.connect();
             }
@@ -232,9 +244,10 @@ class DB {
     }
 
     /**
-     * Uses a connection that is already established.
+     * Uses a connection that is already established. If use this method, call
+     * it right after creating the instance.
      * 
-     * @param {Object} db An DB instance with a established connection.
+     * @param {DB} db An DB instance with a established connection.
      * 
      * @return {DB} Returns the current instance for function chaining.
      */
@@ -325,13 +338,12 @@ class DB {
                     i++;
                     sql = sql.replace("?", "$" + i);
                 }
-                sql = sql.replace(/`/g, ""); //Drop back-quotes.
+                // sql = sql.replace(/`/g, ""); //Drop back-quotes.
                 this.__connection.query(sql, bindings, (err, res) => {
                     if (err) {
                         reject(err);
                     } else {
-                        if (start != "select" && start != "insert")
-                            this.affectedRows = res.rowCount || 0;
+                        this.affectedRows = res.rowCount || 0;
                         if (start == "insert") {
                             //Deal with insert statements.
                             this.insertId = this.__getPostgresInsertId(
@@ -391,7 +403,7 @@ class DB {
     //Gets insertID for PostgreSQL.
     __getPostgresInsertId(row, fields) {
         for (let field of fields) {
-            if (field.dataTypeID == 23 || field.name == "id")
+            if (field.name.toLowerCase() == "id" || field.dataTypeID == 23)
                 return row[field.name];
         }
         return 0;
