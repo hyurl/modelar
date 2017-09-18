@@ -14,23 +14,12 @@ class User extends Model {
         super(data, Object.assign({
             table: "users",
             primary: "id",
-            fields: [
-                "id",
-                "name",
-                "email",
-                "password",
-            ],
-            searchable: [
-                "name",
-                "email",
-            ]
+            fields: ["id", "name", "email", "password"],
+            searchable: ["name", "email"]
         }, config));
 
         //This property defines which fields can be used for logging-in.
-        this.__loginable = [
-            "name",
-            "email",
-        ];
+        this.__loginable = ["name", "email"];
 
         this.__events = Object.assign({
             query: [],
@@ -87,7 +76,7 @@ class User extends Model {
     login(args) {
         if (args.password === undefined) {
             return new Promise(() => {
-                throw new Error("Login requires a `password`, " +
+                throw new Error("Logging in requires a `password`, " +
                     "but none given.");
             });
         }
@@ -100,8 +89,8 @@ class User extends Model {
             }
             if (Object.keys(_args).length === 0) {
                 return new Promise(() => {
-                    throw new Error("Login requires at least one loginable " +
-                        "field, but none given.");
+                    throw new Error("Logging in requires at least one " +
+                        "loginable field, but none given.");
                 });
             }
             this.where(_args); //使用 where 查询
@@ -112,17 +101,12 @@ class User extends Model {
         }
 
         return this.all().then(users => { //Get all matched users.
-            if (users.length === 0) {
-                throw new Error(this.constructor.name +
-                    " was not found by searching " +
-                    "the given data.");
-            }
-            for (var _user of users) {
+            for (var user of users) {
                 //Try to match password for every user, until the first one 
                 //matched.
-                var password = _user.__data.password;
+                var password = user.__data.password;
                 if (bcrypt.compareSync(args.password, password)) {
-                    this.__data = _user.__data
+                    this.__data = user.__data
                     this.trigger("login", this); //Fire login event.
                     return this;
                 }

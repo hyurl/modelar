@@ -1,6 +1,6 @@
 "use strict";
 
-const Query = require("./supports/Query");
+const Query = require("./Query");
 
 /**
  * *Model Wrapper.*
@@ -33,7 +33,7 @@ class Model extends Query {
      * @return {Model}
      */
     constructor(data = {}, config = {}) {
-        super(config.table); //Bind the table name.
+        super(config.table || ""); //Bind the table name.
         this.__fields = config.fields || []; //Fields of the table.
         this.__primary = config.primary || ""; //The primary key.
         this.__searchable = config.searchable || []; //Searchable fields.
@@ -187,7 +187,9 @@ class Model extends Query {
         this.bindings = [];
         this.where(this.__primary, this.__data[this.__primary]);
         this.assign(data, true);
-        return super.update(this.__data).then(model => {
+        data = Object.assign({}, this.__data);
+        delete data[this.__primary];
+        return super.update(data).then(model => {
             return model.get(); //Get real data from database.
         });
     }
@@ -366,10 +368,10 @@ class Model extends Query {
     /*************************** Static Wrappers ****************************/
 
     /**
-     * Uses a connection that is already established. If use this method, call
-     * it right after creating the instance.
+     * Uses a DB instance and share its connection to the database. If use 
+     * this method, call it right after creating the instance.
      * 
-     * @param {DB} db An DB instance with a established connection.
+     * @param {DB} db A DB instance that is already created.
      * 
      * @return {DB} Returns the current instance for function chaining.
      */

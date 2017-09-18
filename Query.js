@@ -16,7 +16,7 @@ class Query extends DB {
      */
     constructor(table = "") {
         super();
-        this.__table = table;
+        this.__table = table; //The table that this query binds to.
         this.__inserts = ""; //Data of insert statement.
         this.__updates = ""; //Data of update statement.
         this.__selects = "*"; //Data of select statement.
@@ -67,7 +67,7 @@ class Query extends DB {
     select(...fields) {
         if (fields[0] instanceof Array)
             fields = fields[0];
-        fields = fields.map(field => this.__backquote(field));
+        fields = fields.map(field => this.backquote(field));
         this.__selects = fields.join(", ");
         return this;
     }
@@ -196,13 +196,13 @@ class Query extends DB {
             operator = "=";
         }
         if (!this.__join) { //One join.
-            this.__join = this.__backquote(this.__table);
+            this.__join = this.backquote(this.__table);
         } else { //Multiple joins.
             this.__join = "(" + this.__join + ")";
         }
-        this.__join += " " + type + " join " + this.__backquote(table) +
-            " on " + this.__backquote(field1) + " " + operator + " " +
-            this.__backquote(field2);
+        this.__join += " " + type + " join " + this.backquote(table) +
+            " on " + this.backquote(field1) + " " + operator + " " +
+            this.backquote(field2);
         return this;
     }
 
@@ -298,7 +298,7 @@ class Query extends DB {
             value = operator;
             operator = "=";
         }
-        this.__where += this.__backquote(field) + " " + operator + " ?";
+        this.__where += this.backquote(field) + " " + operator + " ?";
         this.__bindings.push(value);
         return this;
     }
@@ -317,7 +317,7 @@ class Query extends DB {
     /** Handles where... child-SQL statements. */
     __handleWhereChild(field, callback) {
         var query = this.__getQueryBy(callback);
-        this.__where += this.__backquote(field) + " = (" +
+        this.__where += this.backquote(field) + " = (" +
             query.sql + ")";
         this.__bindings = this.__bindings.concat(query.__bindings);
         return this;
@@ -327,7 +327,8 @@ class Query extends DB {
     __getQueryBy(callback) {
         var query = new Query(); //Create a new instance for nested scope.
         callback.call(query, query);
-        return query.__generateSelectSQl(); //Generate SQL statement.
+        query.sql = query.getSelectSQL();
+        return query; //Generate SQL statement.
     }
 
     /**
@@ -361,7 +362,7 @@ class Query extends DB {
     /** Handles where...(not ) between... clauses. */
     __handleBetween(field, range, between = true) {
         if (this.__where) this.__where += " and ";
-        this.__where += this.__backquote(field) + (between ? "" : " not") +
+        this.__where += this.backquote(field) + (between ? "" : " not") +
             " between ? and ?";
         this.__bindings = this.__bindings.concat(range);
         return this;
@@ -410,7 +411,7 @@ class Query extends DB {
             return this.__handleInChild(field, values, isIn);
         } else {
             var _values = Array(values.length).fill("?");
-            this.__where += this.__backquote(field) + (isIn ? "" : " not") +
+            this.__where += this.backquote(field) + (isIn ? "" : " not") +
                 " in (" + _values.join(", ") + ")";
             this.__bindings = this.__bindings.concat(values);
             return this;
@@ -420,7 +421,7 @@ class Query extends DB {
     /** Handles where...in... child-SQL statements. */
     __handleInChild(field, callback, isIn = true) {
         var query = this.__getQueryBy(callback);
-        this.__where += this.__backquote(field) + (isIn ? "" : " not") +
+        this.__where += this.backquote(field) + (isIn ? "" : " not") +
             " in (" + query.sql + ")";
         this.__bindings = this.__bindings.concat(query.__bindings);
         return this;
@@ -453,7 +454,7 @@ class Query extends DB {
     /** Handles where...is (not) null clauses. */
     __handleWhereNull(field, isNull = true) {
         if (this.__where) this.__where += " and ";
-        this.__where += this.__backquote(field) + " is " +
+        this.__where += this.backquote(field) + " is " +
             (isNull ? "" : "not ") + "null";
         return this;
     }
@@ -509,7 +510,7 @@ class Query extends DB {
      */
     orderBy(field, sequence = "") {
         var comma = this.__orderBy ? ", " : "";
-        this.__orderBy += comma + this.__backquote(field);
+        this.__orderBy += comma + this.backquote(field);
         if (sequence) this.__orderBy += " " + sequence;
         return this;
     }
@@ -520,21 +521,8 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     random() {
-        switch (this.__config.type) {
-            case "sqlite":
-            case "postgres":
-                this.__orderBy = "random()";
-                break;
-            case "sqlserve":
-                this.__orderBy = "newid()";
-                break;
-            case "access":
-                this.__orderBy = "Rnd(`ID`)";
-                break;
-            default:
-                this.__orderBy = "rand()";
-                break;
-        }
+        if (this.__driver.random instanceof Function)
+            this.__driver.random(this);
         return this;
     }
 
@@ -550,7 +538,7 @@ class Query extends DB {
     groupBy(...fields) {
         if (fields[0] instanceof Array)
             fields = fields[0];
-        fields = fields.map(field => this.__backquote(field));
+        fields = fields.map(field => this.backquote(field));
         this.__groupBy = fields.join(", ");
         return this;
     }
@@ -576,10 +564,8 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     limit(length, offset = 0) {
-        if (this.__config.type == "postgres")
-            this.__limit = offset ? length + " offset " + offset : length;
-        else if (this.__config.type == "access")
-            this.__selects = "top " + length + " " + this.__selects;
+        if (this.__driver.limit instanceof Function)
+            this.__driver.limit(this, length, offset);
         else
             this.__limit = offset ? offset + ", " + length : length;
         return this;
@@ -606,7 +592,7 @@ class Query extends DB {
      */
     union(query, all = false) {
         if (query instanceof Query) {
-            query.__generateSelectSQl();
+            query.sql = query.getSelectSQL();
             this.__union += " union " + (all ? "all " : "") + query.sql;
         } else if (typeof query == "string") {
             this.__union += " union " + (all ? "all " : "") + query;
@@ -631,14 +617,14 @@ class Query extends DB {
         var isObj = !(data instanceof Array);
         for (let field in data) {
             bindings.push(data[field]);
-            if (isObj) fields.push(this.__backquote(field));
+            if (isObj) fields.push(this.backquote(field));
             values.push("?");
         }
         if (isObj) fields = fields.join(", ");
         values = values.join(", ");
         this.__inserts = (isObj ? "(" + fields + ") " : "") +
             "values (" + values + ")";
-        this.sql = "insert into " + this.__backquote(this.__table) + " " +
+        this.sql = "insert into " + this.backquote(this.__table) + " " +
             this.__inserts;
         //Fire event and trigger event handlers.
         this.trigger("insert", this);
@@ -665,11 +651,11 @@ class Query extends DB {
         var fields = [];
         for (let field in data) {
             bindings.push(data[field]);
-            fields.push(this.__backquote(field) + " = ?");
+            fields.push(this.backquote(field) + " = ?");
         }
         bindings = bindings.concat(this.__bindings);
         this.__updates = fields.join(", ");
-        this.sql = "update " + this.__backquote(this.__table) + " set " +
+        this.sql = "update " + this.backquote(this.__table) + " set " +
             this.__updates + (this.__where ? " where " + this.__where : "");
         //Fire event and trigger event handlers.
         this.trigger("update", this);
@@ -689,7 +675,7 @@ class Query extends DB {
      *                   to the callback of `then()` is the current instance.
      */
     delete() {
-        this.sql = "delete from " + this.__backquote(this.__table) +
+        this.sql = "delete from " + this.backquote(this.__table) +
             (this.__where ? " where " + this.__where : "");
         //Fire event and trigger event handlers.
         this.trigger("delete", this);
@@ -744,7 +730,7 @@ class Query extends DB {
      */
     count(field = "*") {
         if (field != "*" && this.__distinct)
-            filed = "distinct " + this.__backquote(field);
+            filed = "distinct " + this.backquote(field);
         return this.__handleAggregate("count", field);
     }
 
@@ -879,35 +865,42 @@ class Query extends DB {
 
     /** Handles aggregate functions. */
     __handleAggregate(name, filed) {
-        this.__selects = name + "(" + this.__backquote(field) + ") as alias";
+        this.__selects = name + "(" + this.backquote(field) + ") as alias";
         this.__limit = "";
         return this.__handleSelect().then(data => data[0].alias);
     }
 
     /** Handles select statements. */
     __handleSelect() {
-        this.__generateSelectSQl();
+        this.sql = this.getSelectSQL();
         return this.query(this.sql, this.__bindings).then(db => {
             this.bindings = Object.assign([], this.__bindings);
             return db.__data;
         });
     }
 
-    /** Generating a select statement. */
-    __generateSelectSQl() {
-        var isCount = (/count\(distinct\s\S+\)/i).test(this.__selects);
-        this.sql = "select " +
-            (this.__distinct && !isCount ? "distinct " : "") +
-            this.__selects + " from " +
-            (!this.__join ? this.__backquote(this.__table) : "") +
-            this.__join +
-            (this.__where ? " where " + this.__where : "") +
-            (this.__orderBy ? " order by " + this.__orderBy : "") +
-            (this.__groupBy ? " group by " + this.__groupBy : "") +
-            (this.__having ? "having " + this.__having : "") +
-            (this.__limit ? " limit " + this.__limit : "") +
-            (this.__union ? " union " + this.__union : "");
-        return this;
+    /**
+     * Generates a select statement.
+     * 
+     * @return {String} The select statement.
+     */
+    getSelectSQL() {
+        if (this.__driver.getSelectSQL instanceof Function) {
+            return this.__driver.getSelectSQL(this);
+        } else {
+            var isCount = (/count\(distinct\s\S+\)/i).test(this.__selects);
+            return "select " +
+                (this.__distinct && !isCount ? "distinct " : "") +
+                this.__selects + " from " +
+                (!this.__join ? this.backquote(this.__table) : "") +
+                this.__join +
+                (this.__where ? " where " + this.__where : "") +
+                (this.__orderBy ? " order by " + this.__orderBy : "") +
+                (this.__groupBy ? " group by " + this.__groupBy : "") +
+                (this.__having ? "having " + this.__having : "") +
+                (this.__limit ? " limit " + this.__limit : "") +
+                (this.__union ? " union " + this.__union : "");
+        }
     }
 }
 

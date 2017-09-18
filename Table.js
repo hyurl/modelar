@@ -17,7 +17,7 @@ class Table extends DB {
      */
     constructor(table) {
         super();
-        this.__table = this.__backquote(table);
+        this.__table = table;
         this.__fields = []; //The field list of this table.
         this.__index = -1; //Internal pointer.
     }
@@ -187,8 +187,8 @@ class Table extends DB {
      *                   to the callback of `then()` is the current instance.
      */
     save() {
-        return this.query(this.getDDL()).then(db => {
-            return this;
+        return this.query(this.getDDL()).then(table => {
+            return table;
         });
     }
 
@@ -206,7 +206,7 @@ class Table extends DB {
             isPostgres = this.__config.type == "postgres";
 
         for (let field of this.__fields) {
-            let column = this.__backquote(field.name) + " " + field.type;
+            let column = this.backquote(field.name) + " " + field.type;
             //Deal with primary key.
             if (field.primary && isSqlite)
                 column += " primary key";
@@ -223,7 +223,7 @@ class Table extends DB {
                 column += " default null";
             } else if (field.default !== undefined) {
                 if (typeof field.default == "string")
-                    column += " default " + this.__quote(field.default);
+                    column += " default " + this.quote(field.default);
                 else
                     column += " default " + field.default;
             }
@@ -231,11 +231,11 @@ class Table extends DB {
             if (field.unsigned) column += " unsigned";
             if (field.unique) column += " unique";
             if (field.comment)
-                column += " comment " + this.__quote(field.comment);
+                column += " comment " + this.quote(field.comment);
             if (field.foreignKey.table) {
                 var foreign = " references " +
-                    this.__backquote(field.foreignKey.table) +
-                    " (" + this.__backquote(field.foreignKey.field) +
+                    this.backquote(field.foreignKey.table) +
+                    " (" + this.backquote(field.foreignKey.field) +
                     ") on delete " +
                     field.foreignKey.onDelete + " on update " +
                     field.foreignKey.onUpdate;
@@ -243,7 +243,7 @@ class Table extends DB {
                     column += foreign;
                 } else if (isMysql || isPostgres) {
                     //MySQL puts the foreign key constraint at the end of DDL.
-                    foreign = "foreign key (" + this.__backquote(field.name) +
+                    foreign = "foreign key (" + this.backquote(field.name) +
                         ")" + foreign;
                     foreigns.push(foreign);
                 }
@@ -251,12 +251,12 @@ class Table extends DB {
             columns.push(column);
         }
 
-        this.sql = "create table " + this.__table + " (\n\t" +
-            columns.join(",\n\t");
+        this.sql = "create table " + this.backquote(this.__table) +
+            " (\n\t" + columns.join(",\n\t");
 
         //Handle primary key for MySQL or PostgreSQL.
         if (isMysql || isPostgres && primary)
-            this.sql += ",\n\tprimary key(" + this.__backquote(primary) + ")";
+            this.sql += ",\n\tprimary key(" + this.backquote(primary) + ")";
 
         //Handle foreign key constraints for MySQL or PostgreSQL.
         if (foreigns.length)
