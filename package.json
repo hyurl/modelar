@@ -6,12 +6,10 @@
     "scripts": {
         "test": "cd demo && node index.js && exit 1"
     },
-    "devDependencies": {
-        "sqlite": "^2.8.0"
-    },
     "dependencies": {
         "sqlite": "^2.8.0",
         "mysql": "^2.14.1",
+        "pg": "^7.3.0",
         "bcrypt-nodejs": "^0.0.3"
     },
     "keywords": [

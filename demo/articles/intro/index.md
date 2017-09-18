@@ -99,3 +99,15 @@ have such an ability to do so, because they are **not related**. It would take
 a long time and effort to achieve such goals by programing, which isn't 
 suitable for large projects and short-time developments. Since **Modelar** is 
 aimed at developing strong web applications, it just focus on SQL.
+
+### Supported Database
+
+This module currently supports these Databases:
+
+- `SQLiet` with the node module `sqlite3`.
+- `MySQL` with the node module `mysql`.
+- `PostgreSQL` with the node module `pg`.
+
+These modules will be automatically installed when you install Modelar, so 
+when you are using them, you just set the database type, and they will be 
+imported automatically.
