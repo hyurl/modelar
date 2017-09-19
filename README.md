@@ -1,3 +1,5 @@
+See the [API documentation](http://modelar.hyurl.com:3000) at hyurl.com.
+
 ## Install
 
 To install Modelar in you project, just type the following command in you 
@@ -94,7 +96,7 @@ Article.use(db).get(1).then(article=>{ //Get the article which id is 1.
 
 Above gives a very simple example that shows the convenience and expressive 
 functionality that this module has, you can go into the real depth of it by 
-checking the [API documentation](/docs).
+checking the [API documentation](http://modelar.hyurl.com:3000).
 
 ## SQL or NoSQL?
 
