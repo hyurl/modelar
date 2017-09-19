@@ -1,6 +1,6 @@
 {
     "name": "modelar",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "An expressive Model with Promise functionality and Query constructor.",
     "main": "Model.js",
     "dependencies": {

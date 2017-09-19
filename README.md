@@ -7,12 +7,20 @@ shell or CMD:
 npm install modelar --save
 ```
 
-This module also provides a test environment to help you learn how to try it 
-out, just type the following command after you installing Modelar:
+## Supported Database
 
-```sh
-cd node_modules/modelar && npm test
-```
+This module currently supports these Databases:
+
+- `SQLiet` with module [sqlite3](https://www.npmjs.com/package/sqlite3 "npm install sqlite3 --save").
+- `MySQL` with module [mysql](https://www.npmjs.com/package/mysql "npm install mysql --save").
+- `PostgreSQL` with module [pg](https://www.npmjs.com/package/mysql "npm install pg --save").
+
+Modelar won't install any of these modules automatically, because they are not
+dependencies technically, but if you want to use Modelar, you have to install 
+them manually, just install what you need, and leave others alone.
+
+Modelar is still in developing period, and more database will be supported in 
+the future version.
 
 ## What can I do with this module?
 
@@ -98,19 +106,7 @@ non-relational databases? Sure there are a lot. Say you want to join some
 records in table A when fetching records from table B, this very simple in 
 relational databases, just use a `inner join` clause, and it is OK. But in 
 non-relational databases, judging by the name you will know that they don't 
-have such an ability to do so, because they are **not related**. It would take 
+have such an ability to do so, because they are **not related**. It would take
 a long time and effort to achieve such goals by programing, which isn't 
 suitable for large projects and short-time developments. Since **Modelar** is 
 aimed at developing strong web applications, it just focus on SQL.
-
-### Supported Database
-
-This module currently supports these Databases:
-
-- `SQLiet` with the node module `sqlite3`.
-- `MySQL` with the node module `mysql`.
-- `PostgreSQL` with the node module `pg`.
-
-These modules will be automatically installed when you install Modelar, so 
-when you are using them, you just set the database type, and they will be 
-imported automatically.
