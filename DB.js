@@ -29,6 +29,12 @@ class DB {
         //the last SQL statement.
         this.affectedRows = 0;
 
+        //This property carries the last executed SQL command.
+        this.__command = "";
+
+        //This property indicates whether the transaction is begun or not.
+        this.__transaction = false;
+
         //The data fetched by executing a select statement.
         this.__data = [];
 
@@ -39,7 +45,10 @@ class DB {
         this.__spec = this.__getSpec();
 
         //The database connection of the current instance.
-        this.__connection = null;
+        this.__connection = {
+            active: false, //The state of connection, true means available.
+            connection: null //The real connection.
+        };
 
         //Event handlers.
         this.__events = Object.assign({
@@ -218,21 +227,30 @@ class DB {
      */
     connect() {
         var config = this.__config;
-        var connections = DB.__pool;
-        if (connections[this.__spec] && connections[this.__spec].length > 0) {
+        if (DB.__pool[this.__spec] && DB.__pool[this.__spec].length > 0) {
             //If has available connections, retrieve and use the first one.
-            this.use(connections.shift());
             return new Promise((resolve, reject) => {
+                var db = DB.__pool[this.__spec].shift();
+                this.__connection.connection = db.__connection.connection;
                 resolve(this);
-                reject();
             }).then(db => {
-                if (this.__driver.ping instanceof Function)
-                    return this.__driver.ping(this);
-                else
-                    return db;
+                if (this.__driver.ping instanceof Function) {
+                    //Ping the database server, make sure the connection is
+                    //alive.
+                    return this.__driver.ping(this).then(db => {
+                        this.__connection.active = true;
+                        return this;
+                    });
+                } else {
+                    this.__connection.active = true;
+                    return this;
+                }
             });
         } else {
-            return this.__driver.connect(this);
+            return this.__driver.connect(this).then(db => {
+                this.__connection.active = true;
+                return this;
+            });
         }
         return this;
     }
@@ -248,8 +266,10 @@ class DB {
     use(db) {
         this.__config = db.__config;
         this.__spec = db.__spec;
-        this.__connection = db.__connection;
         this.__driver = db.__driver;
+        //Make a reference to the connection, this action will affect all
+        //DB instances.
+        this.__connection = db.__connection;
         return this;
     }
 
@@ -266,7 +286,14 @@ class DB {
     query(sql, bindings = []) {
         this.sql = sql.trim();
         this.bindings = Object.assign([], bindings);
-        if (this.__connection === null) {
+        var i = this.sql.indexOf(" ");
+        this.__command = this.sql.substring(0, i).toLowerCase();
+        if (this.__command == "begin") {
+            this.__transaction = true;
+        } else if (this.__command == "commit" || this.__command == "rollback") {
+            this.__transaction = false;
+        }
+        if (this.__connection.active === false) {
             //If connection isn't established, connect automatically.
             return this.connect().then(db => {
                 //Fire event and trigger event handlers.
@@ -334,10 +361,14 @@ class DB {
      * @return {DB} Returns the current instance for function chaining.
      */
     close() {
-        if (this.__driver.close instanceof Function && this.__connection)
+        if (this.__driver.close instanceof Function &&
+            this.__connection.active) {
             this.__driver.close(this);
-        //Remove the connection reference.
-        this.__connection = null;
+        }
+        //Remove the connection reference, this action will affect all
+        //DB instances.
+        this.__connection.active = false;
+        this.__connection.connection = null;
         return this;
     }
 
@@ -347,12 +378,27 @@ class DB {
      * @return {DB} Returns the current instance for function chaining.
      */
     recycle() {
-        var connections = DB.__pool[this.__spec];
-        if (connections === undefined)
-            connections = [];
-        if (this.__connection)
-            connections.push(this);
-        this.__connection = null;
+        if (this.__transaction) {
+            //If the transaction is opened but not committed, rollback.
+            this.rollback();
+        }
+        if (DB.__pool[this.__spec] === undefined)
+            DB.__pool[this.__spec] = [];
+        if (this.__connection.active) {
+            //Create a new instance.
+            var db = new DB(this.__config);
+            //Redefine the property so when removing the connection reference,
+            //This instance won't be affected.
+            db.__connection = {
+                active: false,
+                connection: this.__connection.connection
+            };
+            DB.__pool[this.__spec].push(db);
+        }
+        //Remove the connection reference, this action will affect all
+        //DB instances.
+        this.__connection.active = false;
+        this.__connection.connection = null;
         return this;
     }
 

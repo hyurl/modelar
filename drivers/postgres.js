@@ -12,21 +12,22 @@ module.exports = {
         return new Promise((resolve, reject) => {
             try {
                 var config = db.__config,
-                    driver = require("pg");
-                db.__connection = new driver.Client({
-                    host: config.host,
-                    port: config.port,
-                    user: config.user,
-                    password: config.password,
-                    database: config.database,
-                    connect_timeout: config.timeout,
-                    statement_timeout: config.timeout,
-                    client_encoding: config.charset,
-                });
-                db.__connection.connect(err => {
+                    driver = require("pg"),
+                    connection = new driver.Client({
+                        host: config.host,
+                        port: config.port,
+                        user: config.user,
+                        password: config.password,
+                        database: config.database,
+                        connect_timeout: config.timeout,
+                        statement_timeout: config.timeout,
+                        client_encoding: config.charset,
+                    });
+                connection.connect(err => {
                     if (err) {
                         reject(err);
                     } else {
+                        db.__connection.connection = connection;
                         resolve(db);
                     }
                 });
@@ -36,24 +37,24 @@ module.exports = {
         });
     },
     query(db, sql, bindings) {
-        var i = sql.indexOf(" "),
-            command = sql.substring(0, i).toLowerCase();
-        //Return the record when inserting.
-        if (command == "insert" && sql.search(/returning\s/) <= 0)
-            sql += " returning *";
-        //Replace ? to ${n} of the SQL.
-        for (let i in bindings) {
-            i++;
-            sql = sql.replace("?", "$" + i);
-        }
-        // sql = sql.replace(/`/g, ""); //Drop back-quotes.
         return new Promise((resolve, reject) => {
-            db.__connection.query(sql, bindings, (err, res) => {
+            if (db.__connection.active === false) {
+                throw new Error("Database connection is not available.");
+            }
+            //Return the record when inserting.
+            if (db.__command == "insert" && sql.search(/returning\s/) <= 0)
+                sql += " returning *";
+            //Replace ? to ${n} of the SQL.
+            for (let i in bindings) {
+                i++;
+                sql = sql.replace("?", "$" + i);
+            }
+            db.__connection.connection.query(sql, bindings, (err, res) => {
                 if (err) {
                     reject(err);
                 } else {
                     db.affectedRows = res.rowCount || 0;
-                    if (command == "insert") {
+                    if (db.__command == "insert") {
                         //Deal with insert statements.
                         db.insertId = getInsertId(res.rows[0], res.fields);
                     } else {
@@ -72,7 +73,7 @@ module.exports = {
         });
     },
     close(db) {
-        db.__connection.end();
+        db.__connection.connection.end();
     },
     random(query) {
         query.__orderBy = "random()";

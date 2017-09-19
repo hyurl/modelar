@@ -3,14 +3,13 @@
     "version": "0.1.0",
     "description": "An expressive Model with Promise functionality and Query constructor.",
     "main": "Model.js",
-    "scripts": {
-        "test": "cd demo && node index.js && exit 1"
-    },
-    "dependencies": {
+    "devDependencies": {
         "sqlite": "^2.8.0",
         "mysql": "^2.14.1",
-        "pg": "^7.3.0",
-        "bcrypt-nodejs": "^0.0.3"
+        "pg": "^7.3.0"
+    },
+    "dependencies": {
+        "bcrypt-nodejs": "0.0.3"
     },
     "keywords": [
         "promise",

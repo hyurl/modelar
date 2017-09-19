@@ -3,20 +3,21 @@ module.exports = {
         return new Promise((resolve, reject) => {
             try {
                 var config = db.__config,
-                    driver = require("mysql");
-                db.__connection = driver.createConnection({
-                    host: config.host,
-                    port: config.port,
-                    user: config.user,
-                    password: config.password,
-                    database: config.database,
-                    charset: config.charset,
-                    connectTimeout: config.timeout,
-                });
-                db.__connection.connect(err => {
+                    driver = require("mysql"),
+                    connection = driver.createConnection({
+                        host: config.host,
+                        port: config.port,
+                        user: config.user,
+                        password: config.password,
+                        database: config.database,
+                        charset: config.charset,
+                        connectTimeout: config.timeout,
+                    });
+                connection.connect(err => {
                     if (err) {
                         reject(err);
                     } else {
+                        db.__connection.connection = connection;
                         resolve(db);
                     }
                 });
@@ -27,7 +28,10 @@ module.exports = {
     },
     query(db, sql, bindings) {
         return new Promise((resolve, reject) => {
-            db.__connection.query({
+            if (db.__connection.active === false) {
+                throw new Error("Database connection is not available.");
+            }
+            db.__connection.connection.query({
                 sql: sql,
                 values: bindings,
                 timeout: db.__config.timeout,
@@ -51,11 +55,11 @@ module.exports = {
         });
     },
     close(db) {
-        db.__connection.destroy();
+        db.__connection.connection.destroy();
     },
     ping(db) {
         return new Promise((resolve, reject) => {
-            db.__connection.ping(err => {
+            db.__connection.connection.ping(err => {
                 err ? reject(err) : resolve(db);
             });
         });
