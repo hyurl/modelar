@@ -19,7 +19,7 @@ This module currently supports these Databases:
 
 - `SQLiet` with module [sqlite3](https://www.npmjs.com/package/sqlite3 "npm install sqlite3 --save").
 - `MySQL` with module [mysql](https://www.npmjs.com/package/mysql "npm install mysql --save").
-- `PostgreSQL` with module [pg](https://www.npmjs.com/package/mysql "npm install pg --save").
+- `PostgreSQL` with module [pg](https://www.npmjs.com/package/pg "npm install pg --save").
 
 Modelar won't install any of these modules automatically, because they are not
 dependencies technically, but if you want to use Modelar, you have to install 
