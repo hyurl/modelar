@@ -61,20 +61,23 @@ class Article extends Model {
     }
 }
 
+//Create a new DB instance, so that all models can share its connection.
+var db = new DB;
+
 //Create a new article.
 var article = new Article;
 article.title = "A new article in Modelar circumstance.";
 article.content = "This is the content of the article.";
 
 //Save the article.
-article.save().then(article=>{
+article.use(db).save().then(article=>{
     console.log("Article is saved with id: " + article.id + ".");
 }).catch(err=>{ //Catch the error if any presents.
     console.log(err);
 });
 
 //if you want to retrieve an article form the database, just do:
-Article.get(1).then(article=>{ //Get the article which id is 1.
+Article.use(db).get(1).then(article=>{ //Get the article which id is 1.
     console.log(article.valueOf());
 }).catch(err=>{
     console.log(err);
