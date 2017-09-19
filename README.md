@@ -25,8 +25,8 @@ Modelar won't install any of these modules automatically, because they are not
 dependencies technically, but if you want to use Modelar, you have to install 
 them manually, just install what you need, and leave others alone.
 
-Modelar is still in developing period, and more database will be supported in 
-the future version.
+Modelar is still in developing, more databases will be supported in future 
+versions.
 
 ## What can I do with this module?
 
