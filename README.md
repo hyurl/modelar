@@ -1,3 +1,7 @@
+# Modelar
+
+**An expressive Model with Promise functionality and Query constructor.**
+
 See the [API documentation](http://modelar.hyurl.com:3000) at hyurl.com.
 
 ## Install
