@@ -312,8 +312,8 @@ class DB {
      * 
      * @param  {Function}  callback  If a function is passed, the code in it 
      *  will be automatically handled, that means if the program goes well, 
-     *  the transaction will be automatically committed, otherwise it will 
-     *  automatically roll backed. If no function is passed, it just start the
+     *  the transaction will be automatically committed, otherwise it will be 
+     *  automatically rolled back. If no function is passed, it just start the
      *  transaction, that means you have to commit and roll back manually.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
