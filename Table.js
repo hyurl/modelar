@@ -13,7 +13,7 @@ class Table extends DB {
     /**
      * Creates a new instance with a specified table name.
      * 
-     * @param  {String} table The table name.
+     * @param  {String}  table The table name.
      */
     constructor(table) {
         super();
@@ -25,12 +25,13 @@ class Table extends DB {
     /**
      * Adds a new column to the table.
      * 
-     * @param  {String}  name   The name of the field.
-     * @param  {String}  type   The type of the field.
-     * @param  {Number}  length [optional] The top limit of length that this 
-     *                          field can store, also it could be an array 
-     *                          carries only two numbers that represents a 
-     *                          range between bottom and top.
+     * @param  {String}  name  The name of the field.
+     * 
+     * @param  {String}  type  The type of the field.
+     * 
+     * @param  {Number}  length  [optional] The top limit of length that this 
+     *  field can store, also it could be an array carries only two numbers 
+     *  that represents a range between bottom and top.
      * 
      * @return {Table} Returns the current instance for function chaining.
      */
@@ -100,7 +101,7 @@ class Table extends DB {
     /**
      * Sets a default value for the current field.
      * 
-     * @param  {String} value The default value.
+     * @param  {String}  value  The default value.
      * 
      * @return {Table} Returns the current instance for function chaining.
      */
@@ -132,9 +133,9 @@ class Table extends DB {
     /**
      * Adds a comment to the current field.
      * 
-     * @param  {String} text The comment text.
+     * @param  {String}  text  The comment text.
      * 
-     * @return {Table}  Returns the current instance for function chaining.
+     * @return {Table} Returns the current instance for function chaining.
      */
     comment(text) {
         this.__fields[this.__index].comment = value;
@@ -144,24 +145,26 @@ class Table extends DB {
     /**
      * Sets a foreign key constraint of the current field.
      * 
-     * @param  {Any}    table    A table where the the foreign key is in, it 
-     *                           is also possible to pass this argument an 
-     *                           object that sets all the information of the 
-     *                           constraint.
-     * @param  {String} field    [optional] A field in the foreign table that 
-     *                           related to the current field.
-     * @param  {String} onUpdate [optional] An action triggered when the 
-     *                           record is updated. optional values are: 
-     *                           - `no action`
-     *                           - `set null`
-     *                           - `cascade`
-     *                           - `restrict`
-     * @param  {String} onDelete [optional] An action triggered when the 
-     *                           record is deleted. optional values are: 
-     *                           - `no action`
-     *                           - `set null`
-     *                           - `cascade`
-     *                           - `restrict`
+     * @param  {String|Object}  table  A table where the the foreign key is 
+     *  in, it is also possible to pass this argument an object that sets all 
+     *  the information of the constraint.
+     * 
+     * @param  {String}  field  [optional] A field in the foreign table that 
+     *  related to the current field.
+     * 
+     * @param  {String}  onUpdate  [optional] An action triggered when the 
+     *  record is updated. optional values are: 
+     *  - `no action`
+     *  - `set null`
+     *  - `cascade`
+     *  - `restrict`
+     * 
+     * @param  {String}  onDelete  [optional] An action triggered when the 
+     *  record is deleted. optional values are: 
+     *  - `no action`
+     *  - `set null`
+     *  - `cascade`
+     *  - `restrict`
      * 
      * @return {Table} Returns the current instance for function chaining.
      */
@@ -184,7 +187,7 @@ class Table extends DB {
      * database.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the current instance.
+     *  to the callback of `then()` is the current instance.
      */
     save() {
         return this.query(this.getDDL()).then(table => {

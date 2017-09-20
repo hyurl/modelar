@@ -9,11 +9,10 @@
  */
 class DB {
     /**
-     * Creates a new instance with specified configurations.
+     * Creates a new DB instance with specified configurations.
      * 
-     * @param  {Object} config An object that carries configurations for the 
-     *                         current instance, or a string that sets only 
-     *                         the database name.
+     * @param  {Object}  config  An object that carries configurations for the
+     *  current instance, or a string that sets only the database name.
      */
     constructor(config = {}) {
         if (typeof config == "string")
@@ -82,7 +81,7 @@ class DB {
     /**
      * Adds quote to a specified value.
      * 
-     * @param {String|Number} value A value that needs to be quoted.
+     * @param  {String|Number}  value  A value that needs to be quoted.
      * 
      * @return {String|Number} The quoted values.
      */
@@ -98,8 +97,8 @@ class DB {
     /**
      * Adds back-quote to a specified identifier.
      * 
-     * @param {String|Number} identifier A identifier (a table name or field 
-     *                                   name) that needs to be quoted.
+     * @param  {String|Number}  identifier  An identifier (a table name or 
+     *  field name) that needs to be quoted.
      * 
      * @return {String|Number} The quoted identifier.
      */
@@ -121,7 +120,7 @@ class DB {
     /**
      * Initiate the DB class for every instances.
      * 
-     * @param  {Object} config An object that carries configurations.
+     * @param  {Object}  config  An object that carries configurations.
      * 
      * @return {DB} Returns the class itself for function chaining.
      */
@@ -166,10 +165,10 @@ class DB {
     /**
      * Binds an event handler to all DB instances.
      * 
-     * @param  {String}   event    The event name.
-     * @param  {Function} callback A function called when the event fires, 
-     *                             it accepts one argument, which is a new DB 
-     *                             instance.
+     * @param  {String}  event  The event name.
+     * 
+     * @param  {Function}  callback  A function called when the event fires, 
+     *  it accepts one argument, which is a new DB instance.
      * 
      * @return {DB} Returns the class itself for function chaining.
      */
@@ -183,10 +182,10 @@ class DB {
     /**
      * Binds an event handler to a particular instance.
      * 
-     * @param  {String}   event    The event name.
-     * @param  {Function} callback A function called when the event fires,
-     *                             it accepts one argument, which is the 
-     *                             current instance.
+     * @param  {String}  event  The event name.
+     * 
+     * @param  {Function}  callback  A function called when the event fires,
+     *  it accepts one argument, which is the current instance.
      * 
      * @return {DB} Returns the current instance for function chaining.
      */
@@ -200,8 +199,9 @@ class DB {
     /**
      * Fires an event and triggers its handlers.
      * 
-     * @param  {String} event The event name.
-     * @param  {Any}    args  Arguments passed to event handlers.
+     * @param  {String}  event  The event name.
+     * 
+     * @param  {Array}  args  Arguments passed to event handlers.
      * 
      * @return {DB} Returns the current instance for function chaining.
      */
@@ -223,7 +223,7 @@ class DB {
      * one will be established.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the current instance.
+     *  to the callback of `then()` is the current instance.
      */
     connect() {
         var config = this.__config;
@@ -259,7 +259,7 @@ class DB {
      * Uses a DB instance and share its connection to the database. If use 
      * this method, call it right after creating the instance.
      * 
-     * @param {DB} db A DB instance that is already created.
+     * @param  {DB}  db  A DB instance that is already created.
      * 
      * @return {DB} Returns the current instance for function chaining.
      */
@@ -276,12 +276,13 @@ class DB {
     /**
      * Executes a SQL statement.
      * 
-     * @param  {String}  sql      The SQL statement.
-     * @param  {Array}   bindings [optional] The data bound to the SQL 
-     *                            statement.
+     * @param  {String}  sql  The SQL statement.
+     * 
+     * @param  {Array}  bindings  [optional] The data bound to the SQL 
+     *  statement.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the current instance.
+     *  to the callback of `then()` is the current instance.
      */
     query(sql, bindings = []) {
         this.sql = sql.trim();
@@ -309,17 +310,14 @@ class DB {
     /**
      * Starts a transaction and handle actions in it.
      * 
-     * @param {Function} callback If a function is passed, the code in it 
-     *                            will be automatically handled, that means 
-     *                            if the program goes well, the transaction 
-     *                            will be automatically committed, otherwise 
-     *                            it will automatically roll backed. If no 
-     *                            function is passed, it just start the 
-     *                            transaction, that means you have to commit 
-     *                            and roll back manually.
+     * @param  {Function}  callback  If a function is passed, the code in it 
+     *  will be automatically handled, that means if the program goes well, 
+     *  the transaction will be automatically committed, otherwise it will 
+     *  automatically roll backed. If no function is passed, it just start the
+     *  transaction, that means you have to commit and roll back manually.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *                   to the callback of `then()` is the current instance.
+     *  to the callback of `then()` is the current instance.
      */
     transaction(callback = null) {
         if (this.__driver.transaction instanceof Function) {
@@ -341,14 +339,24 @@ class DB {
         }
     }
 
-    /** Commits the transaction when things going well. */
+    /**
+     * Commits the transaction when things going well.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *  to the callback of `then()` is the current instance.
+     */
     commit() {
         if (this.__driver.commit instanceof Function)
             return this.__driver.commit(this);
         return this.query("commit");
     }
 
-    /** Rolls the transaction back when things going not well. */
+    /**
+     * Rolls the transaction back when things going not well.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *  to the callback of `then()` is the current instance.
+     */
     rollback() {
         if (this.__driver.rollback instanceof Function)
             return this.__driver.rollback(this);
