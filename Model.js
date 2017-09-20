@@ -253,7 +253,7 @@ class Model extends Query {
     /**
      * Gets a model from the database.
      * 
-     *  @param  {Number}  id  [optional] The value of the model's primary key.
+     * @param  {Number}  id  [optional] The value of the model's primary key.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the fetched model.
@@ -796,23 +796,27 @@ class Model extends Query {
     }
 
     /**
-     * Deletes an existing record.
+     * Deletes the current model.
      * 
-     * @return  {Promise}  Returns a Promise, and the the only argument passed
-     *   to the callback of `then()` is the current instance.
+     * @param  {Number}  id  [optional] The value of the model's primary key.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *  to the callback of `then()` is the current instance.
      */
-    static delete(args) {
-        return (new this()).delete(args);
+    static delete(id) {
+        return (new this()).delete(id);
     }
 
     /**
-     * Gets a record from the database.
+     * Gets a model from the database.
      * 
-     * @return  {Promise}  Returns a Promise, and the the only argument passed
-     *  to the callback of `then()` is the fetched data.
+     * @param  {Number}  id  [optional] The value of the model's primary key.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *  to the callback of `then()` is the fetched model.
      */
-    static get(args) {
-        return (new this()).get(args);
+    static get(id) {
+        return (new this()).get(id);
     }
 
     /**
