@@ -64,17 +64,25 @@ class DB {
     /** Gets the connect specification by the given configuration. */
     __getSpec() {
         var config = this.__config,
-            spec = config.type + "://";
-        if (config.user)
-            spec += config.user + ":";
-        if (config.password)
-            spec += config.password + "@";
-        if (config.host)
-            spec += config.host + ":";
-        if (config.port)
-            spec += config.port + "/";
+            spec = config.type + ":";
+        if (config.user || config.host)
+            spec += "//";
+        if (config.user) {
+            spec += config.user;
+            if (config.password)
+                spec += ":" + config.password;
+            spec += "@";
+        }
+        if (config.host) {
+            spec += config.host;
+            if (config.port)
+                spec += ":" + config.port;
+            spec += "/";
+        }
         if (config.database)
             spec += config.database;
+        if (!config.user && config.password)
+            spec += ":" + config.password;
         return spec;
     }
 
@@ -390,9 +398,9 @@ class DB {
             //If the transaction is opened but not committed, rollback.
             this.rollback();
         }
-        if (DB.__pool[this.__spec] === undefined)
-            DB.__pool[this.__spec] = [];
         if (this.__connection.active) {
+            if (DB.__pool[this.__spec] === undefined)
+                DB.__pool[this.__spec] = [];
             //Create a new instance.
             var db = new DB(this.__config);
             //Redefine the property so when removing the connection reference,

@@ -1,5 +1,11 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 1.0.4
+
+(2017-9-24 10:27)
+
+1. Fix the structure of the database specification and pool.
+
 ## 1.0.2 
 
 (2017-9-20 20:10)
