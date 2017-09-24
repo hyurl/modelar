@@ -1,5 +1,13 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 1.0.5
+
+(2017-9-24 1:00)
+
+1. Add two methods to the class Query/Model to increase and decrease data:
+    - `query.increase()`
+    - `query.decrease()`
+
 ## 1.0.4
 
 (2017-9-24 10:27)

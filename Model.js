@@ -206,6 +206,80 @@ class Model extends Query {
     }
 
     /**
+     * Increases a specified field with a specified number.
+     * 
+     * @param  {String|Object}  field  The field name of which record needs to
+     *  be increased. It is also possible to pass this argument a object to 
+     *  increase multiple fields.
+     * 
+     * @param  {Number}  number  [optional] A number that needs to be raised.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *  to the callback of `then()` is the current instance.
+     */
+    increase(field, number = 0) {
+        this.__resetWhere();
+        if (this.__whereState.where) {
+            var state = this.__whereState;
+            this.__where += " and " + state.where;
+            this.__bindings = this.__bindings.concat(state.bindings);
+        }
+        return this.__handleCrease(field, number, "+");
+    }
+
+    /**
+     * Decreases a specified field with a specified number.
+     * 
+     * @param  {String|Object}  field  The field name of which record needs to
+     *  be decreased. It is also possible to pass this argument a object to 
+     *  decrease multiple fields.
+     * 
+     * @param  {Number}  number  [optional] A number that needs to be reduced.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *  to the callback of `then()` is the current instance.
+     */
+    decrease(field, number = 0) {
+        this.__resetWhere();
+        if (this.__whereState.where) {
+            var state = this.__whereState;
+            this.__where += " and " + state.where;
+            this.__bindings = this.__bindings.concat(state.bindings);
+        }
+        return this.__handleCrease(field, number, "-");
+    }
+
+    /** Handles increasing and decreasing. */
+    __handleCrease(field, number, type) {
+        if (typeof field == "object") {
+            var data = field;
+        } else {
+            var data = {};
+            data[field] = number;
+        }
+        delete data[this.__primary];
+        var bindings = [];
+        var parts = [];
+        for (let field in data) {
+            if (this.__fields.includes(field) && data[field] > 0) {
+                bindings.push(data[field]);
+                field = this.backquote(field);
+                parts.push(`${field} = ${field} ${type} ?`);
+            }
+        }
+        return this.__handleUpdate(parts, bindings).then(model => {
+            if (model.affectedRows == 0) {
+                //If no model is affected, throw an error.
+                throw new Error("No " + this.constructor.name +
+                    " was updated by matching the given condition.");
+            } else {
+                model.__resetWhere(true);
+                return model.get(); //Get final data from the database.
+            }
+        });
+    }
+
+    /**
      * Deletes the current model.
      * 
      * @param  {Number}  id  [optional] The value of the model's primary key.

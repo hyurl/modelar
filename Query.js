@@ -617,10 +617,13 @@ class Query extends DB {
      *  to the callback of `then()` is the current instance.
      */
     insert(data) {
-        var bindings = [];
-        var fields = [];
-        var values = [];
-        var isObj = !(data instanceof Array);
+        var bindings = [],
+            fields = [],
+            values = [],
+            isObj = !(data instanceof Array);
+        if (isObj && !Object.keys(data).length || (!isObj && !data.length)) {
+            throw new Error("No valid data were given for inserting.");
+        }
         for (let field in data) {
             bindings.push(data[field]);
             if (isObj) fields.push(this.backquote(field));
@@ -628,10 +631,9 @@ class Query extends DB {
         }
         if (isObj) fields = fields.join(", ");
         values = values.join(", ");
-        this.__inserts = (isObj ? "(" + fields + ") " : "") +
-            "values (" + values + ")";
-        this.sql = "insert into " + this.backquote(this.__table) + " " +
-            this.__inserts;
+        this.__inserts = (isObj ? `(${fields}) ` : "") + `values (${values})`;
+        this.sql = `insert into ${this.backquote(this.__table)} ` +
+            `${this.__inserts}`;
         //Fire event and trigger event handlers.
         this.trigger("insert", this);
         return this.query(this.sql, bindings).then(db => {
@@ -653,15 +655,75 @@ class Query extends DB {
      *  to the callback of `then()` is the current instance.
      */
     update(data) {
-        var bindings = [];
-        var fields = [];
+        var parts = [],
+            bindings = [];
         for (let field in data) {
+            parts.push(this.backquote(field) + " = ?");
             bindings.push(data[field]);
-            fields.push(this.backquote(field) + " = ?");
+        }
+        return this.__handleUpdate(parts, bindings);
+    }
+
+    /**
+     * Increases a specified field with a specified number.
+     * 
+     * @param  {String|Object}  field  The field name of which record needs to
+     *  be increased. It is also possible to pass this argument a object to 
+     *  increase multiple fields.
+     * 
+     * @param  {Number}  number  [optional] A number that needs to be raised.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *  to the callback of `then()` is the current instance.
+     */
+    increase(field, number = 0) {
+        return this.__handleCrease(field, number, "+");
+    }
+
+    /**
+     * Decreases a specified field with a specified number.
+     * 
+     * @param  {String|Object}  field  The field name of which record needs to
+     *  be decreased. It is also possible to pass this argument a object to 
+     *  decrease multiple fields.
+     * 
+     * @param  {Number}  number  [optional] A number that needs to be reduced.
+     * 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
+     *  to the callback of `then()` is the current instance.
+     */
+    decrease(field, number = 0) {
+        return this.__handleCrease(field, number, "-");
+    }
+
+    /** Handles increasing and decreasing. */
+    __handleCrease(field, number, type) {
+        if (typeof field == "object") {
+            var data = field;
+        } else {
+            var data = {};
+            data[field] = number;
+        }
+        var bindings = [];
+        var parts = [];
+        for (let field in data) {
+            if (data[field] > 0) {
+                bindings.push(data[field]);
+                field = this.backquote(field);
+                parts.push(`${field} = ${field} ${type} ?`);
+            }
+        }
+        return this.__handleUpdate(parts, bindings);
+    }
+
+    /** Handles update statements. */
+    __handleUpdate(parts, bindings) {
+        if (Object.keys(parts).length === 0) {
+            throw new Error("No valid data were given for updating.");
         }
         bindings = bindings.concat(this.__bindings);
-        this.__updates = fields.join(", ");
-        this.sql = "update " + this.backquote(this.__table) + " set " +
+        this.__updates = parts.join(", ");
+        this.sql = `update ${this.backquote(this.__table)} set ` +
             this.__updates + (this.__where ? " where " + this.__where : "");
         //Fire event and trigger event handlers.
         this.trigger("update", this);
@@ -827,8 +889,8 @@ class Query extends DB {
      *  is `10`. Also you can call `query.limit()` to specify a length before 
      *  calling this method.
      * 
-     * @return {Promise} Returns a Promise, the only argument passes to the 
-     *  callback of `then()` is an object that carries the information, it 
+     * @return {Promise} Returns a Promise, and the only argument passed to 
+     * the callback of `then()` is an object that carries the information, it 
      *  includes:
      *  * `page` The current page.
      *  * `limit` The top limit of per page.
