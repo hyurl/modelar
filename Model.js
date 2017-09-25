@@ -1336,7 +1336,7 @@ class Model extends Query {
             id1 = target.__data[target.__primary],
             ids = [];
         if (notArray) {
-            for (var i in models) {
+            for (let i in models) {
                 if (models.hasOwnProperty(i) && !isNaN(i)) {
                     ids.push(parseInt(i));
                 }

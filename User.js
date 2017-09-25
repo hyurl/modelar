@@ -94,7 +94,7 @@ class User extends Model {
         }
         var _args = {};
         if (args.user === undefined) { //Use a specified field for logging-in.
-            for (var k in args) {
+            for (let k in args) {
                 if (this.__loginable.includes(k)) {
                     _args[k] = args[k];
                 }
@@ -107,16 +107,16 @@ class User extends Model {
             }
             this.where(_args); //使用 where 查询
         } else { //Try to match all loginable fields.
-            for (var field of this.__loginable) {
+            for (let field of this.__loginable) {
                 this.orWhere(field, args.user);
             }
         }
 
         return this.all().then(users => { //Get all matched users.
-            for (var user of users) {
+            for (let user of users) {
                 //Try to match password for every user, until the first one 
                 //matched.
-                var password = user.__data.password;
+                let password = user.__data.password;
                 if (bcrypt.compareSync(args.password, password)) {
                     this.__data = user.__data
                     this.trigger("login", this); //Fire login event.

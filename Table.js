@@ -236,7 +236,7 @@ class Table extends DB {
             if (field.comment)
                 column += " comment " + this.quote(field.comment);
             if (field.foreignKey.table) {
-                var foreign = " references " +
+                let foreign = " references " +
                     this.backquote(field.foreignKey.table) +
                     " (" + this.backquote(field.foreignKey.field) +
                     ") on delete " +
