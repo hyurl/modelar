@@ -1,5 +1,11 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 1.0.6
+
+(2017-9-27 13:24)
+
+1. Fix a BUG in class User.
+
 ## 1.0.5
 
 (2017-9-24 1:00)

@@ -105,7 +105,7 @@ class User extends Model {
                         "loginable field, but none given.");
                 });
             }
-            this.where(_args); //使用 where 查询
+            this.where(_args);
         } else { //Try to match all loginable fields.
             for (let field of this.__loginable) {
                 this.orWhere(field, args.user);
@@ -113,14 +113,19 @@ class User extends Model {
         }
 
         return this.all().then(users => { //Get all matched users.
+
             for (let user of users) {
                 //Try to match password for every user, until the first one 
                 //matched.
-                let password = user.__data.password;
-                if (bcrypt.compareSync(args.password, password)) {
-                    this.__data = user.__data
-                    this.trigger("login", this); //Fire login event.
-                    return this;
+                let password = user.__data.password || "";
+                try {
+                    if (bcrypt.compareSync(args.password, password)) {
+                        this.__data = user.__data
+                        this.trigger("login", this); //Fire login event.
+                        return this;
+                    }
+                } catch (err) {
+                    throw err instanceof Error ? err : new Error(err);
                 }
             }
             throw new Error("The password you provided didn't match any " +
