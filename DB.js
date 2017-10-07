@@ -1,5 +1,9 @@
 "use strict";
 
+const mysql = require("./drivers/mysql.js");
+const postgres = ("./drivers/postgres.js");
+const sqlite = require("./drivers/sqlite.js");
+
 /**
  * *Database Connection Manager.*
  * 
@@ -40,8 +44,8 @@ class DB {
         //This object carries database configurations of the current instance.
         this.__config = Object.assign({}, this.constructor.__config, config);
 
-        //The connection specification of the current instance.
-        this.__spec = this.__getSpec();
+        //The data source name of the current instance.
+        this.__dsn = this.__getDSN();
 
         //The database connection of the current instance.
         this.__connection = {
@@ -57,33 +61,32 @@ class DB {
         }, this.constructor.__events);
 
         //Reference to the driver.
-        var dirver = this.constructor.__drivers[this.__config.type];
-        this.__driver = require(dirver);
+        this.__driver = this.constructor.__drivers[this.__config.type];
     }
 
-    /** Gets the connect specification by the given configuration. */
-    __getSpec() {
+    /** Gets the data source name by the given configuration. */
+    __getDSN() {
         var config = this.__config,
-            spec = config.type + ":";
+            dsn = config.type + ":";
         if (config.user || config.host)
-            spec += "//";
+            dsn += "//";
         if (config.user) {
-            spec += config.user;
+            dsn += config.user;
             if (config.password)
-                spec += ":" + config.password;
-            spec += "@";
+                dsn += ":" + config.password;
+            dsn += "@";
         }
         if (config.host) {
-            spec += config.host;
+            dsn += config.host;
             if (config.port)
-                spec += ":" + config.port;
-            spec += "/";
+                dsn += ":" + config.port;
+            dsn += "/";
         }
         if (config.database)
-            spec += config.database;
+            dsn += config.database;
         if (!config.user && config.password)
-            spec += ":" + config.password;
-        return spec;
+            dsn += ":" + config.password;
+        return dsn;
     }
 
     /**
@@ -148,17 +151,14 @@ class DB {
             ssl: null,
             timeout: 5000,
             charset: "utf8",
+            max: 50, // Maximum connection count of the pool.
         }, this.__config || {}, config);
 
         //This property carries all event handlers bound by DB.on().
         this.__events = Object.assign({}, this.__events || {});
 
-        //This property carries drivers names and their locations.
-        this.__drivers = {
-            sqlite: "./drivers/sqlite.js",
-            mysql: "./drivers/mysql.js",
-            postgres: "./drivers/postgres.js",
-        };
+        //This property carries database drivers.
+        this.__drivers = { mysql, postgres, sqlite };
 
         //This property stores those connections that are recycled by calling
         //db.recycle(), which means they're released and can be reused again. 
@@ -234,15 +234,19 @@ class DB {
      *  to the callback of `then()` is the current instance.
      */
     connect() {
-        var config = this.__config;
-        if (DB.__pool[this.__spec] && DB.__pool[this.__spec].length > 0) {
+        if (DB.__pool[this.__dsn] === undefined) {
+            DB.__pool[this.__dsn] = [];
+            DB.__pool[this.__dsn].count = 0;
+        }
+        if (DB.__pool[this.__dsn].length > 0) {
             //If has available connections, retrieve and use the first one.
             return new Promise((resolve, reject) => {
-                var db = DB.__pool[this.__spec].shift();
+                var db = DB.__pool[this.__dsn].shift();
                 this.__connection.connection = db.__connection.connection;
                 resolve(this);
             }).then(db => {
-                if (this.__driver.ping instanceof Function) {
+                var expireAt = db.__connection.expireAt;
+                if (expireAt && expireAt < (new Date).getTime()) {
                     //Ping the database server, make sure the connection is
                     //alive.
                     return this.__driver.ping(this).then(db => {
@@ -254,9 +258,21 @@ class DB {
                     return this;
                 }
             });
+        } else if (DB.__pool[this.__dsn].count >= this.__config.max) {
+            // If no available connections, set a timer to listen the pool 
+            // until getting one.
+            return new Promise((resolve, reject) => {
+                var timer = setInterval(() => {
+                    if (DB.__pool[this.__dsn].length > 0) {
+                        clearInterval(timer);
+                        resolve(this.connect());
+                    }
+                }, 10);
+            });
         } else {
             return this.__driver.connect(this).then(db => {
                 this.__connection.active = true;
+                DB.__pool[this.__dsn].count += 1;
                 return this;
             });
         }
@@ -273,7 +289,7 @@ class DB {
      */
     use(db) {
         this.__config = db.__config;
-        this.__spec = db.__spec;
+        this.__dsn = db.__dsn;
         this.__driver = db.__driver;
         //Make a reference to the connection, this action will affect all
         //DB instances.
@@ -295,11 +311,12 @@ class DB {
     query(sql, bindings = []) {
         this.sql = sql.trim();
         this.bindings = Object.assign([], bindings);
-        var i = this.sql.indexOf(" ");
-        this.__command = this.sql.substring(0, i).toLowerCase();
-        if (this.__command == "begin") {
+        var i = this.sql.indexOf(" "),
+            command = this.sql.substring(0, i).toLowerCase();
+        this.__command = command;
+        if (command == "begin") {
             this.__transaction = true;
-        } else if (this.__command == "commit" || this.__command == "rollback") {
+        } else if (command == "commit" || command == "rollback") {
             this.__transaction = false;
         }
         if (this.__connection.active === false) {
@@ -399,8 +416,6 @@ class DB {
             this.rollback();
         }
         if (this.__connection.active) {
-            if (DB.__pool[this.__spec] === undefined)
-                DB.__pool[this.__spec] = [];
             //Create a new instance.
             var db = new DB(this.__config);
             //Redefine the property so when removing the connection reference,
@@ -409,7 +424,12 @@ class DB {
                 active: false,
                 connection: this.__connection.connection
             };
-            DB.__pool[this.__spec].push(db);
+            if (db.__driver.ping instanceof Function) {
+                // IF the driver has a ping() method, then set a expire time.
+                db.__connection.expireAt = (new Date).getTime() +
+                    db.__config.timeout;
+            }
+            DB.__pool[this.__dsn].push(db);
         }
         //Remove the connection reference, this action will affect all
         //DB instances.
@@ -424,13 +444,13 @@ class DB {
      * @return {DB} Returns the class itself for function chaining.
      */
     static destroy() {
-        for (let spec in DB.__pool) {
-            if (DB.__pool[spec] instanceof Array) {
-                for (let db of DB.__pool[spec]) {
+        for (let dsn in DB.__pool) {
+            if (DB.__pool[dsn] instanceof Array) {
+                for (let db of DB.__pool[dsn]) {
                     db.close();
                 }
             }
-            delete DB.__pool[spec]; //Remove the connection reference.
+            delete DB.__pool[dsn]; //Remove the connection reference.
         }
         return this;
     }

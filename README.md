@@ -2,7 +2,7 @@
 
 **An expressive Model with Promise functionality and Query constructor.**
 
-See the [API documentation](http://modelar.hyurl.com:3000) at hyurl.com.
+See the [API documentation](http://modelar.hyurl.com) at modelar.hyurl.com.
 
 ## Install
 
@@ -23,30 +23,29 @@ This module currently supports these Databases:
 
 Modelar won't install any of these modules automatically, because they are not
 dependencies technically, but if you want to use Modelar, you have to install 
-them manually, just install what you need, and leave others alone.
+them manually, just install the one you need, and leave others alone.
 
-Modelar is still in developing, more databases will be supported in future 
-versions.
+Modelar is still growing, more databases will be supported in future versions.
 
 ## What can I do with this module?
 
 * **Write less code.**
     * You can just define a class that extends the Model, and most of the 
-    work would be done for you.
+        work would be done for you.
     * Promise guarantees that all the procedures can be controlled within one 
-    logic.
+        logic.
 * **Write expressive and good looking code.**
     * Attributes of a model is actually properties of the instance.
     * All setter and getter supports.
 * **Use query constructors to handle data.**
     * This module provides most of the SQL supports to the Model.
     * Query constructor provides an Object-Oriented way to generate SQL 
-    statements.
+        statements.
 * **Control database connections.**
     * The DB class provides an internal pool to automatically manage
-    connections.
+        connections.
     * Transaction is very easy to use, the program will automatically commit 
-    or rollback for you.
+        or rollback for you.
 
 ## Example
 
@@ -100,7 +99,7 @@ Article.use(db).get(1).then(article=>{ //Get the article which id is 1.
 
 Above gives a very simple example that shows the convenience and expressive 
 functionality that this module has, you can go into the real depth of it by 
-checking the [API documentation](http://modelar.hyurl.com:3000).
+checking the [API documentation](http://modelar.hyurl.com).
 
 ## SQL or NoSQL?
 
