@@ -1,6 +1,7 @@
-var getInsertId = (row, fields) => {
+var getInsertId = (db, row, fields) => {
+    var primary = db.__primary || "id";
     for (let field of fields) {
-        if (field.name.toLowerCase() == "id" || field.dataTypeID == 23)
+        if (field.name.toLowerCase() == primary)
             return row[field.name];
     }
     return 0;
@@ -56,7 +57,7 @@ module.exports = {
                     db.affectedRows = res.rowCount || 0;
                     if (db.__command == "insert") {
                         // Deal with insert statements.
-                        db.insertId = getInsertId(res.rows[0], res.fields);
+                        db.insertId = getInsertId(db, res.rows[0], res.fields);
                     } else if (res.rows.length) {
                         // Deal with other statements.
                         db.__data = res.rows.map(row => {
