@@ -42,7 +42,9 @@ module.exports = {
                     if (res instanceof Array) {
                         // Deal with select or pragma statements, they 
                         // returns an array.
-                        db.__data = res;
+                        db.__data = res.map(row => {
+                            return Object.assign({}, row);
+                        });
                     } else {
                         // Deal with other statements like insert/update/
                         // delete.

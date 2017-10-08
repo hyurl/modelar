@@ -1,5 +1,11 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 1.0.8
+
+(2017-10-8 21:43 UTC+0800)
+
+1. Fix some bugs.
+
 ## 1.0.7
 
 (2017-10-8 16:12 UTC+0800)

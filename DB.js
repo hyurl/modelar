@@ -1,7 +1,7 @@
 "use strict";
 
 const mysql = require("./drivers/mysql.js");
-const postgres = ("./drivers/postgres.js");
+const postgres = require("./drivers/postgres.js");
 const sqlite = require("./drivers/sqlite.js");
 
 /**

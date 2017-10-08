@@ -57,14 +57,10 @@ module.exports = {
                     if (db.__command == "insert") {
                         // Deal with insert statements.
                         db.insertId = getInsertId(res.rows[0], res.fields);
-                    } else {
+                    } else if (res.rows.length) {
                         // Deal with other statements.
                         db.__data = res.rows.map(row => {
-                            var data = {};
-                            for (let key in row) {
-                                data[key] = row[key];
-                            }
-                            return data;
+                            return Object.assign({}, row);
                         });
                     }
                     resolve(db);

@@ -365,7 +365,10 @@ class Model extends Query {
                     delete this.__typeKey;
                     delete this.__pivot;
                     // Assign data and trigger event handlers.
-                    return this.assign(data).trigger("get", this);
+                    this.assign(data);
+                    this.__modified = {};
+                    this.trigger("get", this);
+                    return this;
                 }
             });
         } else {
