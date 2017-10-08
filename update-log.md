@@ -2,13 +2,14 @@
 
 ## 1.0.7
 
-(2017-10-8 1:48 UTC+0800)
+(2017-10-8 16:12 UTC+0800)
 
 1. Change the property `db.__spec` to `db.__dsn`, method `db.__getSpec()` to 
     `db.__getDSN()`.
 2. New configuration option `max` for setting maximum count of connections in 
     the database pool.
 3. More efficient when retrieving connections from the pool.
+4. More efficient when updating a model.
 
 ## 1.0.6
 

@@ -22,45 +22,46 @@ class DB {
         if (typeof config == "string")
             config = { database: config };
 
-        this.sql = ""; //The SQL statement the last time execute.
-        this.bindings = []; //The binding data the last time execute.
+        this.sql = ""; // The SQL statement the last time execute.
+        this.bindings = []; // The binding data the last time execute.
 
-        //The ID returned by executing the last insert statement.
+        // The ID returned by executing the last insert statement.
         this.insertId = 0;
 
-        //A count that represents how many records are affected by executing
-        //the last SQL statement.
+        // A count that represents how many records are affected by executing
+        // the last SQL statement.
         this.affectedRows = 0;
 
-        //This property carries the last executed SQL command.
+        // This property carries the last executed SQL command.
         this.__command = "";
 
-        //This property indicates whether the transaction is begun or not.
+        // This property indicates whether the transaction is begun or not.
         this.__transaction = false;
 
-        //The data fetched by executing a select statement.
+        // The data fetched by executing a select statement.
         this.__data = [];
 
-        //This object carries database configurations of the current instance.
+        // This object carries database configurations of the current 
+        // instance.
         this.__config = Object.assign({}, this.constructor.__config, config);
 
-        //The data source name of the current instance.
+        // The data source name of the current instance.
         this.__dsn = this.__getDSN();
 
-        //The database connection of the current instance.
+        // The database connection of the current instance.
         this.__connection = {
-            active: false, //The state of connection, true means available.
-            connection: null //The real connection.
+            active: false, // The state of connection, true means available.
+            connection: null // The real connection.
         };
 
-        //Event handlers.
+        // Event handlers.
         this.__events = Object.assign({
-            //This event will be fired when a SQL statement is about to be
-            //executed.
+            // This event will be fired when a SQL statement is about to be
+            // executed.
             query: [],
         }, this.constructor.__events);
 
-        //Reference to the driver.
+        // Reference to the driver.
         this.__driver = this.constructor.__drivers[this.__config.type];
     }
 
@@ -97,11 +98,11 @@ class DB {
      * @return {String|Number} The quoted values.
      */
     quote(value) {
-        var quote = this.__driver.quote || "'";
         if (typeof value == "number" || value === null)
             return value;
         value = value.replace(/\\/g, "\\\\");
-        var re = new RegExp(quote, "g");
+        var quote = this.__driver.quote || "'",
+            re = new RegExp(quote, "g");
         return quote + value.replace(re, "\\" + quote) + quote;
     }
 
@@ -114,12 +115,10 @@ class DB {
      * @return {String|Number} The quoted identifier.
      */
     backquote(identifier) {
-        //PostgreSQL uses double-quote while others use back-quote.
         var quote = this.__driver.backquote || "`",
-            parts = identifier.split(".");
-        if (identifier.indexOf(" ") < 0 && identifier.indexOf("(") < 0 &&
-            identifier.indexOf(quote) < 0 && identifier != "*" &&
-            parts.length === 1) {
+            parts = identifier.split("."),
+            exception = /[~`!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:"'<>,\?\/\s]/;
+        if (parts.length === 1 && !exception.test(identifier)) {
             identifier = quote + identifier + quote;
         } else if (parts.length === 2) {
             identifier = this.backquote(parts[0]) + "." +
@@ -136,35 +135,35 @@ class DB {
      * @return {DB} Returns the class itself for function chaining.
      */
     static init(config = {}) {
-        //This object carries basic database configurations for every 
-        //instance.
+        // This object carries basic database configurations for every 
+        // instance.
         this.__config = Object.assign({
-            //Database type, A.K.A the driver name.
+            // Database type, A.K.A the driver name.
             type: "sqlite",
             database: "",
-            //These properties are only for datbase servers:
+            // These properties are only for database servers:
             host: "",
             port: 0,
             user: "",
             password: "",
-            //SSL option supports: { rejectUnauthorized, ca, key, cert }
+            // SSL option supports: { rejectUnauthorized, ca, key, cert }
             ssl: null,
             timeout: 5000,
             charset: "utf8",
-            max: 50, // Maximum connection count of the pool.
+            max: 50, //  Maximum connection count of the pool.
         }, this.__config || {}, config);
 
-        //This property carries all event handlers bound by DB.on().
+        // This property carries all event handlers bound by DB.on().
         this.__events = Object.assign({}, this.__events || {});
 
-        //This property carries database drivers.
+        // This property carries database drivers.
         this.__drivers = { mysql, postgres, sqlite };
 
-        //This property stores those connections that are recycled by calling
-        //db.recycle(), which means they're released and can be reused again. 
-        //When the next time trying to connect a database, the program will 
-        //firstly trying to retrieve a connection from this property, if no 
-        //connections are available, a new one will be created.
+        // This property stores those connections that are recycled by calling
+        // db.recycle(), which means they're released and can be reused again.
+        // When the next time trying to connect a database, the program will 
+        // firstly trying to retrieve a connection from this property, if no 
+        // connections are available, a new one will be created.
         DB.__pool = {};
 
         return this;
@@ -239,7 +238,7 @@ class DB {
             DB.__pool[this.__dsn].count = 0;
         }
         if (DB.__pool[this.__dsn].length > 0) {
-            //If has available connections, retrieve and use the first one.
+            // If has available connections, retrieve and use the first one.
             return new Promise((resolve, reject) => {
                 var db = DB.__pool[this.__dsn].shift();
                 this.__connection.connection = db.__connection.connection;
@@ -247,8 +246,8 @@ class DB {
             }).then(db => {
                 var expireAt = db.__connection.expireAt;
                 if (expireAt && expireAt < (new Date).getTime()) {
-                    //Ping the database server, make sure the connection is
-                    //alive.
+                    // Ping the database server, make sure the connection is
+                    // alive.
                     return this.__driver.ping(this).then(db => {
                         this.__connection.active = true;
                         return this;
@@ -291,8 +290,8 @@ class DB {
         this.__config = db.__config;
         this.__dsn = db.__dsn;
         this.__driver = db.__driver;
-        //Make a reference to the connection, this action will affect all
-        //DB instances.
+        // Make a reference to the connection, this action will affect all
+        // DB instances.
         this.__connection = db.__connection;
         return this;
     }
@@ -320,9 +319,9 @@ class DB {
             this.__transaction = false;
         }
         if (this.__connection.active === false) {
-            //If connection isn't established, connect automatically.
+            // If connection isn't established, connect automatically.
             return this.connect().then(db => {
-                //Fire event and trigger event handlers.
+                // Fire event and trigger event handlers.
                 this.trigger("query", this);
                 return this.__driver.query(this, sql, bindings);
             });
@@ -398,8 +397,8 @@ class DB {
             this.__connection.active) {
             this.__driver.close(this);
         }
-        //Remove the connection reference, this action will affect all
-        //DB instances.
+        // Remove the connection reference, this action will affect all
+        // DB instances.
         this.__connection.active = false;
         this.__connection.connection = null;
         return this;
@@ -412,14 +411,14 @@ class DB {
      */
     recycle() {
         if (this.__transaction) {
-            //If the transaction is opened but not committed, rollback.
+            // If the transaction is opened but not committed, rollback.
             this.rollback();
         }
         if (this.__connection.active) {
-            //Create a new instance.
+            // Create a new instance.
             var db = new DB(this.__config);
-            //Redefine the property so when removing the connection reference,
-            //This instance won't be affected.
+            // Redefine the property so when removing the connection 
+            // reference, this instance won't be affected.
             db.__connection = {
                 active: false,
                 connection: this.__connection.connection
@@ -431,8 +430,8 @@ class DB {
             }
             DB.__pool[this.__dsn].push(db);
         }
-        //Remove the connection reference, this action will affect all
-        //DB instances.
+        // Remove the connection reference, this action will affect all
+        // DB instances.
         this.__connection.active = false;
         this.__connection.connection = null;
         return this;
@@ -450,12 +449,12 @@ class DB {
                     db.close();
                 }
             }
-            delete DB.__pool[dsn]; //Remove the connection reference.
+            delete DB.__pool[dsn]; // Remove the connection reference.
         }
         return this;
     }
 }
 
-DB.init(); //Initiate configuration.
+DB.init(); // Initiate configuration.
 
 module.exports = DB;

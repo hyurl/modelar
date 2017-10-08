@@ -40,12 +40,12 @@ module.exports = {
                     reject(err);
                 } else {
                     if (res instanceof Array) {
-                        //Deal with select or pragma statements, they 
-                        //returns an array.
+                        // Deal with select or pragma statements, they 
+                        // returns an array.
                         db.__data = res;
                     } else {
-                        //Deal with other statements like insert/update/
-                        //delete.
+                        // Deal with other statements like insert/update/
+                        // delete.
                         db.insertId = res.insertId;
                         db.affectedRows = res.affectedRows;
                     }

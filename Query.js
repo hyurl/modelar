@@ -1,6 +1,6 @@
 "use strict";
 
-const DB = require("./DB"); //Import DB class.
+const DB = require("./DB");
 
 /**
  * *Query Constructor for SQL statements and beyond.*
@@ -17,41 +17,41 @@ class Query extends DB {
      */
     constructor(table = "") {
         super();
-        this.__table = table; //The table that this query binds to.
-        this.__inserts = ""; //Data of insert statement.
-        this.__updates = ""; //Data of update statement.
-        this.__selects = "*"; //Data of select statement.
-        this.__distinct = ""; //Distinct clause.
-        this.__join = ""; //Join clause.
-        this.__where = ""; //Where clause.
-        this.__orderBy = ""; //Order-by clause.
-        this.__groupBy = ""; //Group-by clause.
-        this.__having = ""; //Having clause.
-        this.__limit = ""; //Limit condition.
-        this.__union = ""; //Union clause.
-        this.__bindings = []; //Data that bind to select statement.
+        this.__table = table; // The table that this query binds to.
+        this.__inserts = ""; // Data of insert statement.
+        this.__updates = ""; // Data of update statement.
+        this.__selects = "*"; // Data of select statement.
+        this.__distinct = ""; // Distinct clause.
+        this.__join = ""; // Join clause.
+        this.__where = ""; // Where clause.
+        this.__orderBy = ""; // Order-by clause.
+        this.__groupBy = ""; // Group-by clause.
+        this.__having = ""; // Having clause.
+        this.__limit = ""; // Limit condition.
+        this.__union = ""; // Union clause.
+        this.__bindings = []; // Data that bind to select statement.
 
-        //Event handlers.
+        // Event handlers.
         this.__events = Object.assign({
-            //This event will be fired when a SQL statement is about to be
-            //executed.
+            // This event will be fired when a SQL statement is about to be
+            // executed.
             query: [],
-            //This event will be fired when a new model is about to be 
-            //inserted into the database.
+            // This event will be fired when a new model is about to be 
+            // inserted into the database.
             insert: [],
-            //This event will be fired when a new model is successfully 
-            //inserted into the database.
+            // This event will be fired when a new model is successfully 
+            // inserted into the database.
             inserted: [],
-            //This event will be fired when a model is about to be updated.
+            // This event will be fired when a model is about to be updated.
             update: [],
-            //This event will be fired when a model is successfully updated.
+            // This event will be fired when a model is successfully updated.
             updated: [],
-            //This event will be fired when a model is about to be deleted.
+            // This event will be fired when a model is about to be deleted.
             delete: [],
-            //This event will be fired when a model is successfully deleted.
+            // This event will be fired when a model is successfully deleted.
             deleted: [],
-            //This event will be fired when a model is successfully fetched 
-            //from the database.
+            // This event will be fired when a model is successfully fetched 
+            // from the database.
             get: [],
         }, this.constructor.__events);
     }
@@ -206,9 +206,9 @@ class Query extends DB {
             field2 = operator;
             operator = "=";
         }
-        if (!this.__join) { //One join.
+        if (!this.__join) { // One join.
             this.__join = this.backquote(this.__table);
-        } else { //Multiple joins.
+        } else { // Multiple joins.
             this.__join = "(" + this.__join + ")";
         }
         this.__join += " " + type + " join " + this.backquote(table) +
@@ -310,7 +310,7 @@ class Query extends DB {
 
     /** Handles nested where... (or...) clauses. */
     __handleNestedWhere(callback) {
-        var query = new Query(); //Create a new instance for nested scope.
+        var query = new Query(); // Create a new instance for nested scope.
         callback.call(query, query);
         if (query.__where) {
             this.__where += "(" + query.__where + ")";
@@ -330,10 +330,10 @@ class Query extends DB {
 
     /** Gets a query by a callback function. */
     __getQueryBy(callback) {
-        var query = new Query(); //Create a new instance for nested scope.
+        var query = new Query(); // Create a new instance for nested scope.
         callback.call(query, query);
         query.sql = query.getSelectSQL();
-        return query; //Generate SQL statement.
+        return query; // Generate SQL statement.
     }
 
     /**
@@ -634,13 +634,13 @@ class Query extends DB {
         this.__inserts = (isObj ? `(${fields}) ` : "") + `values (${values})`;
         this.sql = `insert into ${this.backquote(this.__table)} ` +
             `${this.__inserts}`;
-        //Fire event and trigger event handlers.
+        // Fire event and trigger event handlers.
         this.trigger("insert", this);
         return this.query(this.sql, bindings).then(db => {
             this.bindings = Object.assign([], bindings);
             this.insertId = db.insertId;
             this.affectedRows = db.affectedRows;
-            //Fire event and trigger event handlers.
+            // Fire event and trigger event handlers.
             this.trigger("inserted", this);
             return this;
         });
@@ -725,12 +725,12 @@ class Query extends DB {
         this.__updates = parts.join(", ");
         this.sql = `update ${this.backquote(this.__table)} set ` +
             this.__updates + (this.__where ? " where " + this.__where : "");
-        //Fire event and trigger event handlers.
+        // Fire event and trigger event handlers.
         this.trigger("update", this);
         return this.query(this.sql, bindings).then(db => {
             this.bindings = Object.assign([], bindings);
             this.affectedRows = db.affectedRows;
-            //Fire event and trigger event handlers.
+            // Fire event and trigger event handlers.
             this.trigger("updated", this);
             return this;
         });
@@ -745,12 +745,12 @@ class Query extends DB {
     delete() {
         this.sql = "delete from " + this.backquote(this.__table) +
             (this.__where ? " where " + this.__where : "");
-        //Fire event and trigger event handlers.
+        // Fire event and trigger event handlers.
         this.trigger("delete", this);
         return this.query(this.sql, this.__bindings).then(db => {
             this.bindings = Object.assign([], this.__bindings);
             this.affectedRows = db.affectedRows;
-            //Fire event and trigger event handlers.
+            // Fire event and trigger event handlers.
             this.trigger("deleted", this);
             return this;
         });
@@ -764,8 +764,8 @@ class Query extends DB {
      */
     get() {
         var promise = this.limit(1).__handleSelect().then(data => data[0]);
-        //Fire event and trigger event handlers only if the current instance 
-        //is an Query instance, not its subclasses' instances.
+        // Fire event and trigger event handlers only if the current instance 
+        // is an Query instance, not its subclasses' instances.
         if (this.constructor.name == "Query")
             this.trigger("get", this);
         return promise;
@@ -780,8 +780,8 @@ class Query extends DB {
      */
     all() {
         var promise = this.__handleSelect();
-        //Fire event and trigger event handlers only if the current instance 
-        //is an Query instance, not its subclasses' instances.
+        // Fire event and trigger event handlers only if the current instance 
+        // is an Query instance, not its subclasses' instances.
         if (this.constructor.name == "Query")
             this.trigger("get", this);
         return promise;
@@ -870,7 +870,7 @@ class Query extends DB {
                     var ok = callback.call(this, data);
                     if (data.length === length && ok !== false) {
                         offset += length;
-                        //Running the function recursively.
+                        // Running the function recursively.
                         return loop();
                     } else {
                         return data;
@@ -903,9 +903,9 @@ class Query extends DB {
             length = parseInt(this.__limit) || 10;
         var offset = (page - 1) * length;
         var selects = this.__selects;
-        //Get all counts of records.
+        // Get all counts of records.
         return this.count().then(total => {
-            if (!total) { //If there is no record, return immediately.
+            if (!total) { // If there is no record, return immediately.
                 return {
                     page,
                     pages: 0,
@@ -913,7 +913,7 @@ class Query extends DB {
                     total,
                     data: [],
                 }
-            } else { //If the are records, continue fetching data.
+            } else { // If the are records, continue fetching data.
                 this.__selects = selects;
                 return this.limit(length, offset).all().then(data => {
                     return {

@@ -41,10 +41,10 @@ module.exports = {
             if (db.__connection.active === false) {
                 throw new Error("Database connection is not available.");
             }
-            //Return the record when inserting.
+            // Return the record when inserting.
             if (db.__command == "insert" && sql.search(/returning\s/) <= 0)
                 sql += " returning *";
-            //Replace ? to ${n} of the SQL.
+            // Replace ? to ${n} of the SQL.
             for (let i in bindings) {
                 i++;
                 sql = sql.replace("?", "$" + i);
@@ -55,10 +55,10 @@ module.exports = {
                 } else {
                     db.affectedRows = res.rowCount || 0;
                     if (db.__command == "insert") {
-                        //Deal with insert statements.
+                        // Deal with insert statements.
                         db.insertId = getInsertId(res.rows[0], res.fields);
                     } else {
-                        //Deal with other statements.
+                        // Deal with other statements.
                         db.__data = res.rows.map(row => {
                             var data = {};
                             for (let key in row) {

@@ -31,57 +31,61 @@ class Model extends Query {
      *      be used when calling `model.getMany()`.
      */
     constructor(data = {}, config = {}) {
-        super(config.table || ""); //Bind the table name.
-        this.__fields = config.fields || []; //Fields of the table.
-        this.__primary = config.primary || ""; //The primary key.
-        this.__searchable = config.searchable || []; //Searchable fields.
+        super(config.table || ""); // Bind the table name.
+        this.__fields = config.fields || []; // Fields of the table.
+        this.__primary = config.primary || ""; // The primary key.
+        this.__searchable = config.searchable || []; // Searchable fields.
 
-        //This property sets an extra where... clause for the SQL statement 
-        //when updating or deleting the model.
+        // This property sets an extra where... clause for the SQL statement 
+        // when updating or deleting the model.
         this.__whereState = { where: "", bindings: [] };
 
-        //This property carries the data of the model.
+        // This property carries the data of the model.
         this.__data = {};
 
-        //This property carries extra data of the model.
-        //When calling model.assign(), those data which are not defined in the
-        //model.__fields will be stored in this property.
-        //When inserting or updating the model, these data won't be affected.
+        // This property carries extra data of the model.
+        // When calling model.assign(), those data which are not defined in 
+        // the model.__fields will be stored in this property.
+        // When inserting or updating the model, these data won't be affected.
         this.__extra = {};
 
-        //Event handlers.
+        // This property carries the data that needs to be updated to the 
+        // database.
+        this.__modified = {};
+
+        // Event handlers.
         this.__events = Object.assign({
-            //This event will be fired when a SQL statement is about to be
-            //executed.
+            // This event will be fired when a SQL statement is about to be
+            // executed.
             query: [],
-            //This event will be fired when a new model is about to be 
-            //inserted into the database.
+            // This event will be fired when a new model is about to be 
+            // inserted into the database.
             insert: [],
-            //This event will be fired when a new model is successfully 
-            //inserted into the database.
+            // This event will be fired when a new model is successfully 
+            // inserted into the database.
             inserted: [],
-            //This event will be fired when a model is about to be updated.
+            // This event will be fired when a model is about to be updated.
             update: [],
-            //This event will be fired when a model is successfully updated.
+            // This event will be fired when a model is successfully updated.
             updated: [],
-            //This event will be fired when a model is about to be saved.
+            // This event will be fired when a model is about to be saved.
             save: [],
-            //This event will be fired when a model is successfully saved.
+            // This event will be fired when a model is successfully saved.
             saved: [],
-            //This event will be fired when a model is about to be deleted.
+            // This event will be fired when a model is about to be deleted.
             delete: [],
-            //This event will be fired when a model is successfully deleted.
+            // This event will be fired when a model is successfully deleted.
             deleted: [],
-            //This event will be fired when a model is successfully fetched 
-            //from the database.
+            // This event will be fired when a model is successfully fetched 
+            // from the database.
             get: [],
         }, this.constructor.__events);
 
-        //Define pseudo-properties.
+        // Define pseudo-properties.
         this.__defineProperties(this.__fields);
 
-        //Assign data to the instance.
-        delete data[this.__primary]; //Filter primary key.
+        // Assign data to the instance.
+        delete data[this.__primary]; // Filter primary key.
         this.assign(data, true);
     }
 
@@ -95,13 +99,17 @@ class Model extends Query {
                 isProp = this.hasOwnProperty(field);
             if (!hasGetter && !hasSetter && !isProp) {
                 Object.defineProperty(this, field, {
-                    //Getter
+                    // Getter
                     get: () => this.__data[field] || null,
-                    //Setter
+                    // Setter
                     set: (v) => {
-                        //Primary key cannot be set through pseudo-property.
-                        if (field != this.__primary)
+                        // Primary key cannot be set through pseudo-property.
+                        if (field != this.__primary) {
                             this.__data[field] = v;
+                            if (this.__data[this.__primary]) {
+                                this.__modified[field] = v;
+                            }
+                        }
                     },
                 });
             }
@@ -120,20 +128,24 @@ class Model extends Query {
      */
     assign(data, useSetter = false) {
         if (this.__data instanceof Array) {
-            //__data extends from DB class, so it could be an array.
+            // __data extends from DB class, so it could be an array.
             this.__data = {};
         }
+        var isNew = !this.__data[this.__primary];
         for (let key in data) {
             if (this.__fields.includes(key)) {
-                //Only accept those fields that `__fields` sets.
+                // Only accept those fields that `__fields` sets.
                 if (useSetter) {
                     let set = this.__lookupSetter__(key);
                     if (set instanceof Function && set.name.includes(" ")) {
-                        set.call(this, data[key]); //Calling setter
+                        set.call(this, data[key]); // Calling setter
                         continue;
                     }
                 }
                 this.__data[key] = data[key];
+                if (!isNew && key != this.__primary) {
+                    this.__modified[key] = data[key];
+                }
             } else {
                 this.__extra[key] = data[key];
             }
@@ -149,7 +161,7 @@ class Model extends Query {
      *  to the callback of `then()` is the current instance.
      */
     save() {
-        this.trigger("save", this); //Trigger the save event.
+        this.trigger("save", this); // Trigger the save event.
         var exists = this.__data[this.__primary],
             promise = exists ? this.update() : this.insert();
         return promise.then(model => {
@@ -171,7 +183,7 @@ class Model extends Query {
         this.assign(data, true);
         return super.insert(this.__data).then(model => {
             model.where(model.__primary, model.insertId);
-            return model.get(); //Get final data from database.
+            return model.get(); // Get final data from database.
         });
     }
 
@@ -183,26 +195,33 @@ class Model extends Query {
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
      */
-    update(data = null) {
+    update(data = {}) {
         this.__resetWhere();
         if (this.__whereState.where) {
             var state = this.__whereState;
             this.__where += " and " + state.where;
             this.__bindings = this.__bindings.concat(state.bindings);
         }
-        this.assign(data, true);
-        data = Object.assign({}, this.__data);
         delete data[this.__primary];
-        return super.update(data).then(model => {
-            if (model.affectedRows == 0) {
-                //If no model is affected, throw an error.
-                throw new Error("No " + this.constructor.name +
-                    " was updated by matching the given condition.");
-            } else {
-                model.__resetWhere(true);
-                return model.get(); //Get final data from the database.
-            }
-        });
+        this.assign(data, true);
+        data = Object.assign({}, this.__modified);
+        if (Object.keys(data).length === 0) {
+            // If no data modified, then resolve the current model.
+            return new Promise(resolve => {
+                resolve(this);
+            });
+        } else {
+            return super.update(data).then(model => {
+                if (model.affectedRows == 0) {
+                    // If no model is affected, throw an error.
+                    throw new Error("No " + this.constructor.name +
+                        " was updated by matching the given condition.");
+                } else {
+                    model.__resetWhere(true);
+                    return model.get(); // Get final data from the database.
+                }
+            });
+        }
     }
 
     /**
@@ -269,12 +288,12 @@ class Model extends Query {
         }
         return this.__handleUpdate(parts, bindings).then(model => {
             if (model.affectedRows == 0) {
-                //If no model is affected, throw an error.
+                // If no model is affected, throw an error.
                 throw new Error("No " + this.constructor.name +
                     " was updated by matching the given condition.");
             } else {
                 model.__resetWhere(true);
-                return model.get(); //Get final data from the database.
+                return model.get(); // Get final data from the database.
             }
         });
     }
@@ -297,7 +316,7 @@ class Model extends Query {
             }
             return super.delete().then(model => {
                 if (model.affectedRows == 0) {
-                    //If no model is affected, throw an error.
+                    // If no model is affected, throw an error.
                     throw new Error("No " + this.constructor.name +
                         " was deleted by matching the given condition.");
                 } else {
@@ -336,16 +355,16 @@ class Model extends Query {
         if (id == 0) {
             return super.get().then(data => {
                 if (!data || Object.keys(data).length === 0) {
-                    //If no model is retrieved, throw an error.
+                    // If no model is retrieved, throw an error.
                     throw new Error("No " + this.constructor.name +
                         " was found by matching the given condition.");
                 } else {
-                    //Remove temporary property.
+                    // Remove temporary property.
                     delete this.__caller;
                     delete this.__foreignKey;
                     delete this.__typeKey;
                     delete this.__pivot;
-                    //Assign data and trigger event handlers.
+                    // Assign data and trigger event handlers.
                     return this.assign(data).trigger("get", this);
                 }
             });
@@ -363,14 +382,14 @@ class Model extends Query {
     all() {
         return super.all().then(data => {
             if (data.length === 0) {
-                //If no models are retrieved, throw an error.
+                // If no models are retrieved, throw an error.
                 throw new Error("No " + this.constructor.name +
                     " was found by matching the given condition.");
             } else {
                 var models = [];
                 for (let i in data) {
                     let model = new this.constructor();
-                    //Assign data and trigger event handlers for every model.
+                    // Assign data and trigger event handlers for every model.
                     model.use(this).assign(data[i]).trigger("get", model);
                     models.push(model);
                 }
@@ -417,7 +436,7 @@ class Model extends Query {
         };
         args = Object.assign(defaults, args);
 
-        //Set basic query conditions.
+        // Set basic query conditions.
         var offset = (args.page - 1) * args.limit;
         this.limit(args.limit, offset);
         if (args.sequence !== "asc" && args.sequence != "desc")
@@ -425,13 +444,13 @@ class Model extends Query {
         else
             this.orderBy(args.orderBy, args.sequence);
 
-        //Set where clause for fields.
+        // Set where clause for fields.
         for (let field of this.__fields) {
             if (args[field] && defaults[field] === undefined) {
                 let operator = "=",
                     value = args[field],
                     match = value.match(/^(<>|!=|<=|>=|<|>|=)\w+/);
-                if (match) { //Handle values which start with an operator.
+                if (match) { // Handle values which start with an operator.
                     operator = match[1];
                     value = value.substring(operator.length);
                 }
@@ -439,17 +458,17 @@ class Model extends Query {
             }
         }
 
-        //Set where clause by using keywords in a vague searching senario.
+        // Set where clause by using keywords in a vague searching senario.
         if (args.keywords && this.__searchable) {
             var keywords = args.keywords,
                 wildcard = this.__config.type == "access" ? "*" : "%";
             if (typeof keywords == "string") keywords = [keywords];
             for (let i in keywords) {
-                //Escape special characters.
+                // Escape special characters.
                 keywords[i] = keywords[i].replace("\\", "\\\\")
                     .replace(wildcard, "\\" + wildcard);
             }
-            //Construct nested conditions.
+            // Construct nested conditions.
             this.where((query) => {
                 for (let field of this.__searchable) {
                     query.orWhere((query) => {
@@ -462,7 +481,7 @@ class Model extends Query {
             });
         }
 
-        //Get paginated information.
+        // Get paginated information.
         return this.paginate(args.page, args.limit).then(info => {
             return Object.assign(args, info);
         });
@@ -987,7 +1006,7 @@ class Model extends Query {
      * 
      * @param  {Number}  page  [optional] The current page, default is `1`.
      * 
-     * @param  {Number}  length  [optional] The top limit of per page, default 
+     * @param  {Number}  length  [optional] The top limit of per page, default
      *  is `10`. Also you can call `query.limit()` to specify a length before 
      *  calling this method.
      * 
@@ -1364,19 +1383,19 @@ class Model extends Query {
             for (let single of data) {
                 let id = single[this.__pivot[1]];
                 exists.push(id);
-                //Store records in an object.
+                // Store records in an object.
                 _data[id] = single;
                 if (!ids.includes(id)) {
-                    //Get IDs that needs to be deleted.
+                    // Get IDs that needs to be deleted.
                     deletes.push(id);
                 }
             }
             for (let id of ids) {
                 if (!exists.includes(id)) {
-                    //Get IDs that needs to be inserted.
+                    // Get IDs that needs to be inserted.
                     inserts.push(id);
                 } else if (notArray) {
-                    //Get IDs that needs to be updated.
+                    // Get IDs that needs to be updated.
                     for (let i in models[id]) {
                         if (_data[id][i] !== undefined &&
                             _data[id][i] != models[id][i]) {
@@ -1388,7 +1407,7 @@ class Model extends Query {
             }
 
             let _query = (new Query(this.__pivot[0])).use(this),
-                //Insert association records within a recursive loop.
+                // Insert association records within a recursive loop.
                 doInsert = (query) => {
                     let id = inserts.shift(),
                         data = notArray ? models[id] : {};
@@ -1396,17 +1415,17 @@ class Model extends Query {
                     data[this.__pivot[1]] = id;
                     if (this.__pivot[3])
                         data[this.__pivot[3]] = this.__pivot[4];
-                    //Insert a new record.
+                    // Insert a new record.
                     return query.insert(data).then(query => {
                         return inserts.length ? doInsert(query) : query;
                     });
                 },
-                //Update association records within a recursive loop.
+                // Update association records within a recursive loop.
                 doUpdate = (query) => {
                     let id = updates.shift(),
                         data = notArray ? models[id] : {};
 
-                    //Re-initiate the query.
+                    // Re-initiate the query.
                     query.__where = "";
                     query.__bindings = [];
                     query.where(
@@ -1418,17 +1437,17 @@ class Model extends Query {
                         query.where(this.__pivot[3], this.__pivot[4]);
                         delete data[this.__pivot[3]];
                     }
-                    //Update the record.
+                    // Update the record.
                     return query.update(data).then(query => {
                         return updates.length ? doUpdate(query) : query;
                     });
                 };
             if (deletes.length || updates.length || inserts.length) {
-                //Handle the procedure in a transaction.
+                // Handle the procedure in a transaction.
                 return this.transaction(() => {
                     if (deletes.length) {
-                        //Delete association records which are not in the 
-                        //provided models.
+                        // Delete association records which are not in the 
+                        // provided models.
                         _query.whereIn(this.__pivot[1], deletes);
                         _query.where(this.__pivot[2], id1);
                         if (this.__pivot[3])
@@ -1489,7 +1508,7 @@ class Model extends Query {
         if (this.__pivot[3])
             query.where(this.__pivot[3], this.__pivot[4]);
         if (models.length > 0) {
-            //Delete association records which are in the provided models.
+            // Delete association records which are in the provided models.
             let ids = [];
             for (let model of models) {
                 if (!isNaN(model)) {
@@ -1542,10 +1561,10 @@ class Model extends Query {
         for (let key of this.__fields) {
             let get = this.__lookupGetter__(key);
             if (get instanceof Function && get.name.includes(" ")) {
-                //Calling getter.
+                // Calling getter.
                 let value = get.call(this, this.__data[key]);
-                //Set this property only if getter returns an non-undefined
-                //value.
+                // Set this property only if getter returns an non-undefined
+                // value.
                 if (value !== undefined)
                     data[key] = value;
             } else if (this.__data[key] !== undefined) {

@@ -31,7 +31,7 @@ class User extends Model {
             searchable: ["name", "email"]
         }, config));
 
-        //This property defines which fields can be used for logging-in.
+        // This property defines which fields can be used for logging-in.
         this.__loginable = ["name", "email"];
 
         this.__events = Object.assign({
@@ -45,27 +45,27 @@ class User extends Model {
             delete: [],
             deleted: [],
             get: [],
-            //This event will be fired when the user successfully logged in.
+            // This event will be fired when the user successfully logged in.
             login: [],
         }, this.constructor.__events);
 
-        //When creating a new user, if no password is provided, use an empty
-        //string as its password.
+        // When creating a new user, if no password is provided, use an empty
+        // string as its password.
         this.on("save", () => {
             if (this.__data.password === undefined)
                 this.password = "";
         });
     }
 
-    //The setter of password, use BCrypt to encrypt data.
+    // The setter of password, use BCrypt to encrypt data.
     set password(v) {
-        //Model's data are stored in the __data property.
+        // Model's data are stored in the __data property.
         this.__data.password = bcrypt.hashSync(v);
     }
 
-    //The getter of password, always return undefined.
-    //When a getter returns undefined, that means when you call toString() or
-    //valueOf(), or in a for...of... loop, this property will be absent.
+    // The getter of password, always return undefined.
+    // When a getter returns undefined, that means when you call toString() or
+    // valueOf(), or in a for...of... loop, this property will be absent.
     get password() {
         return undefined;
     }
@@ -93,7 +93,8 @@ class User extends Model {
             });
         }
         var _args = {};
-        if (args.user === undefined) { //Use a specified field for logging-in.
+        if (args.user === undefined) {
+            // Use a specified field for logging-in.
             for (let k in args) {
                 if (this.__loginable.includes(k)) {
                     _args[k] = args[k];
@@ -106,22 +107,23 @@ class User extends Model {
                 });
             }
             this.where(_args);
-        } else { //Try to match all loginable fields.
+        } else {
+            // Try to match all loginable fields.
             for (let field of this.__loginable) {
                 this.orWhere(field, args.user);
             }
         }
 
-        return this.all().then(users => { //Get all matched users.
+        return this.all().then(users => { // Get all matched users.
 
             for (let user of users) {
-                //Try to match password for every user, until the first one 
-                //matched.
+                // Try to match password for every user, until the first one 
+                // matched.
                 let password = user.__data.password || "";
                 try {
                     if (bcrypt.compareSync(args.password, password)) {
                         this.__data = user.__data
-                        this.trigger("login", this); //Fire login event.
+                        this.trigger("login", this); // Fire login event.
                         return this;
                     }
                 } catch (err) {

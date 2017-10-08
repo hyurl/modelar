@@ -1,6 +1,6 @@
 "use strict";
 
-const DB = require('./DB'); //Import DB class.
+const DB = require('./DB');
 
 /**
  * *Database Table Manager.*
@@ -18,8 +18,8 @@ class Table extends DB {
     constructor(table) {
         super();
         this.__table = table;
-        this.__fields = []; //The field list of this table.
-        this.__index = -1; //Internal pointer.
+        this.__fields = []; // The field list of this table.
+        this.__index = -1; // Internal pointer.
     }
 
     /**
@@ -36,7 +36,7 @@ class Table extends DB {
      * @return {Table} Returns the current instance for function chaining.
      */
     addColumn(name, type, length = 0) {
-        this.__index += 1; //Move the pointer forward.
+        this.__index += 1; // Move the pointer forward.
         if (length) {
             if (length instanceof Array)
                 length = length.join(",");
@@ -53,13 +53,13 @@ class Table extends DB {
             unique: false,
             comment: "",
             foreignKey: {
-                table: "", //The name of the foreign table.
-                field: "", //The binding field in the foreign table.
-                //An action will be triggered when the record is updated.
-                //Optional value is: no action, set null, cascade, restrict
+                table: "", // The name of the foreign table.
+                field: "", // The binding field in the foreign table.
+                // An action will be triggered when the record is updated.
+                // Optional value is: no action, set null, cascade, restrict
                 onUpdate: "no action",
-                //An action will be triggered when the record is deleted.
-                //Optional value is: no action, set null, cascade, restrict
+                // An action will be triggered when the record is deleted.
+                // Optional value is: no action, set null, cascade, restrict
                 onDelete: "no action",
             },
         }, { name, type }));
@@ -210,17 +210,17 @@ class Table extends DB {
 
         for (let field of this.__fields) {
             let column = this.backquote(field.name) + " " + field.type;
-            //Deal with primary key.
+            // Deal with primary key.
             if (field.primary && isSqlite)
                 column += " primary key";
             else
                 primary = field.name;
-            //Deal with auto-increment.
+            // Deal with auto-increment.
             if (field.autoIncrement) {
                 if (isSqlite)
-                    column += " autoincrement"; //SQLite
+                    column += " autoincrement"; // SQLite
                 else if (isMysql)
-                    column += " auto_increment"; //MySQL
+                    column += " auto_increment"; // MySQL
             }
             if (field.default === null) {
                 column += " default null";
@@ -245,7 +245,7 @@ class Table extends DB {
                 if (isSqlite) {
                     column += foreign;
                 } else if (isMysql || isPostgres) {
-                    //MySQL puts the foreign key constraint at the end of DDL.
+                    // MySQL puts foreign key constraints at the end of DDL.
                     foreign = "foreign key (" + this.backquote(field.name) +
                         ")" + foreign;
                     foreigns.push(foreign);
@@ -257,17 +257,17 @@ class Table extends DB {
         this.sql = "create table " + this.backquote(this.__table) +
             " (\n\t" + columns.join(",\n\t");
 
-        //Handle primary key for MySQL or PostgreSQL.
+        // Handle primary key for MySQL or PostgreSQL.
         if (isMysql || isPostgres && primary)
             this.sql += ",\n\tprimary key(" + this.backquote(primary) + ")";
 
-        //Handle foreign key constraints for MySQL or PostgreSQL.
+        // Handle foreign key constraints for MySQL or PostgreSQL.
         if (foreigns.length)
             this.sql += ",\n\t" + foreigns.join(",\n\t");
 
         this.sql += "\n)";
 
-        if (isMysql) { //Set the engine and charset for MySQL.
+        if (isMysql) { // Set the engine and charset for MySQL.
             this.sql += " engine=InnoDB default charset=" +
                 this.__config.charset;
         }
