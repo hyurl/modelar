@@ -225,10 +225,12 @@ class Table extends DB {
             if (field.default === null) {
                 column += " default null";
             } else if (field.default !== undefined) {
-                if (typeof field.default == "string")
+                if (typeof field.default == "string" &&
+                    !(isPostgres && field.default.indexOf("::") > 0)) {
                     column += " default " + this.quote(field.default);
-                else
+                } else {
                     column += " default " + field.default;
+                }
             }
             if (field.notNull) column += " not null";
             if (field.unsigned) column += " unsigned";
