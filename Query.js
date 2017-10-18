@@ -218,7 +218,7 @@ class Query extends DB {
     }
 
     /**
-     * Set a where... clause for the SQL statement.
+     * Sets a where... clause for the SQL statement.
      * 
      * @param  {String|Function|Object}  field  This could be a field name, or
      *  an object that sets multiple `=` (equal) conditions for the clause. Or
@@ -258,7 +258,7 @@ class Query extends DB {
     }
 
     /**
-     * Set an where...or... clause for the SQL statement.
+     * Sets a where...or... clause for the SQL statement.
      * 
      * @param  {String|Function|Object}  field  This could be a field name, or
      *  an object that sets multiple `=` (equal) conditions for the clause. Or
