@@ -228,15 +228,16 @@ class Model extends Query {
      * Increases a specified field with a specified number.
      * 
      * @param  {String|Object}  field  The field name of which record needs to
-     *  be increased. It is also possible to pass this argument a object to 
+     *  be increased. It is also possible to pass this argument an object to 
      *  increase multiple fields.
      * 
-     * @param  {Number}  number  [optional] A number that needs to be raised.
+     * @param  {Number}  number  [optional] A number that needs to be raised, 
+     *  default is `1`.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
      */
-    increase(field, number = 0) {
+    increase(field, number = 1) {
         this.__resetWhere();
         if (this.__whereState.where) {
             var state = this.__whereState;
@@ -250,15 +251,16 @@ class Model extends Query {
      * Decreases a specified field with a specified number.
      * 
      * @param  {String|Object}  field  The field name of which record needs to
-     *  be decreased. It is also possible to pass this argument a object to 
+     *  be decreased. It is also possible to pass this argument an object to 
      *  decrease multiple fields.
      * 
-     * @param  {Number}  number  [optional] A number that needs to be reduced.
+     * @param  {Number}  number  [optional] A number that needs to be reduced,
+     *  default is `1`.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
      */
-    decrease(field, number = 0) {
+    decrease(field, number = 1) {
         this.__resetWhere();
         if (this.__whereState.where) {
             var state = this.__whereState;
@@ -675,7 +677,7 @@ class Model extends Query {
     }
 
     /**
-     * Set a where... clause for the SQL statement.
+     * Sets a where... clause for the SQL statement.
      * 
      * @param  {String|Function|Object}  field  This could be a field name, or
      *  an object that sets multiple `=` (equal) conditions for the clause. Or
@@ -709,7 +711,7 @@ class Model extends Query {
      * @param  {Array}  range  An array that carries only two elements which
      *  represent the start point and the end point.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static whereBetween(field, range) {
         return (new this()).whereBetween(field, range);
@@ -724,7 +726,7 @@ class Model extends Query {
      * @param  {Array}  range  An array that carries only two elements which
      *  represent the start point and the end point.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static whereNotBetween(field, range) {
         return (new this()).whereNotBetween(field, range);
@@ -741,7 +743,7 @@ class Model extends Query {
      *  the only argument passed to the callback is a new Query instance, so 
      *  that you can use its features to generate a SQL statement.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static whereIn(field, values) {
         return (new this()).whereIn(field, values);
@@ -758,7 +760,7 @@ class Model extends Query {
      *  the only argument passed to the callback is a new Query instance, so 
      *  that you can use its features to generate a SQL statement.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static whereNotIn(field, values) {
         return (new this()).whereNotIn(field, values);
@@ -770,7 +772,7 @@ class Model extends Query {
      * @param  {String}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static whereNull(field) {
         return (new this()).whereNull(field);
@@ -782,7 +784,7 @@ class Model extends Query {
      * @param  {String}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static whereNotNull(field) {
         return (new this()).whereNotNull(field);
@@ -796,7 +798,7 @@ class Model extends Query {
      *  Query instance, so that you can use its features to generate a SQL 
      *  statement.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static whereExists(callback) {
         return (new this()).whereExists(callback);
@@ -810,14 +812,14 @@ class Model extends Query {
      *  Query instance, so that you can use its features to generate a SQL 
      *  statement.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static whereNotExists(callback) {
         return (new this()).whereNotExists(callback);
     }
 
     /**
-     * Sets a order by... clause for the SQL statement.
+     * Sets an order by... clause for the SQL statement.
      * 
      * @param  {String}  field  A field name in the table that currently binds
      *  to.
@@ -825,7 +827,7 @@ class Model extends Query {
      * @param  {String}  sequence  [optional] The way of how records ordered, 
      *  it could be either `asc` or `desc`.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static orderBy(field, sequence = "") {
         return (new this()).orderBy(field, sequence);
@@ -847,32 +849,32 @@ class Model extends Query {
      *  passed as an argument. Or just pass the first argument as an array 
      *  that carries all the field names.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static groupBy(...fields) {
         return (new this()).groupBy(fields);
     }
 
     /**
-     * Sets a having clause for the SQL statement.
+     * Sets a having... clause for the SQL statement.
      * 
-     * @param  {String}  raw  A SQL clause to define comparing conditions.
+     * @param  {String}  raw  A SQL clause for defining comparing conditions.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static having(raw) {
         return (new this()).having(raw);
     }
 
     /**
-     * Sets a limit clause for the SQL statement.
+     * Sets a limit... clause for the SQL statement.
      * 
      * @param  {Number}  length  The top limit of how many counts that this 
      *  query will fetch.
      * 
      * @param  {Number}  offset  [optional] The start point, count from `0`.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static limit(length, offset = 0) {
         return (new this()).limit(length, offset);
@@ -892,7 +894,7 @@ class Model extends Query {
     }
 
     /**
-     * Deletes the current model.
+     * Deletes a model with a specified id.
      * 
      * @param  {Number}  id  [optional] The value of the model's primary key.
      * 
