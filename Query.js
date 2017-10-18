@@ -671,12 +671,13 @@ class Query extends DB {
      *  be increased. It is also possible to pass this argument an object to 
      *  increase multiple fields.
      * 
-     * @param  {Number}  number  [optional] A number that needs to be raised.
+     * @param  {Number}  number  [optional] A number that needs to be raised,
+     *  default is `1`.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
      */
-    increase(field, number = 0) {
+    increase(field, number = 1) {
         return this.__handleCrease(field, number, "+");
     }
 
@@ -687,12 +688,13 @@ class Query extends DB {
      *  be decreased. It is also possible to pass this argument an object to 
      *  decrease multiple fields.
      * 
-     * @param  {Number}  number  [optional] A number that needs to be reduced.
+     * @param  {Number}  number  [optional] A number that needs to be reduced,
+     *  default is `1`.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
      */
-    decrease(field, number = 0) {
+    decrease(field, number = 1) {
         return this.__handleCrease(field, number, "-");
     }
 
