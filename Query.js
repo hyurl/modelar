@@ -93,7 +93,7 @@ class Query extends DB {
     /**
      * Sets a inner join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to join with.
+     * @param  {String}  table  A table name that needs to be joined with.
      * 
      * @param  {String}  field1  A field name in the table that currently 
      *  binds to.
@@ -115,7 +115,7 @@ class Query extends DB {
     /**
      * Sets a left join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to join with.
+     * @param  {String}  table  A table name that needs to be joined with.
      * 
      * @param  {String}  field1  A field name in the table that currently 
      *  binds to.
@@ -137,7 +137,7 @@ class Query extends DB {
     /**
      * Sets a right join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to join with.
+     * @param  {String}  table  A table name that needs to be joined with.
      * 
      * @param  {String}  field1  A field name in the table that currently 
      *  binds to.
@@ -159,7 +159,7 @@ class Query extends DB {
     /**
      * Sets a full join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to join with.
+     * @param  {String}  table  A table name that needs to be joined with.
      * 
      * @param  {String}  field1  A field name in the table that currently 
      *  binds to.
@@ -181,7 +181,7 @@ class Query extends DB {
     /**
      * Sets a cross join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to join with.
+     * @param  {String}  table  A table name that needs to be joined with.
      * 
      * @param  {String}  field1  A field name in the table that currently 
      *  binds to.
