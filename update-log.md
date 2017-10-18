@@ -1,5 +1,11 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 1.0.9
+
+(2017-10-18 23:44 UTC+0800)
+
+1. Update query.increase() and query.decrease(), set default to 1.
+
 ## 1.0.8
 
 (2017-10-8 23:32 UTC+0800)
