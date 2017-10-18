@@ -502,7 +502,7 @@ class Query extends DB {
     }
 
     /**
-     * Sets a order by... clause for the SQL statement.
+     * Sets an order by... clause for the SQL statement.
      * 
      * @param  {String}  field  A field name in the table that currently binds
      *  to.
