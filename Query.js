@@ -548,7 +548,7 @@ class Query extends DB {
     }
 
     /**
-     * Sets a having clause for the SQL statement.
+     * Sets a having... clause for the SQL statement.
      * 
      * @param  {String}  raw  A SQL clause to define comparing conditions.
      * 
