@@ -559,7 +559,7 @@ class Query extends DB {
     }
 
     /**
-     * Sets a limit clause for the SQL statement.
+     * Sets a limit... clause for the SQL statement.
      * 
      * @param  {Number}  length  The top limit of how many counts that this 
      *  query will fetch.
@@ -668,7 +668,7 @@ class Query extends DB {
      * Increases a specified field with a specified number.
      * 
      * @param  {String|Object}  field  The field name of which record needs to
-     *  be increased. It is also possible to pass this argument a object to 
+     *  be increased. It is also possible to pass this argument an object to 
      *  increase multiple fields.
      * 
      * @param  {Number}  number  [optional] A number that needs to be raised.
@@ -684,7 +684,7 @@ class Query extends DB {
      * Decreases a specified field with a specified number.
      * 
      * @param  {String|Object}  field  The field name of which record needs to
-     *  be decreased. It is also possible to pass this argument a object to 
+     *  be decreased. It is also possible to pass this argument an object to 
      *  decrease multiple fields.
      * 
      * @param  {Number}  number  [optional] A number that needs to be reduced.
