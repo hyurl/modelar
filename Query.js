@@ -550,7 +550,7 @@ class Query extends DB {
     /**
      * Sets a having... clause for the SQL statement.
      * 
-     * @param  {String}  raw  A SQL clause to define comparing conditions.
+     * @param  {String}  raw  A SQL clause for defining comparing conditions.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
