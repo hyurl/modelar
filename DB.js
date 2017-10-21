@@ -266,7 +266,7 @@ class DB {
                         clearInterval(timer);
                         resolve(this.connect());
                     }
-                }, 10);
+                }, 1);
             });
         } else {
             return this.__driver.connect(this).then(db => {

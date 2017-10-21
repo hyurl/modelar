@@ -137,7 +137,7 @@ class Model extends Query {
                 // Only accept those fields that `__fields` sets.
                 if (useSetter) {
                     let set = this.__lookupSetter__(key);
-                    if (set instanceof Function && set.name.includes(" ")) {
+                    if (set instanceof Function) {
                         set.call(this, data[key]); // Calling setter
                         continue;
                     }
@@ -1565,7 +1565,7 @@ class Model extends Query {
         var data = {};
         for (let key of this.__fields) {
             let get = this.__lookupGetter__(key);
-            if (get instanceof Function && get.name.includes(" ")) {
+            if (get instanceof Function) {
                 // Calling getter.
                 let value = get.call(this, this.__data[key]);
                 // Set this property only if getter returns an non-undefined
