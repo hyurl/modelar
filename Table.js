@@ -29,9 +29,9 @@ class Table extends DB {
      * 
      * @param  {String}  type  The type of the field.
      * 
-     * @param  {Number}  length  [optional] The top limit of length that this 
-     *  field can store, also it could be an array carries only two numbers 
-     *  that represents a range between bottom and top.
+     * @param  {Number}  [length]  The top limit of length that this field can
+     *  store, also it could be an array carries only two numbers that 
+     *  represents a range between bottom and top.
      * 
      * @return {Table} Returns the current instance for function chaining.
      */
@@ -149,18 +149,18 @@ class Table extends DB {
      *  in, it is also possible to pass this argument an object that sets all 
      *  the information of the constraint.
      * 
-     * @param  {String}  field  [optional] A field in the foreign table that 
-     *  related to the current field.
+     * @param  {String}  [field]  A field in the foreign table that related to
+     *  the current field.
      * 
-     * @param  {String}  onUpdate  [optional] An action triggered when the 
-     *  record is updated. optional values are: 
+     * @param  {String}  [onUpdate]  An action triggered when the record is 
+     *  updated. optional values are: 
      *  - `no action`
      *  - `set null`
      *  - `cascade`
      *  - `restrict`
      * 
-     * @param  {String}  onDelete  [optional] An action triggered when the 
-     *  record is deleted. optional values are: 
+     * @param  {String}  [onDelete]  An action triggered when the record is 
+     *  deleted. optional values are: 
      *  - `no action`
      *  - `set null`
      *  - `cascade`

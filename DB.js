@@ -301,8 +301,7 @@ class DB {
      * 
      * @param  {String}  sql  The SQL statement.
      * 
-     * @param  {Array}  bindings  [optional] The data bound to the SQL 
-     *  statement.
+     * @param  {Array}  [bindings]  The data bound to the SQL statement.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.

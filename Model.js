@@ -20,10 +20,10 @@ class Model extends Query {
     /**
      *  Creates a new Model instance with initial data and configurations.
      * 
-     * @param  {Object}  data  [optional] Initial data of the model.
+     * @param  {Object}  [data]  Initial data of the model.
      * 
-     * @param  {Object}  config  [optional] Initial configuration of the 
-     *  model, they could be:
+     * @param  {Object}  [config]  Initial configuration of the model, they 
+     *  could be:
      *  * `table` The table name that the instance binds to.
      *  * `fields` Fields of the table in an array.
      *  * `primary` The primary key of the table.
@@ -119,10 +119,10 @@ class Model extends Query {
     /**
      * Assigns data to the model instance.
      * 
-     * @param  {Object}  data  The data in a object needs to be assigned.
+     * @param  {Object}  data  The data in an object to be assigned.
      * 
-     * @param  {Boolean}  useSetter  [optional] Use setters (if any) to 
-     *  process the data, default is `false`.
+     * @param  {Boolean}  [useSetter]  Use setters (if any) to process the 
+     *  data, default is `false`.
      * 
      * @return {Model} Returns the current instance for function chaining.
      */
@@ -231,8 +231,8 @@ class Model extends Query {
      *  be increased. It is also possible to pass this argument an object to 
      *  increase multiple fields.
      * 
-     * @param  {Number}  number  [optional] A number that needs to be raised, 
-     *  default is `1`.
+     * @param  {Number}  [number]  A number that needs to be raised, default 
+     *  is `1`.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
@@ -254,8 +254,8 @@ class Model extends Query {
      *  be decreased. It is also possible to pass this argument an object to 
      *  decrease multiple fields.
      * 
-     * @param  {Number}  number  [optional] A number that needs to be reduced,
-     *  default is `1`.
+     * @param  {Number}  [number]  A number that needs to be reduced, default 
+     * is `1`.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
@@ -303,7 +303,7 @@ class Model extends Query {
     /**
      * Deletes the current model.
      * 
-     * @param  {Number}  id  [optional] The value of the model's primary key.
+     * @param  {Number}  [id]  The value of the model's primary key.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
@@ -348,7 +348,7 @@ class Model extends Query {
     /**
      * Gets a model from the database.
      * 
-     * @param  {Number}  id  [optional] The value of the model's primary key.
+     * @param  {Number}  [id]  The value of the model's primary key.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the fetched model.
@@ -409,8 +409,8 @@ class Model extends Query {
      * generate sophisticated SQL statement and fetch models with paginated 
      * information.
      * 
-     * @param  {Object}  args  [optional] An object carries key-value pairs 
-     *  information for fields, and it also accepts these properties:
+     * @param  {Object}  [args]  An object carries key-value pairs information
+     *  for fields, and it also accepts these properties:
      *  * `page` The current page, default is `1`.
      *  * `limit` The top limit of per page, default is `10`.
      *  * `orderBy` Ordered by a particular field, default is the primary key.
@@ -502,16 +502,16 @@ class Model extends Query {
      *  argument passed to the callback is a new Query instance with its 
      *  features.
      * 
-     * @param  {String|Function}  operator  [optional] Condition operator, if 
-     *  the `value` isn't passed, then this argument will replace it, and the 
+     * @param  {String|Function}  [operator]  Condition operator, if the 
+     *  `value` isn't passed, then this argument will replace it, and the 
      *  operator will become an `=`. It is also possible to pass this argument
      *  a callback function to generate a child-SQL statement, the only 
      *  argument passed to the callback is a new Query instance, so that you
      *  can use its features to generate a SQL statement.
      * 
-     * @param  {String|Number}  value  [optional] A value that needs to be 
-     *  compared with `field`. If this argument is missing, then `operator` 
-     *  will replace it, and the operator will become an `=`.
+     * @param  {String|Number}  [value]  A value that needs to be compared 
+     *  with `field`. If this argument is missing, then `operator` will 
+     *  replace it, and the operator will become an `=`.
      * 
      * @return {Model} Returns the current instance for function chaining.
      */
@@ -569,7 +569,7 @@ class Model extends Query {
     /**
      * Sets a inner join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to join with.
+     * @param  {String}  table  A table name that needs to be joined with.
      * 
      * @param  {String}  field1  A field name in the table that currently 
      *  binds to.
@@ -578,11 +578,11 @@ class Model extends Query {
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  field2  [optional] A field in `table` that needs to
-     *  be compared with `field1`. If this argument is missing, then 
-     *  `operator` will replace it, and the operator will become an `=`.
+     * @param  {String}  [field2]  A field in `table` that needs to be 
+     *  compared with `field1`. If this argument is missing, then `operator` 
+     *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static join(table, field1, operator, field2) {
         return (new this()).join(table, field1, operator, field2);
@@ -591,7 +591,7 @@ class Model extends Query {
     /**
      * Sets a left join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to join with.
+     * @param  {String}  table  A table name that needs to be joined with.
      * 
      * @param  {String}  field1  A field name in the table that currently 
      *  binds to.
@@ -600,11 +600,11 @@ class Model extends Query {
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  field2  [optional] A field in `table` that needs to
-     *  be compared with `field1`. If this argument is missing, then 
-     *  `operator` will replace it, and the operator will become an `=`.
+     * @param  {String}  [field2]  A field in `table` that needs to be 
+     *  compared with `field1`. If this argument is missing, then `operator` 
+     *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static leftJoin(table, field1, operator, field2) {
         return (new this()).leftJoin(table, field1, operator, field2);
@@ -613,7 +613,7 @@ class Model extends Query {
     /**
      * Sets a right join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to join with.
+     * @param  {String}  table  A table name that needs to be joined with.
      * 
      * @param  {String}  field1  A field name in the table that currently 
      *  binds to.
@@ -622,11 +622,11 @@ class Model extends Query {
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  field2  [optional] A field in `table` that needs to
-     *  be compared with `field1`. If this argument is missing, then 
-     *  `operator` will replace it, and the operator will become an `=`.
+     * @param  {String}  [field2]  A field in `table` that needs to be 
+     *  compared with `field1`. If this argument is missing, then `operator` 
+     *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static rightJoin(table, field1, operator, field2) {
         return (new this()).rightJoin(table, field1, operator, field2);
@@ -635,7 +635,7 @@ class Model extends Query {
     /**
      * Sets a full join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to join with.
+     * @param  {String}  table  A table name that needs to be joined with.
      * 
      * @param  {String}  field1  A field name in the table that currently 
      *  binds to.
@@ -644,11 +644,11 @@ class Model extends Query {
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  field2  [optional] A field in `table` that needs to
-     *  be compared with `field1`. If this argument is missing, then 
-     *  `operator` will replace it, and the operator will become an `=`.
+     * @param  {String}  [field2]  A field in `table` that needs to be 
+     *  compared with `field1`. If this argument is missing, then `operator` 
+     *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static fullJoin(table, field1, operator, field2) {
         return (new this()).fullJoin(table, field1, operator, field2);
@@ -657,7 +657,7 @@ class Model extends Query {
     /**
      * Sets a cross join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to join with.
+     * @param  {String}  table  A table name that needs to be joined with.
      * 
      * @param  {String}  field1  A field name in the table that currently 
      *  binds to.
@@ -666,11 +666,11 @@ class Model extends Query {
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  field2  [optional] A field in `table` that needs to
-     *  be compared with `field1`. If this argument is missing, then 
-     *  `operator` will replace it, and the operator will become an `=`.
+     * @param  {String}  [field2]  A field in `table` that needs to be 
+     *  compared with `field1`. If this argument is missing, then `operator` 
+     *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static crossJoin(table, field1, operator, field2) {
         return (new this()).crossJoin(table, field1, operator, field2);
@@ -685,18 +685,18 @@ class Model extends Query {
      *  argument passed to the callback is a new Query instance with its 
      *  features.
      * 
-     * @param  {String|Function}  operator  [optional] Condition operator, if 
-     *  the `value` isn't passed, then this argument will replace it, and the 
+     * @param  {String|Function}  [operator]  Condition operator, if the 
+     *  `value` isn't passed, then this argument will replace it, and the 
      *  operator will become an `=`. It is also possible to pass this argument
      *  a callback function to generate a child-SQL statement, the only 
      *  argument passed to the callback is a new Query instance, so that you
      *  can use its features to generate a SQL statement.
      * 
-     * @param  {String|Number}  value  [optional] A value that needs to be 
-     *  compared with `field`. If this argument is missing, then `operator` 
-     *  will replace it, and the operator will become an `=`.
+     * @param  {String|Number}  [value]  A value that needs to be compared 
+     *  with `field`. If this argument is missing, then `operator` will 
+     *  replace it, and the operator will become an `=`.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Query} Returns the current instance for function chaining.
      */
     static where(field, operator = null, value = undefined) {
         return (new this()).where(field, operator, value);
@@ -824,8 +824,8 @@ class Model extends Query {
      * @param  {String}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @param  {String}  sequence  [optional] The way of how records ordered, 
-     *  it could be either `asc` or `desc`.
+     * @param  {String}  [sequence]  The way of how records ordered, it could 
+     *  be either `asc` or `desc`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -872,7 +872,7 @@ class Model extends Query {
      * @param  {Number}  length  The top limit of how many counts that this 
      *  query will fetch.
      * 
-     * @param  {Number}  offset  [optional] The start point, count from `0`.
+     * @param  {Number}  [offset]  The start point, count from `0`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -896,10 +896,10 @@ class Model extends Query {
     /**
      * Deletes a model with a specified id.
      * 
-     * @param  {Number}  id  [optional] The value of the model's primary key.
+     * @param  {Number}  [id]  The value of the model's primary key.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     *  to the callback of `then()` is the deleted model.
      */
     static delete(id) {
         return (new this()).delete(id);
@@ -908,7 +908,7 @@ class Model extends Query {
     /**
      * Gets a model from the database.
      * 
-     * @param  {Number}  id  [optional] The value of the model's primary key.
+     * @param  {Number}  [id]  The value of the model's primary key.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the fetched model.
@@ -921,7 +921,7 @@ class Model extends Query {
      * Gets all records from the database.
      * 
      * @return  {Promise}  Returns a Promise, and the the only argument passed
-     *  to the callback of `then()` is all the fetched data  carried in an 
+     *  to the callback of `then()` is all the fetched data carried in an 
      *  array.
      */
     static all() {
@@ -931,7 +931,7 @@ class Model extends Query {
     /**
      * Gets all counts of records or a specified filed.
      * 
-     * @param  {String}  field  [optional] Count a specified field.
+     * @param  {String}  [field]  Count a specified field.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is a number that represents the count of 
@@ -1009,14 +1009,14 @@ class Model extends Query {
     /**
      * Gets paginated information of all records that suit given conditions.
      * 
-     * @param  {Number}  page  [optional] The current page, default is `1`.
+     * @param  {Number}  [page]  The current page, default is `1`.
      * 
-     * @param  {Number}  length  [optional] The top limit of per page, default
-     *  is `10`. Also you can call `query.limit()` to specify a length before 
-     *  calling this method.
+     * @param  {Number}  [length]  The top limit of per page, default is `10`.
+     *  Also you can call `query.limit()` to specify a length before calling 
+     *  this method.
      * 
-     * @return {Promise} Returns a Promise, the only argument passes to the 
-     *  callback of `then()` is an object that carries the information, it 
+     * @return {Promise} Returns a Promise, and the only argument passed to 
+     * the callback of `then()` is an object that carries the information, it 
      *  includes:
      *  * `page` The current page.
      *  * `limit` The top limit of per page.
@@ -1034,8 +1034,8 @@ class Model extends Query {
      * generate sophisticated SQL statement and fetch models with paginated 
      * information.
      * 
-     * @param  {Object}  args  [optional] An object carries key-value pairs 
-     *  information for fields, and it also accepts these properties:
+     * @param  {Object}  [args]  An object carries key-value pairs information
+     *  for fields, and it also accepts these properties:
      *  * `page` The current page, default is `1`.
      *  * `limit` The top limit of per page, default is `10`.
      *  * `orderBy` Ordered by a particular field, default is the primary key.
@@ -1070,16 +1070,16 @@ class Model extends Query {
      *  argument passed to the callback is a new Query instance with its 
      *  features.
      * 
-     * @param  {String|Function}  operator  [optional] Condition operator, if 
-     *  the `value` isn't passed, then this argument will replace it, and the 
+     * @param  {String|Function}  [operator]  Condition operator, if the 
+     *  `value` isn't passed, then this argument will replace it, and the 
      *  operator will become an `=`. It is also possible to pass this argument
      *  a callback function to generate a child-SQL statement, the only 
      *  argument passed to the callback is a new Query instance, so that you
      *  can use its features to generate a SQL statement.
      * 
-     * @param  {String|Number}  value  [optional] A value that needs to be 
-     *  compared with `field`. If this argument is missing, then `operator` 
-     *  will replace it, and the operator will become an `=`.
+     * @param  {String|Number}  [value]  A value that needs to be compared 
+     *  with `field`. If this argument is missing, then `operator` will 
+     *  replace it, and the operator will become an `=`.
      * 
      * @return {Model} Returns the current instance for function chaining.
      */
@@ -1096,9 +1096,9 @@ class Model extends Query {
      * 
      * @param  {String}  foreignKey  A foreign key in the associated model.
      * 
-     * @param  {String}  typeKey  [optional] A field name in the associated 
-     *  model that stores the current model name when you are defining a 
-     *  polymorphic association.
+     * @param  {String}  [typeKey]  A field name in the associated model that 
+     *  stores the current model name when you are defining a polymorphic 
+     *  association.
      * 
      * @return {Model} Returns the associated model instance so you can use 
      *  its features to handle data.
@@ -1119,8 +1119,8 @@ class Model extends Query {
      * 
      * @param  {String}  foreignKey  A foreign key in the current model.
      * 
-     * @param  {String}  typeKey  [optional] A field name in the current model
-     *  that stores the current model name when you are defining a polymorphic
+     * @param  {String}  [typeKey]  A field name in the current model that 
+     *  stores the current model name when you are defining a polymorphic
      *  association.
      * 
      * @return {Model} Returns the associated model instance so you can use 
@@ -1202,8 +1202,8 @@ class Model extends Query {
      * @param  {String}  foreignKey2  A foreign key in the pivot table that 
      *  points to the current model.
      * 
-     * @param  {String}  typeKey  [optional] A field name in the pivot table 
-     *  that stores the current model name when you are defining a polymorphic
+     * @param  {String}  [typeKey]  A field name in the pivot table that 
+     *  stores the current model name when you are defining a polymorphic
      *  association.
      * 
      * @return {Model} Returns the associated model instance so you can use 
@@ -1241,9 +1241,9 @@ class Model extends Query {
      * @param  {String}  foreignKey2  A foreign key in the pivot table that 
      *  points to the associated model.
      * 
-     * @param  {String}  typeKey  [optional] A field name in the pivot table 
-     *  that stores the associated model name when you are defining a 
-     *  polymorphic association.
+     * @param  {String}  [typeKey]  A field name in the pivot table that 
+     *  stores the associated model name when you are defining a polymorphic 
+     *  association.
      * 
      * @return {Model} Returns the associated model instance so you can use 
      *  its features to handle data.
@@ -1309,8 +1309,8 @@ class Model extends Query {
      * 
      * @param  {String}  foreignKey  A foreign key in the current model.
      * 
-     * @param  {String}  typeKey  [optional] A field name that stores the 
-     *  associated model name when you are defining a polymorphic association.
+     * @param  {String}  [typeKey]  A field name that stores the associated 
+     *  model name when you are defining a polymorphic association.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the caller instance.
@@ -1488,8 +1488,8 @@ class Model extends Query {
      * This method can only be called after calling `model.hasVia()` or 
      * `model.belongsToVia()`.
      * 
-     * @param {Array} models [optional] An array carries all models or numbers
-     *  which represents the values of models' primary  keys that needs to be 
+     * @param {Array} [models]  An array carries all models or numbers which 
+     *  represents the values of models' primary  keys that needs to be 
      *  associated. If this parameter is not provided, all associations of 
      *  the caller model in the pivot table will be deleted.
      * 

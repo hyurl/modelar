@@ -13,10 +13,10 @@ class User extends Model {
     /**
      *  Creates a new User instance with initial data and configurations.
      * 
-     * @param  {Object}  data  [optional] Initial data of the model.
+     * @param  {Object}  [data]  Initial data of the model.
      * 
-     * @param  {Object}  config  [optional] Initial configuration of the 
-     *  model, they could be:
+     * @param  {Object}  [config]  Initial configuration of the model, they 
+     *  could be:
      *  * `table` The table name that the instance binds to.
      *  * `fields` Fields of the table in an array.
      *  * `primary` The primary key of the table.

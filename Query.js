@@ -12,8 +12,7 @@ class Query extends DB {
     /**
      * Creates a new Query instance with a specified table name binding to it.
      * 
-     * @param  {String}  table [optional] The table name binds to the 
-     *  instance.
+     * @param  {String}  [table]  The table name binds to the instance.
      */
     constructor(table = "") {
         super();
@@ -102,9 +101,9 @@ class Query extends DB {
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  field2  [optional] A field in `table` that needs to
-     *  be compared with `field1`. If this argument is missing, then 
-     *  `operator` will replace it, and the operator will become an `=`.
+     * @param  {String}  [field2]  A field in `table` that needs to be 
+     *  compared with `field1`. If this argument is missing, then `operator` 
+     *  will replace it, and the operator will become an `=`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -124,9 +123,9 @@ class Query extends DB {
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  field2  [optional] A field in `table` that needs to
-     *  be compared with `field1`. If this argument is missing, then 
-     *  `operator` will replace it, and the operator will become an `=`.
+     * @param  {String}  [field2]  A field in `table` that needs to be 
+     *  compared with `field1`. If this argument is missing, then `operator` 
+     *  will replace it, and the operator will become an `=`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -146,9 +145,9 @@ class Query extends DB {
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  field2  [optional] A field in `table` that needs to
-     *  be compared with `field1`. If this argument is missing, then 
-     *  `operator` will replace it, and the operator will become an `=`.
+     * @param  {String}  [field2]  A field in `table` that needs to be 
+     *  compared with `field1`. If this argument is missing, then `operator` 
+     *  will replace it, and the operator will become an `=`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -168,9 +167,9 @@ class Query extends DB {
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  field2  [optional] A field in `table` that needs to
-     *  be compared with `field1`. If this argument is missing, then 
-     *  `operator` will replace it, and the operator will become an `=`.
+     * @param  {String}  [field2]  A field in `table` that needs to be 
+     *  compared with `field1`. If this argument is missing, then `operator` 
+     *  will replace it, and the operator will become an `=`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -190,9 +189,9 @@ class Query extends DB {
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  field2  [optional] A field in `table` that needs to
-     *  be compared with `field1`. If this argument is missing, then 
-     *  `operator` will replace it, and the operator will become an `=`.
+     * @param  {String}  [field2]  A field in `table` that needs to be 
+     *  compared with `field1`. If this argument is missing, then `operator` 
+     *  will replace it, and the operator will become an `=`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -226,16 +225,16 @@ class Query extends DB {
      *  argument passed to the callback is a new Query instance with its 
      *  features.
      * 
-     * @param  {String|Function}  operator  [optional] Condition operator, if 
-     *  the `value` isn't passed, then this argument will replace it, and the 
+     * @param  {String|Function}  [operator]  Condition operator, if the 
+     *  `value` isn't passed, then this argument will replace it, and the 
      *  operator will become an `=`. It is also possible to pass this argument
      *  a callback function to generate a child-SQL statement, the only 
      *  argument passed to the callback is a new Query instance, so that you
      *  can use its features to generate a SQL statement.
      * 
-     * @param  {String|Number}  value  [optional] A value that needs to be 
-     *  compared with `field`. If this argument is missing, then `operator` 
-     *  will replace it, and the operator will become an `=`.
+     * @param  {String|Number}  [value]  A value that needs to be compared 
+     *  with `field`. If this argument is missing, then `operator` will 
+     *  replace it, and the operator will become an `=`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -266,16 +265,16 @@ class Query extends DB {
      *  argument passed to the callback is a new Query instance with its 
      *  features.
      * 
-     * @param  {String|Function}  operator  [optional] Condition operator, if 
-     *  the `value` isn't passed, then this argument will replace it, and the 
+     * @param  {String|Function}  [operator]  Condition operator, if the 
+     *  `value` isn't passed, then this argument will replace it, and the 
      *  operator will become an `=`. It is also possible to pass this argument
      *  a callback function to generate a child-SQL statement, the only 
      *  argument passed to the callback is a new Query instance, so that you
      *  can use its features to generate a SQL statement.
      * 
-     * @param  {String|Number}  value  [optional] A value that needs to be 
-     *  compared with `field`. If this argument is missing, then `operator` 
-     *  will replace it, and the operator will become an `=`.
+     * @param  {String|Number}  [value]  A value that needs to be compared 
+     *  with `field`. If this argument is missing, then `operator` will 
+     *  replace it, and the operator will become an `=`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -507,8 +506,8 @@ class Query extends DB {
      * @param  {String}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @param  {String}  sequence  [optional] The way of how records ordered, 
-     *  it could be either `asc` or `desc`.
+     * @param  {String}  [sequence]  The way of how records ordered, it could 
+     *  be either `asc` or `desc`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -564,7 +563,7 @@ class Query extends DB {
      * @param  {Number}  length  The top limit of how many counts that this 
      *  query will fetch.
      * 
-     * @param  {Number}  offset  [optional] The start point, count from `0`.
+     * @param  {Number}  [offset]  The start point, count from `0`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -592,8 +591,8 @@ class Query extends DB {
      * @param  {String|Query}  query Could be a SQL statement, or a Query 
      *  instance.
      * 
-     * @param  {Boolean}  all  [optional] Use `union all` to concatenate 
-     *  results, default is `false`.
+     * @param  {Boolean}  [all]  Use `union all` to concatenate results, 
+     *  default is `false`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -671,8 +670,8 @@ class Query extends DB {
      *  be increased. It is also possible to pass this argument an object to 
      *  increase multiple fields.
      * 
-     * @param  {Number}  number  [optional] A number that needs to be raised,
-     *  default is `1`.
+     * @param  {Number}  [number]  A number that needs to be raised, default 
+     *  is `1`.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
@@ -688,8 +687,8 @@ class Query extends DB {
      *  be decreased. It is also possible to pass this argument an object to 
      *  decrease multiple fields.
      * 
-     * @param  {Number}  number  [optional] A number that needs to be reduced,
-     *  default is `1`.
+     * @param  {Number}  [number]  A number that needs to be reduced, default 
+     * is `1`.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
@@ -792,7 +791,7 @@ class Query extends DB {
     /**
      * Gets all counts of records or a specified filed.
      * 
-     * @param  {String}  field  [optional] Count a specified field.
+     * @param  {String}  [field]  Count a specified field.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is a number that represents the count of 
@@ -885,11 +884,11 @@ class Query extends DB {
     /**
      * Gets paginated information of all records that suit given conditions.
      * 
-     * @param  {Number}  page  [optional] The current page, default is `1`.
+     * @param  {Number}  [page]  The current page, default is `1`.
      * 
-     * @param  {Number}  length  [optional] The top limit of per page, default 
-     *  is `10`. Also you can call `query.limit()` to specify a length before 
-     *  calling this method.
+     * @param  {Number}  [length]  The top limit of per page, default is `10`.
+     *  Also you can call `query.limit()` to specify a length before calling 
+     *  this method.
      * 
      * @return {Promise} Returns a Promise, and the only argument passed to 
      * the callback of `then()` is an object that carries the information, it 
