@@ -154,8 +154,8 @@ class Model extends Query {
     }
 
     /**
-     * Saves the current model, if there is not record in the database, it 
-     * will be automatically inserted.
+     * Saves the current model, if there is no record in the database, it will
+     * be automatically inserted.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
@@ -174,7 +174,8 @@ class Model extends Query {
     /**
      * Inserts the current model as a new record into the database.
      * 
-     * @param  {Object}  data  An object that carries fields and their values.
+     * @param  {Object}  [data]  An object that carries fields and their 
+     *  values.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
@@ -190,7 +191,8 @@ class Model extends Query {
     /**
      * Updates the current model.
      * 
-     * @param  {Object}  data An object that carries fields and their values.
+     * @param  {Object}  [data]  An object that carries fields and their 
+     *  values.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the current instance.
@@ -379,7 +381,7 @@ class Model extends Query {
     }
 
     /**
-     * Gets all models from the database.
+     * Gets all matched models from the database.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is all fetched models carried in an array.
@@ -531,7 +533,7 @@ class Model extends Query {
      * 
      * @param  {DB}  db  A DB instance that is already created.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static use(db) {
         return (new this()).use(db);
@@ -547,7 +549,7 @@ class Model extends Query {
      *  transaction, that means you have to commit and roll back manually.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     *  to the callback of `then()` is a new model instance.
      */
     static transaction(callback = null) {
         return (new this()).transaction(callback);
@@ -560,7 +562,7 @@ class Model extends Query {
      *  passed as an argument, or just pass the first argument as an array 
      *  that carries all the field names.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static select(...fields) {
         return (new this()).select(fields);
@@ -582,7 +584,7 @@ class Model extends Query {
      *  compared with `field1`. If this argument is missing, then `operator` 
      *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static join(table, field1, operator, field2) {
         return (new this()).join(table, field1, operator, field2);
@@ -604,7 +606,7 @@ class Model extends Query {
      *  compared with `field1`. If this argument is missing, then `operator` 
      *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static leftJoin(table, field1, operator, field2) {
         return (new this()).leftJoin(table, field1, operator, field2);
@@ -626,7 +628,7 @@ class Model extends Query {
      *  compared with `field1`. If this argument is missing, then `operator` 
      *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static rightJoin(table, field1, operator, field2) {
         return (new this()).rightJoin(table, field1, operator, field2);
@@ -648,7 +650,7 @@ class Model extends Query {
      *  compared with `field1`. If this argument is missing, then `operator` 
      *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static fullJoin(table, field1, operator, field2) {
         return (new this()).fullJoin(table, field1, operator, field2);
@@ -670,7 +672,7 @@ class Model extends Query {
      *  compared with `field1`. If this argument is missing, then `operator` 
      *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static crossJoin(table, field1, operator, field2) {
         return (new this()).crossJoin(table, field1, operator, field2);
@@ -696,7 +698,7 @@ class Model extends Query {
      *  with `field`. If this argument is missing, then `operator` will 
      *  replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static where(field, operator = null, value = undefined) {
         return (new this()).where(field, operator, value);
@@ -711,7 +713,7 @@ class Model extends Query {
      * @param  {Array}  range  An array that carries only two elements which
      *  represent the start point and the end point.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static whereBetween(field, range) {
         return (new this()).whereBetween(field, range);
@@ -726,7 +728,7 @@ class Model extends Query {
      * @param  {Array}  range  An array that carries only two elements which
      *  represent the start point and the end point.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static whereNotBetween(field, range) {
         return (new this()).whereNotBetween(field, range);
@@ -743,7 +745,7 @@ class Model extends Query {
      *  the only argument passed to the callback is a new Query instance, so 
      *  that you can use its features to generate a SQL statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static whereIn(field, values) {
         return (new this()).whereIn(field, values);
@@ -760,7 +762,7 @@ class Model extends Query {
      *  the only argument passed to the callback is a new Query instance, so 
      *  that you can use its features to generate a SQL statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static whereNotIn(field, values) {
         return (new this()).whereNotIn(field, values);
@@ -772,7 +774,7 @@ class Model extends Query {
      * @param  {String}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static whereNull(field) {
         return (new this()).whereNull(field);
@@ -784,7 +786,7 @@ class Model extends Query {
      * @param  {String}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static whereNotNull(field) {
         return (new this()).whereNotNull(field);
@@ -798,7 +800,7 @@ class Model extends Query {
      *  Query instance, so that you can use its features to generate a SQL 
      *  statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static whereExists(callback) {
         return (new this()).whereExists(callback);
@@ -812,7 +814,7 @@ class Model extends Query {
      *  Query instance, so that you can use its features to generate a SQL 
      *  statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static whereNotExists(callback) {
         return (new this()).whereNotExists(callback);
@@ -827,7 +829,7 @@ class Model extends Query {
      * @param  {String}  [sequence]  The way of how records ordered, it could 
      *  be either `asc` or `desc`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static orderBy(field, sequence = "") {
         return (new this()).orderBy(field, sequence);
@@ -836,7 +838,7 @@ class Model extends Query {
     /**
      * Sets that the records will be ordered in random sequence.
      * 
-     * @return {Model} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static random() {
         return (new this()).random();
@@ -849,7 +851,7 @@ class Model extends Query {
      *  passed as an argument. Or just pass the first argument as an array 
      *  that carries all the field names.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static groupBy(...fields) {
         return (new this()).groupBy(fields);
@@ -860,7 +862,7 @@ class Model extends Query {
      * 
      * @param  {String}  raw  A SQL clause for defining comparing conditions.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static having(raw) {
         return (new this()).having(raw);
@@ -874,7 +876,7 @@ class Model extends Query {
      * 
      * @param  {Number}  [offset]  The start point, count from `0`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {Model} Returns a new model instance.
      */
     static limit(length, offset = 0) {
         return (new this()).limit(length, offset);
@@ -887,7 +889,7 @@ class Model extends Query {
      *  or pass all values in an array that fulfil all the fields.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     *  to the callback of `then()` is the inserted model.
      */
     static insert(data) {
         return (new this(data)).insert();
@@ -918,10 +920,10 @@ class Model extends Query {
     }
 
     /**
-     * Gets all records from the database.
+     * Gets all models from the database.
      * 
      * @return  {Promise}  Returns a Promise, and the the only argument passed
-     *  to the callback of `then()` is all the fetched data carried in an 
+     *  to the callback of `then()` is all the fetched models carried in an 
      *  array.
      */
     static all() {
@@ -990,7 +992,7 @@ class Model extends Query {
     }
 
     /**
-     * Processes chunked data with a specified length.
+     * Processes chunked models with a specified length.
      * 
      * @param  {Number}  length  The top limit of how many records that each 
      *  chunk will carry.
@@ -1000,14 +1002,14 @@ class Model extends Query {
      *  carries. If the callback returns `false`, stop chunking.
      * 
      * @return {Promise} Returns a Promise, and the only argument passed to
-     *  the callback of `then()` is the last chunk of data.
+     *  the callback of `then()` is the last chunk of models.
      */
     static chunk(length, callback) {
         return (new this()).chunk(length, callback);
     }
 
     /**
-     * Gets paginated information of all records that suit given conditions.
+     * Gets paginated information of all models that suit given conditions.
      * 
      * @param  {Number}  [page]  The current page, default is `1`.
      * 
@@ -1022,7 +1024,7 @@ class Model extends Query {
      *  * `limit` The top limit of per page.
      *  * `pages` A number of all record pages.
      *  * `total` A number of all record counts.
-     *  * `data` An array that carries all fetched data.
+     *  * `data` An array that carries all fetched models.
      */
     static paginate(page = 1, limit = 10) {
         return (new this()).paginate(page, limit);
@@ -1120,7 +1122,7 @@ class Model extends Query {
      * @param  {String}  foreignKey  A foreign key in the current model.
      * 
      * @param  {String}  [typeKey]  A field name in the current model that 
-     *  stores the current model name when you are defining a polymorphic
+     *  stores the associated model name when you are defining a polymorphic
      *  association.
      * 
      * @return {Model} Returns the associated model instance so you can use 

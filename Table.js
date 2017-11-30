@@ -168,7 +168,7 @@ class Table extends DB {
      * 
      * @return {Table} Returns the current instance for function chaining.
      */
-    foreignKey(table, field = "", onUpdate = "", onDelete = "") {
+    foreignKey(table, field = "", onUpdate = "no action", onDelete = "no action") {
         if (table instanceof Object)
             var foreignKey = table;
         else
@@ -196,7 +196,7 @@ class Table extends DB {
     }
 
     /**
-     * Gets the DDL statement by the definitions.
+     * Gets the DDL statement by the definition.
      * 
      * @return {String} Returns the DDL statement.
      */
@@ -211,10 +211,12 @@ class Table extends DB {
         for (let field of this.__fields) {
             let column = this.backquote(field.name) + " " + field.type;
             // Deal with primary key.
-            if (field.primary && isSqlite)
-                column += " primary key";
-            else
-                primary = field.name;
+            if (field.primary){
+                if (isSqlite)
+                    column += " primary key";
+                else
+                    primary = field.name;
+            }
             // Deal with auto-increment.
             if (field.autoIncrement) {
                 if (isSqlite)

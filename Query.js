@@ -10,9 +10,9 @@ const DB = require("./DB");
  */
 class Query extends DB {
     /**
-     * Creates a new Query instance with a specified table name binding to it.
+     * Creates a new Query instance with a specified table name.
      * 
-     * @param  {String}  [table]  The table name binds to the instance.
+     * @param  {String}  [table]  The table name bound to the instance.
      */
     constructor(table = "") {
         super();
@@ -28,7 +28,7 @@ class Query extends DB {
         this.__having = ""; // Having clause.
         this.__limit = ""; // Limit condition.
         this.__union = ""; // Union clause.
-        this.__bindings = []; // Data that bind to select statement.
+        this.__bindings = []; // Data bound to select statement.
 
         // Event handlers.
         this.__events = Object.assign({
@@ -506,8 +506,8 @@ class Query extends DB {
      * @param  {String}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @param  {String}  [sequence]  The way of how records ordered, it could 
-     *  be either `asc` or `desc`.
+     * @param  {String}  [sequence]  The way of how records are ordered, it
+     *  could be either `asc` or `desc`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
@@ -789,7 +789,7 @@ class Query extends DB {
     }
 
     /**
-     * Gets all counts of records or a specified filed.
+     * Gets all counts of records or a specified field.
      * 
      * @param  {String}  [field]  Count a specified field.
      * 
@@ -799,7 +799,7 @@ class Query extends DB {
      */
     count(field = "*") {
         if (field != "*" && this.__distinct)
-            filed = "distinct " + this.backquote(field);
+            field = "distinct " + this.backquote(field);
         return this.__handleAggregate("count", field);
     }
 
@@ -930,7 +930,7 @@ class Query extends DB {
     }
 
     /** Handles aggregate functions. */
-    __handleAggregate(name, filed) {
+    __handleAggregate(name, field) {
         this.__selects = name + "(" + this.backquote(field) + ") as alias";
         this.__limit = "";
         return this.__handleSelect().then(data => data[0].alias);

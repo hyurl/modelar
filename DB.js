@@ -128,7 +128,7 @@ class DB {
     }
 
     /**
-     * Initiate the DB class for every instances.
+     * Initiates the DB class for every instances.
      * 
      * @param  {Object}  config  An object that carries configurations.
      * 

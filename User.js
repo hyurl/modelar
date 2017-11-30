@@ -71,7 +71,7 @@ class User extends Model {
     }
 
     /**
-     * Tries to sign in a user. If succeeded, an `login` event will be fired, 
+     * Tring to sign in a user. If succeeded, an `login` event will be fired, 
      * if failed, throws an error indicates the reason. This method won't 
      * save user information in session or other storage materials, if you 
      * want it to, you have to do it yourself.
@@ -82,7 +82,7 @@ class User extends Model {
      *  be passed, which means trying to match all possibilities 
      *  automatically.
      * 
-     * @return (Promise} Returns a Promise, and the the only argument passed 
+     * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the user instance which is logged in.
      */
     login(args) {
@@ -136,7 +136,7 @@ class User extends Model {
     }
 
     /**
-     * Tries to sign in a user. If succeeded, an `login` event will be fired, 
+     * Tring to sign in a user. If succeeded, an `login` event will be fired, 
      * if failed, throws an error indicates the reason. This method won't 
      * save user information in session or other storage materials, if you 
      * want it to, you have to do it yourself.
@@ -147,7 +147,7 @@ class User extends Model {
      *  be passed, which means trying to match all possibilities 
      *  automatically.
      * 
-     * @return (Promise} Returns a Promise, and the the only argument passed 
+     * @return {Promise} Returns a Promise, and the the only argument passed
      *  to the callback of `then()` is the user instance which is logged in.
      */
     static login(args) {
