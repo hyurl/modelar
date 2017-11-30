@@ -496,7 +496,7 @@ class Model extends Query {
 
     /**
      * Sets an extra where... clause for the SQL statement when updating or 
-     * deleting the model.
+     * deleting the model to mark the state.
      * 
      * @param  {String|Function|Object}  field  This could be a field name, or
      *  an object that sets multiple `=` (equal) conditions for the clause. Or
@@ -1492,7 +1492,7 @@ class Model extends Query {
      * 
      * @param {Array} [models]  An array carries all models or numbers which 
      *  represents the values of models' primary  keys that needs to be 
-     *  associated. If this parameter is not provided, all associations of 
+     *  dissociated. If this parameter is not provided, all associations of 
      *  the caller model in the pivot table will be deleted.
      * 
      * @return {Promise} Returns a Promise, and the the only argument passed 
