@@ -24,7 +24,7 @@
 
 ## The DB Class
 
-*Database Connection Manager.*
+*Database Manager.*
 
 This class provides an internal pool for connections, when a connection has 
 done its job, it could be recycled and retrieved, there for saving the 

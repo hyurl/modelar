@@ -30,7 +30,7 @@
 
 ## The Model Class
 
-*Model Wrapper.*
+*Model Wrapper and beyond.*
 
 This class extends from Query class, there for has all the features that Query
 has, and features that Query doesn't have, which makes data operation more 

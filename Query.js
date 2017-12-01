@@ -1,10 +1,10 @@
 const DB = require("./DB");
 
 /**
- * *Query Constructor for SQL statements and beyond.*
+ * *Query Builder and beyond.*
  * 
  * This class provides a bunch of methods with Object-Oriented features to 
- * make generating SQL statements and handling data more easier and efficient.
+ * generate SQL statements and handle data in a more easier and efficient way.
  */
 class Query extends DB {
     /**
