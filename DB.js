@@ -1,8 +1,6 @@
-"use strict";
-
-const mysql = require("./drivers/mysql.js");
-const postgres = require("./drivers/postgres.js");
-const sqlite = require("./drivers/sqlite.js");
+const EventEmitter = require("events");
+const MysqlAdapter = require("modelar-mysql-adapter");
+const PostgresAdapter = require("modelar-postgres-adapter");
 
 /**
  * *Database Connection Manager.*
@@ -11,14 +9,15 @@ const sqlite = require("./drivers/sqlite.js");
  * done its job, it could be recycled and retrieved, there for saving the 
  * resources and speeding up the program.
  */
-class DB {
+class DB extends EventEmitter {
     /**
      * Creates a new DB instance with specified configurations.
      * 
-     * @param  {Object}  config  An object that carries configurations for the
-     *  current instance, or a string that sets only the database name.
+     * @param  {Object}  [config]  An object that carries configurations for 
+     *  the current instance, or a string that sets only the database name.
      */
     constructor(config = {}) {
+        super();
         if (typeof config == "string")
             config = { database: config };
 
@@ -33,41 +32,31 @@ class DB {
         this.affectedRows = 0;
 
         // This property carries the last executed SQL command.
-        this.__command = "";
+        this._command = "";
 
         // This property indicates whether the transaction is begun or not.
-        this.__transaction = false;
+        // this._transaction = false;
 
         // The data fetched by executing a select statement.
-        this.__data = [];
+        this._data = [];
 
         // This object carries database configurations of the current 
         // instance.
-        this.__config = Object.assign({}, this.constructor.__config, config);
+        this._config = Object.assign({}, this.constructor._config, config);
 
         // The data source name of the current instance.
-        this.__dsn = this.__getDSN();
+        this._dsn = this._getDSN();
 
-        // The database connection of the current instance.
-        this.__connection = {
-            active: false, // The state of connection, true means available.
-            connection: null // The real connection.
-        };
+        // Event listeners.
+        this._events = Object.assign({}, this.constructor._events);
+        this._eventsCount = Object.keys(this._events).length;
 
-        // Event handlers.
-        this.__events = Object.assign({
-            // This event will be fired when a SQL statement is about to be
-            // executed.
-            query: [],
-        }, this.constructor.__events);
-
-        // Reference to the driver.
-        this.__driver = this.constructor.__drivers[this.__config.type];
+        this._adapter = this.constructor._adapters[this._config.type];
     }
 
     /** Gets the data source name by the given configuration. */
-    __getDSN() {
-        var config = this.__config,
+    _getDSN() {
+        var config = this._config,
             dsn = config.type + ":";
         if (config.user || config.host)
             dsn += "//";
@@ -101,7 +90,7 @@ class DB {
         if (typeof value == "number" || value === null)
             return value;
         value = value.replace(/\\/g, "\\\\");
-        var quote = this.__driver.quote || "'",
+        var quote = this._adapter.quote || "'",
             re = new RegExp(quote, "g");
         return quote + value.replace(re, "\\" + quote) + quote;
     }
@@ -115,11 +104,27 @@ class DB {
      * @return {String|Number} The quoted identifier.
      */
     backquote(identifier) {
-        var quote = this.__driver.backquote || "`",
-            parts = identifier.split("."),
-            exception = /[~`!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:"'<>,\?\/\s]/;
+        var parts = identifier.split("."),
+            exception = /[~`!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:"'<>,\?\/\s]/,
+            quote;
+        if (this._adapter.backquote !== undefined) {
+            if (this._adapter.backquote instanceof Array) {
+                quote = this._adapter.backquote;
+            } else {
+                if (this._adapter.backquote.length === 2) {
+                    quote = this._adapter.backquote.split("");
+                } else {
+                    quote = [
+                        this._adapter.backquote,
+                        this._adapter.backquote
+                    ];
+                }
+            }
+        } else {
+            quote = ["`", "`"];
+        }
         if (parts.length === 1 && !exception.test(identifier)) {
-            identifier = quote + identifier + quote;
+            identifier = quote[0] + identifier + quote[1];
         } else if (parts.length === 2) {
             identifier = this.backquote(parts[0]) + "." +
                 this.backquote(parts[1]);
@@ -130,18 +135,17 @@ class DB {
     /**
      * Initiates the DB class for every instances.
      * 
-     * @param  {Object}  config  An object that carries configurations.
+     * @param  {Object}  [config]  An object that carries configurations.
      * 
      * @return {DB} Returns the class itself for function chaining.
      */
     static init(config = {}) {
         // This object carries basic database configurations for every 
         // instance.
-        this.__config = Object.assign({
-            // Database type, A.K.A the driver name.
-            type: "sqlite",
+        this._config = Object.assign({
+            // Database type.
+            type: "mysql",
             database: "",
-            // These properties are only for database servers:
             host: "",
             port: 0,
             user: "",
@@ -151,148 +155,94 @@ class DB {
             timeout: 5000,
             charset: "utf8",
             max: 50, //  Maximum connection count of the pool.
-        }, this.__config || {}, config);
+        }, this._config, config);
 
-        // This property carries all event handlers bound by DB.on().
-        this.__events = Object.assign({}, this.__events || {});
+        // This property stores all event listeners bound by DB.on().
+        if (this._events === undefined)
+            this._events = {};
 
-        // This property carries database drivers.
-        this.__drivers = { mysql, postgres, sqlite };
-
-        // This property stores those connections that are recycled by calling
-        // db.recycle(), which means they're released and can be reused again.
-        // When the next time trying to connect a database, the program will 
-        // firstly trying to retrieve a connection from this property, if no 
-        // connections are available, a new one will be created.
-        DB.__pool = {};
+        // This property stores all available adapters.
+        if (this._adapters === undefined) {
+            this._adapters = {
+                mysql: MysqlAdapter,
+                maria: MysqlAdapter,
+                postgres: PostgresAdapter,
+            };
+        }
 
         return this;
     }
 
     /**
-     * Binds an event handler to all DB instances.
+     * Binds a listener to an event for all DB instances.
      * 
-     * @param  {String}  event  The event name.
+     * @param  {String|symbol}  event  The event name.
      * 
-     * @param  {Function}  callback  A function called when the event fires, 
-     *  it accepts one argument, which is a new DB instance.
+     * @param  {(...args: any[])=>void}  listener  A function called when the 
+     *  event fires.
      * 
      * @return {DB} Returns the class itself for function chaining.
      */
-    static on(event, callback) {
-        if (this.__events[event] === undefined)
-            this.__events[event] = [];
-        this.__events[event].push(callback);
+    static on(event, listener) {
+        if (this._events[event] instanceof Function) {
+            this._events[event] = [this._events[event], listener];
+        } else if (this._events[event] instanceof Array) {
+            this._events[event].push(listener);
+        } else {
+            this._events[event] = listener;
+        }
         return this;
     }
 
     /**
-     * Binds an event handler to a particular instance.
+     * Sets adapter for a specified database type.
      * 
-     * @param  {String}  event  The event name.
+     * @param  {String}  type  Database type.
+     * @param  {String}  Adapter  The adapter class.
      * 
-     * @param  {Function}  callback  A function called when the event fires,
-     *  it accepts one argument, which is the current instance.
-     * 
-     * @return {DB} Returns the current instance for function chaining.
+     * @return {DB} Returns the class itself for function chaining.
      */
-    on(event, callback) {
-        if (this.__events[event] === undefined)
-            this.__events[event] = [];
-        this.__events[event].push(callback);
+    static setAdapter(type, Adapter) {
+        this._adapters[type] = Adapter;
         return this;
     }
 
-    /**
-     * Fires an event and triggers its handlers.
-     * 
-     * @param  {String}  event  The event name.
-     * 
-     * @param  {Array}  args  Arguments passed to event handlers.
-     * 
-     * @return {DB} Returns the current instance for function chaining.
+    /** 
+     * An alias of `db.emit()`.
+     * @param {String|symbol} event
+     * @param {Any[]} ...args
+     * @return {Boolean}
      */
     trigger(event, ...args) {
-        if (this.__events[event] instanceof Array) {
-            for (let callback of this.__events[event]) {
-                callback.apply(this, args);
-            }
-        } else if (this.__events[event] instanceof Function) {
-            this.__events[event].apply(this, args);
-        }
-        return this;
+        return this.emit(event, ...args);
     }
 
     /**
-     * Makes a connection to the database. This method will automatically 
-     * check the pool, if there are connections available in the pool, 
-     * the first one will be retrieved; if no connections are available, a new
-     * one will be established.
+     * Acquires a connection to the database.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<DB>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
-    connect() {
-        if (DB.__pool[this.__dsn] === undefined) {
-            DB.__pool[this.__dsn] = [];
-            DB.__pool[this.__dsn].count = 0;
-        }
-        if (DB.__pool[this.__dsn].length > 0) {
-            // If has available connections, retrieve and use the first one.
-            return new Promise((resolve, reject) => {
-                var db = DB.__pool[this.__dsn].shift();
-                this.__connection.connection = db.__connection.connection;
-                resolve(this);
-            }).then(db => {
-                var expireAt = db.__connection.expireAt;
-                if (expireAt && expireAt < (new Date).getTime()) {
-                    // Ping the database server, make sure the connection is
-                    // alive.
-                    return this.__driver.ping(this).then(db => {
-                        this.__connection.active = true;
-                        return this;
-                    });
-                } else {
-                    this.__connection.active = true;
-                    return this;
-                }
-            });
-        } else if (DB.__pool[this.__dsn].count >= this.__config.max) {
-            // If no available connections, set a timer to listen the pool 
-            // until getting one.
-            return new Promise((resolve, reject) => {
-                var timer = setInterval(() => {
-                    if (DB.__pool[this.__dsn].length > 0) {
-                        clearInterval(timer);
-                        resolve(this.connect());
-                    }
-                }, 1);
-            });
-        } else {
-            return this.__driver.connect(this).then(db => {
-                this.__connection.active = true;
-                DB.__pool[this.__dsn].count += 1;
-                return this;
-            });
-        }
-        return this;
+    connect(){
+        return this._adapter.connect(this);
+    }
+
+    /** An alias of db.connect(). */
+    acquire() {
+        return this.connect();
     }
 
     /**
-     * Uses a DB instance and share its connection to the database. If use 
-     * this method, call it right after creating the instance.
+     * Uses a DB instance and share its connection to the database.
      * 
      * @param  {DB}  db  A DB instance that is already created.
      * 
      * @return {DB} Returns the current instance for function chaining.
      */
     use(db) {
-        this.__config = db.__config;
-        this.__dsn = db.__dsn;
-        this.__driver = db.__driver;
-        // Make a reference to the connection, this action will affect all
-        // DB instances.
-        this.__connection = db.__connection;
+        this._config = db._config;
+        this._dsn = db._dsn;
+        this._adapter = db._adapter;
         return this;
     }
 
@@ -301,159 +251,101 @@ class DB {
      * 
      * @param  {String}  sql  The SQL statement.
      * 
-     * @param  {Array}  [bindings]  The data bound to the SQL statement.
+     * @param  {String[]}  [bindings]  The data bound to the SQL statement, 
+     *  pass each one as an argument, or just pass the first one an array.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<DB>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
-    query(sql, bindings = []) {
+    query(sql, ...bindings) {
+        if(bindings[0] instanceof Array)
+            bindings = bindings[0];
         this.sql = sql.trim();
         this.bindings = Object.assign([], bindings);
         var i = this.sql.indexOf(" "),
             command = this.sql.substring(0, i).toLowerCase();
-        this.__command = command;
-        if (command == "begin") {
-            this.__transaction = true;
-        } else if (command == "commit" || command == "rollback") {
-            this.__transaction = false;
-        }
-        if (this.__connection.active === false) {
-            // If connection isn't established, connect automatically.
-            return this.connect().then(db => {
-                // Fire event and trigger event handlers.
-                this.trigger("query", this);
-                return this.__driver.query(this, sql, bindings);
-            });
-        } else {
-            this.trigger("query", this);
-            return this.__driver.query(this, sql, bindings);
-        }
+        this._command = command;
+        this.emit("query", this);
+        return this._adapter.query(this, sql, bindings);
     }
 
     /**
-     * Starts a transaction and handle actions in it.
+     * Begins transaction.
      * 
-     * @param  {Function}  callback  If a function is passed, the code in it 
-     *  will be automatically handled, that means if the program goes well, 
-     *  the transaction will be automatically committed, otherwise it will be 
-     *  automatically rolled back. If no function is passed, it just start the
-     *  transaction, that means you have to commit and roll back manually.
+     * @param  {(db: DB)=>void}  [callback]  If a function is passed, the code 
+     *  in it will be automatically handled, that means if the program goes 
+     *  well, the transaction will be automatically committed, otherwise it 
+     *  will be automatically rolled back. If no function is passed, it just 
+     *  begin the transaction, that means you have to commit and roll back 
+     *  manually.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<DB>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     transaction(callback = null) {
-        if (this.__driver.transaction instanceof Function) {
-            return this.__driver.transaction(this, callback);
-        } else {
-            if (typeof callback == "function") {
-                return this.query("begin").then(db => {
-                    return callback.call(db, db);
-                }).then(db => {
-                    this.commit();
-                    return this;
-                }).catch(err => {
-                    this.rollback();
-                    throw err;
-                });
-            } else {
-                return this.query("begin");
-            }
-        }
+        return this._adapter.transaction(this, callback);
     }
 
     /**
      * Commits the transaction when things going well.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<DB>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     commit() {
-        if (this.__driver.commit instanceof Function)
-            return this.__driver.commit(this);
-        return this.query("commit");
+        return this._adapter.commit(this);
     }
 
     /**
-     * Rolls the transaction back when things going not well.
+     * Rolls the transaction back when things going wrong.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<DB>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     rollback() {
-        if (this.__driver.rollback instanceof Function)
-            return this.__driver.rollback(this);
-        return this.query("rollback");
+        return this._adapter.rollback(this);
     }
 
     /**
-     * Closes the connection that current instance holds.
+     * Releases the connection.
      * 
-     * @return {DB} Returns the current instance for function chaining.
+     * @param {void}
+     */
+    release() {
+        this._adapter.release();
+    }
+
+    /** An alias of db.release(). */
+    recycle() {
+        return this.release();
+    }
+
+    /**
+     * Closes the connection.
+     * 
+     * @return {void}
      */
     close() {
-        if (this.__driver.close instanceof Function &&
-            this.__connection.active) {
-            this.__driver.close(this);
-        }
-        // Remove the connection reference, this action will affect all
-        // DB instances.
-        this.__connection.active = false;
-        this.__connection.connection = null;
-        return this;
+        return this._adapter.close();
     }
 
     /**
-     * Recycles the connection that current instance holds.
+     * Closes all connections in all pools.
      * 
-     * @return {DB} Returns the current instance for function chaining.
+     * @return {void}
      */
-    recycle() {
-        if (this.__transaction) {
-            // If the transaction is opened but not committed, rollback.
-            this.rollback();
+    static close() {
+        for (let i in this._adapters) {
+            this._adapters[i].closeAll();
         }
-        if (this.__connection.active) {
-            // Create a new instance.
-            var db = new DB(this.__config);
-            // Redefine the property so when removing the connection 
-            // reference, this instance won't be affected.
-            db.__connection = {
-                active: false,
-                connection: this.__connection.connection
-            };
-            if (db.__driver.ping instanceof Function) {
-                // IF the driver has a ping() method, then set a expire time.
-                db.__connection.expireAt = (new Date).getTime() +
-                    db.__config.timeout;
-            }
-            DB.__pool[this.__dsn].push(db);
-        }
-        // Remove the connection reference, this action will affect all
-        // DB instances.
-        this.__connection.active = false;
-        this.__connection.connection = null;
-        return this;
     }
 
-    /**
-     * Destroys all recycled connections that DB holds.
-     * 
-     * @return {DB} Returns the class itself for function chaining.
-     */
+    /** An alias of DB.close(). */
     static destroy() {
-        for (let dsn in DB.__pool) {
-            if (DB.__pool[dsn] instanceof Array) {
-                for (let db of DB.__pool[dsn]) {
-                    db.close();
-                }
-            }
-            delete DB.__pool[dsn]; // Remove the connection reference.
-        }
-        return this;
+        return this.close();
     }
 }
 
-DB.init(); // Initiate configuration.
+DB.init(); // Initiate configurations.
 
 module.exports = DB;

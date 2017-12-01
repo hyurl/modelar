@@ -1,5 +1,3 @@
-"use strict";
-
 const Query = require("./Query");
 
 /**
@@ -32,67 +30,39 @@ class Model extends Query {
      */
     constructor(data = {}, config = {}) {
         super(config.table || ""); // Bind the table name.
-        this.__fields = config.fields || []; // Fields of the table.
-        this.__primary = config.primary || ""; // The primary key.
-        this.__searchable = config.searchable || []; // Searchable fields.
+        this._fields = config.fields || []; // Fields of the table.
+        this._primary = config.primary || ""; // The primary key.
+        this._searchable = config.searchable || []; // Searchable fields.
 
         // This property sets an extra where... clause for the SQL statement 
         // when updating or deleting the model.
-        this.__whereState = { where: "", bindings: [] };
+        this._whereState = { where: "", bindings: [] };
 
         // This property carries the data of the model.
-        this.__data = {};
+        this._data = {};
 
         // This property carries extra data of the model.
         // When calling model.assign(), those data which are not defined in 
-        // the model.__fields will be stored in this property.
+        // the model._fields will be stored in this property.
         // When inserting or updating the model, these data won't be affected.
-        this.__extra = {};
+        this._extra = {};
 
         // This property carries the data that needs to be updated to the 
         // database.
-        this.__modified = {};
-
-        // Event handlers.
-        this.__events = Object.assign({
-            // This event will be fired when a SQL statement is about to be
-            // executed.
-            query: [],
-            // This event will be fired when a new model is about to be 
-            // inserted into the database.
-            insert: [],
-            // This event will be fired when a new model is successfully 
-            // inserted into the database.
-            inserted: [],
-            // This event will be fired when a model is about to be updated.
-            update: [],
-            // This event will be fired when a model is successfully updated.
-            updated: [],
-            // This event will be fired when a model is about to be saved.
-            save: [],
-            // This event will be fired when a model is successfully saved.
-            saved: [],
-            // This event will be fired when a model is about to be deleted.
-            delete: [],
-            // This event will be fired when a model is successfully deleted.
-            deleted: [],
-            // This event will be fired when a model is successfully fetched 
-            // from the database.
-            get: [],
-        }, this.constructor.__events);
+        this._modified = {};
 
         // Define pseudo-properties.
-        this.__defineProperties(this.__fields);
+        this._defineProperties(this._fields);
 
         // Assign data to the instance.
-        delete data[this.__primary]; // Filter primary key.
+        delete data[this._primary]; // Filter primary key.
         this.assign(data, true);
     }
 
     /** 
      * Defines setters and getters for model fields, if they're not defined.
      */
-    __defineProperties(fields) {
+    _defineProperties(fields) {
         for (let field of fields) {
             let hasGetter = this.__lookupGetter__(field) instanceof Function,
                 hasSetter = this.__lookupSetter__(field) instanceof Function,
@@ -100,14 +70,14 @@ class Model extends Query {
             if (!hasGetter && !hasSetter && !isProp) {
                 Object.defineProperty(this, field, {
                     // Getter
-                    get: () => this.__data[field] || null,
+                    get: () => this._data[field] || null,
                     // Setter
                     set: (v) => {
                         // Primary key cannot be set through pseudo-property.
-                        if (field != this.__primary) {
-                            this.__data[field] = v;
-                            if (this.__data[this.__primary]) {
-                                this.__modified[field] = v;
+                        if (field != this._primary) {
+                            this._data[field] = v;
+                            if (this._data[this._primary]) {
+                                this._modified[field] = v;
                             }
                         }
                     },
@@ -127,14 +97,14 @@ class Model extends Query {
      * @return {Model} Returns the current instance for function chaining.
      */
     assign(data, useSetter = false) {
-        if (this.__data instanceof Array) {
-            // __data extends from DB class, so it could be an array.
-            this.__data = {};
+        if (this._data instanceof Array) {
+            // _data extends from DB class, so it could be an array.
+            this._data = {};
         }
-        var isNew = !this.__data[this.__primary];
+        var isNew = !this._data[this._primary];
         for (let key in data) {
-            if (this.__fields.includes(key)) {
-                // Only accept those fields that `__fields` sets.
+            if (this._fields.includes(key)) {
+                // Only accept those fields that `_fields` sets.
                 if (useSetter) {
                     let set = this.__lookupSetter__(key);
                     if (set instanceof Function) {
@@ -142,12 +112,12 @@ class Model extends Query {
                         continue;
                     }
                 }
-                this.__data[key] = data[key];
-                if (!isNew && key != this.__primary) {
-                    this.__modified[key] = data[key];
+                this._data[key] = data[key];
+                if (!isNew && key != this._primary) {
+                    this._modified[key] = data[key];
                 }
             } else {
-                this.__extra[key] = data[key];
+                this._extra[key] = data[key];
             }
         }
         return this;
@@ -157,15 +127,16 @@ class Model extends Query {
      * Saves the current model, if there is no record in the database, it will
      * be automatically inserted.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     save() {
-        this.trigger("save", this); // Trigger the save event.
-        var exists = this.__data[this.__primary],
+        this.emit("save", this); // Emit the save event.
+        var exists = this._data[this._primary],
             promise = exists ? this.update() : this.insert();
         return promise.then(model => {
-            return this.trigger("saved", model);
+            this.emit("saved", model);
+            return this;
         });
     }
 
@@ -177,13 +148,13 @@ class Model extends Query {
      * @param  {Object}  [data]  An object that carries fields and their 
      *  values.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     insert(data = {}) {
         this.assign(data, true);
-        return super.insert(this.__data).then(model => {
-            model.where(model.__primary, model.insertId);
+        return super.insert(this._data).then(model => {
+            model.where(model._primary, model.insertId);
             return model.get(); // Get final data from database.
         });
     }
@@ -194,21 +165,21 @@ class Model extends Query {
      * @param  {Object}  [data]  An object that carries fields and their 
      *  values.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     update(data = {}) {
-        this.__resetWhere();
-        if (this.__whereState.where) {
-            var state = this.__whereState;
-            this.__where += " and " + state.where;
-            this.__bindings = this.__bindings.concat(state.bindings);
+        this._resetWhere();
+        if (this._whereState.where) {
+            var state = this._whereState;
+            this._where += " and " + state.where;
+            this._bindings = this._bindings.concat(state.bindings);
         }
-        delete data[this.__primary];
+        delete data[this._primary];
         this.assign(data, true);
-        data = Object.assign({}, this.__modified);
+        data = Object.assign({}, this._modified);
         if (Object.keys(data).length === 0) {
-            // If no data modified, then resolve the current model.
+            // If no data modified, resolve the current model immediately.
             return new Promise(resolve => {
                 resolve(this);
             });
@@ -219,7 +190,7 @@ class Model extends Query {
                     throw new Error("No " + this.constructor.name +
                         " was updated by matching the given condition.");
                 } else {
-                    model.__resetWhere(true);
+                    model._resetWhere(true);
                     return model.get(); // Get final data from the database.
                 }
             });
@@ -236,17 +207,17 @@ class Model extends Query {
      * @param  {Number}  [number]  A number that needs to be raised, default 
      *  is `1`.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     increase(field, number = 1) {
-        this.__resetWhere();
-        if (this.__whereState.where) {
-            var state = this.__whereState;
-            this.__where += " and " + state.where;
-            this.__bindings = this.__bindings.concat(state.bindings);
+        this._resetWhere();
+        if (this._whereState.where) {
+            var state = this._whereState;
+            this._where += " and " + state.where;
+            this._bindings = this._bindings.concat(state.bindings);
         }
-        return this.__handleCrease(field, number, "+");
+        return this._handleCrease(field, number, "+");
     }
 
     /**
@@ -259,44 +230,44 @@ class Model extends Query {
      * @param  {Number}  [number]  A number that needs to be reduced, default 
      * is `1`.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     decrease(field, number = 1) {
-        this.__resetWhere();
-        if (this.__whereState.where) {
-            var state = this.__whereState;
-            this.__where += " and " + state.where;
-            this.__bindings = this.__bindings.concat(state.bindings);
+        this._resetWhere();
+        if (this._whereState.where) {
+            var state = this._whereState;
+            this._where += " and " + state.where;
+            this._bindings = this._bindings.concat(state.bindings);
         }
-        return this.__handleCrease(field, number, "-");
+        return this._handleCrease(field, number, "-");
     }
 
     /** Handles increasing and decreasing. */
-    __handleCrease(field, number, type) {
+    _handleCrease(field, number, type) {
         if (typeof field == "object") {
             var data = field;
         } else {
             var data = {};
             data[field] = number;
         }
-        delete data[this.__primary];
+        delete data[this._primary];
         var bindings = [];
         var parts = [];
         for (let field in data) {
-            if (this.__fields.includes(field) && data[field] > 0) {
+            if (this._fields.includes(field) && data[field] > 0) {
                 bindings.push(data[field]);
                 field = this.backquote(field);
                 parts.push(`${field} = ${field} ${type} ?`);
             }
         }
-        return this.__handleUpdate(parts, bindings).then(model => {
+        return this._handleUpdate(parts, bindings).then(model => {
             if (model.affectedRows == 0) {
                 // If no model is affected, throw an error.
                 throw new Error("No " + this.constructor.name +
                     " was updated by matching the given condition.");
             } else {
-                model.__resetWhere(true);
+                model._resetWhere(true);
                 return model.get(); // Get final data from the database.
             }
         });
@@ -307,16 +278,16 @@ class Model extends Query {
      * 
      * @param  {Number}  [id]  The value of the model's primary key.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     delete(id = 0) {
         if (id == 0) {
-            this.__resetWhere();
-            if (this.__whereState.where) {
-                var state = this.__whereState;
-                this.__where += " and " + state.where;
-                this.__bindings = this.__bindings.concat(state.bindings);
+            this._resetWhere();
+            if (this._whereState.where) {
+                var state = this._whereState;
+                this._where += " and " + state.where;
+                this._bindings = this._bindings.concat(state.bindings);
             }
             return super.delete().then(model => {
                 if (model.affectedRows == 0) {
@@ -326,7 +297,7 @@ class Model extends Query {
                 } else {
                     return model;
                 }
-            })
+            });
         } else {
             return this.get(id).then(model => {
                 return model.delete();
@@ -335,16 +306,16 @@ class Model extends Query {
     }
 
     /** Resets the where... clause */
-    __resetWhere(resetState = false) {
-        this.__where = "";
-        this.__limit = "";
-        this.__bindings = [];
+    _resetWhere(resetState = false) {
+        this._where = "";
+        this._limit = "";
+        this._bindings = [];
         this.bindings = [];
         if (resetState) {
-            this.__whereState.where = "";
-            this.__whereState.bindings = [];
+            this._whereState.where = "";
+            this._whereState.bindings = [];
         }
-        return this.where(this.__primary, this.__data[this.__primary]);
+        return this.where(this._primary, this._data[this._primary]);
     }
 
     /**
@@ -352,8 +323,8 @@ class Model extends Query {
      * 
      * @param  {Number}  [id]  The value of the model's primary key.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the fetched model.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the fetched model.
      */
     get(id = 0) {
         if (id == 0) {
@@ -364,27 +335,28 @@ class Model extends Query {
                         " was found by matching the given condition.");
                 } else {
                     // Remove temporary property.
-                    delete this.__caller;
-                    delete this.__foreignKey;
-                    delete this.__typeKey;
-                    delete this.__pivot;
-                    // Assign data and trigger event handlers.
+                    delete this._caller;
+                    delete this._foreignKey;
+                    delete this._typeKey;
+                    delete this._pivot;
+                    // Assign data and emit event listeners.
                     this.assign(data);
-                    this.__modified = {};
-                    this.trigger("get", this);
+                    this._modified = {};
+                    this.emit("get", this);
                     return this;
                 }
             });
         } else {
-            return this.where(this.__primary, id).get();
+            return this.where(this._primary, id).get();
         }
     }
 
     /**
      * Gets all matched models from the database.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is all fetched models carried in an array.
+     * @return {Promise<Array>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is all fetched models carried in an
+     *  array.
      */
     all() {
         return super.all().then(data => {
@@ -396,8 +368,8 @@ class Model extends Query {
                 var models = [];
                 for (let i in data) {
                     let model = new this.constructor();
-                    // Assign data and trigger event handlers for every model.
-                    model.use(this).assign(data[i]).trigger("get", model);
+                    // Assign data and emit event listeners for every model.
+                    model.use(this).assign(data[i]).emit("get", model);
                     models.push(model);
                 }
                 return models;
@@ -437,7 +409,7 @@ class Model extends Query {
         var defaults = {
             page: 1,
             limit: 10,
-            orderBy: this.__primary,
+            orderBy: this._primary,
             sequence: "asc",
             keywords: "",
         };
@@ -452,7 +424,7 @@ class Model extends Query {
             this.orderBy(args.orderBy, args.sequence);
 
         // Set where clause for fields.
-        for (let field of this.__fields) {
+        for (let field of this._fields) {
             if (args[field] && defaults[field] === undefined) {
                 let operator = "=",
                     value = args[field],
@@ -466,9 +438,9 @@ class Model extends Query {
         }
 
         // Set where clause by using keywords in a vague searching senario.
-        if (args.keywords && this.__searchable) {
+        if (args.keywords && this._searchable) {
             var keywords = args.keywords,
-                wildcard = this.__config.type == "access" ? "*" : "%";
+                wildcard = this._config.type == "access" ? "*" : "%";
             if (typeof keywords == "string") keywords = [keywords];
             for (let i in keywords) {
                 // Escape special characters.
@@ -477,7 +449,7 @@ class Model extends Query {
             }
             // Construct nested conditions.
             this.where((query) => {
-                for (let field of this.__searchable) {
+                for (let field of this._searchable) {
                     query.orWhere((query) => {
                         for (let keyword of keywords) {
                             keyword = wildcard + keyword + wildcard;
@@ -520,16 +492,15 @@ class Model extends Query {
     whereState(field, operator = null, value = undefined) {
         var query = new Query();
         query.where(field, operator, value);
-        this.__whereState.where = query.__where;
-        this.__whereState.bindings = query.__bindings;
+        this._whereState.where = query._where;
+        this._whereState.bindings = query._bindings;
         return this;
     }
 
     /*************************** Static Wrappers ****************************/
 
     /**
-     * Uses a DB instance and share its connection to the database. If use 
-     * this method, call it right after creating the instance.
+     * Uses a DB instance and share its connection to the database.
      * 
      * @param  {DB}  db  A DB instance that is already created.
      * 
@@ -540,16 +511,17 @@ class Model extends Query {
     }
 
     /**
-     * Starts a transaction and handle actions in it.
+     * Begins transaction.
      * 
-     * @param  {Function}  callback  If a function is passed, the code in it 
-     *  will be automatically handled, that means if the program goes well, 
-     *  the transaction will be automatically committed, otherwise it will be 
-     *  automatically rolled back. If no function is passed, it just start the
-     *  transaction, that means you have to commit and roll back manually.
+     * @param  {(model: Model)=>void}  [callback] If a function is passed, the 
+     *  code in it will be automatically handled, that means if the program 
+     *  goes well, the transaction will be automatically committed, otherwise 
+     *  it will be automatically rolled back. If no function is passed, it 
+     *  just begin the transaction, that means you have to commit and roll 
+     *  back manually.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is a new model instance.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is a new model instance.
      */
     static transaction(callback = null) {
         return (new this()).transaction(callback);
@@ -558,14 +530,14 @@ class Model extends Query {
     /**
      * Sets what fields that need to be fetched.
      * 
-     * @param  {String|Array}  fields  A list of all target fields, each one 
+     * @param  {String[]}  fields  A list of all target fields, each one
      *  passed as an argument, or just pass the first argument as an array 
      *  that carries all the field names.
      * 
      * @return {Model} Returns a new model instance.
      */
     static select(...fields) {
-        return (new this()).select(fields);
+        return (new this()).select(...fields);
     }
 
     /**
@@ -720,7 +692,7 @@ class Model extends Query {
     }
 
     /**
-     * Sets a where...not between clause for the SQL statement.
+     * Sets a where...not between... clause for the SQL statement.
      * 
      * @param  {String}  field  A field name in the table that currently 
      *  binds to.
@@ -795,10 +767,10 @@ class Model extends Query {
     /**
      * Sets a where exists... clause for the SQL statement.
      * 
-     * @param  {Function}  callback  Pass a callback function to generate 
-     *  child-SQL statement, the only argument passed to the callback is a new
-     *  Query instance, so that you can use its features to generate a SQL 
-     *  statement.
+     * @param  {(query: Query)=>void}  callback  Pass a callback function to 
+     *  generate child-SQL statement, the only argument passed to the callback
+     *  is a new Query instance, so that you can use its features to generate 
+     *  a SQL statement.
      * 
      * @return {Model} Returns a new model instance.
      */
@@ -809,10 +781,10 @@ class Model extends Query {
     /**
      * Sets a where not exists... clause for the SQL statement.
      * 
-     * @param  {Function}  callback  Pass a callback function to generate 
-     *  child-SQL statement, the only argument passed to the callback is a new
-     *  Query instance, so that you can use its features to generate a SQL 
-     *  statement.
+     * @param  {(query: Query)=>void}  callback  Pass a callback function to
+     *  generate child-SQL statement, the only argument passed to the callback
+     *  is a new Query instance, so that you can use its features to generate
+     *  a SQL statement.
      * 
      * @return {Model} Returns a new model instance.
      */
@@ -847,14 +819,14 @@ class Model extends Query {
     /**
      * Sets a group by... clause for the SQL statement.
      * 
-     * @param  {String|Array}  fields  A list of all target fields, each one 
+     * @param  {String[]}  fields  A list of all target fields, each one 
      *  passed as an argument. Or just pass the first argument as an array 
      *  that carries all the field names.
      * 
      * @return {Model} Returns a new model instance.
      */
     static groupBy(...fields) {
-        return (new this()).groupBy(fields);
+        return (new this()).groupBy(...fields);
     }
 
     /**
@@ -888,8 +860,8 @@ class Model extends Query {
      * @param  {Object}  data  An object that carries fields and their values,
      *  or pass all values in an array that fulfil all the fields.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the inserted model.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the inserted model.
      */
     static insert(data) {
         return (new this(data)).insert();
@@ -900,8 +872,8 @@ class Model extends Query {
      * 
      * @param  {Number}  [id]  The value of the model's primary key.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the deleted model.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the deleted model.
      */
     static delete(id) {
         return (new this()).delete(id);
@@ -912,8 +884,8 @@ class Model extends Query {
      * 
      * @param  {Number}  [id]  The value of the model's primary key.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the fetched model.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the fetched model.
      */
     static get(id) {
         return (new this()).get(id);
@@ -922,9 +894,9 @@ class Model extends Query {
     /**
      * Gets all models from the database.
      * 
-     * @return  {Promise}  Returns a Promise, and the the only argument passed
-     *  to the callback of `then()` is all the fetched models carried in an 
-     *  array.
+     * @return  {Promise<Array>}  Returns a Promise, and the the only argument
+     *  passed to the callback of `then()` is all the fetched models carried 
+     *  in an array.
      */
     static all() {
         return (new this()).all();
@@ -935,9 +907,9 @@ class Model extends Query {
      * 
      * @param  {String}  [field]  Count a specified field.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is a number that represents the count of 
-     *  records.
+     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is a number that represents the 
+     *  count of records.
      */
     static count(field = "*") {
         return (new this()).count(field);
@@ -948,8 +920,8 @@ class Model extends Query {
      * 
      * @param {String} field The specified field.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the maximum value fetched.
+     * @return {Promise<Number>} Returns a Promise, and the the only argument
+     *  passed to the callback of `then()` is the maximum value fetched.
      */
     static max(field) {
         return (new this()).max(field);
@@ -960,8 +932,8 @@ class Model extends Query {
      * 
      * @param  {String}  field The specified field.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the minimum value fetched.
+     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the minimum value fetched.
      */
     static min(field) {
         return (new this()).min(field);
@@ -972,8 +944,8 @@ class Model extends Query {
      * 
      * @param  {String}  field The specified field.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the average value fetched.
+     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the average value fetched.
      */
     static avg(field) {
         return (new this()).avg(field);
@@ -984,8 +956,8 @@ class Model extends Query {
      * 
      * @param  {String}  field The specified field.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the summarized value fetched.
+     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the summarized value fetched.
      */
     static sum(field) {
         return (new this()).sum(field);
@@ -997,12 +969,13 @@ class Model extends Query {
      * @param  {Number}  length  The top limit of how many records that each 
      *  chunk will carry.
      * 
-     * @param  {Function}  callback  A function for processing every chunked 
-     *  data, the only argument passed to it is the data that current chunk 
-     *  carries. If the callback returns `false`, stop chunking.
-     * 
-     * @return {Promise} Returns a Promise, and the only argument passed to
-     *  the callback of `then()` is the last chunk of models.
+     * @param  {(data: Array)=>void|Boolean}  callback  A function for
+     *  processing every chunked data, the only argument passed to it is the
+     *  data that current chunk carries. If the callback returns `false`, stop
+     *  chunking.
+     *
+     * @return {Promise<Array>} Returns a Promise, and the only argument
+     *  passed to the callback of `then()` is the last chunk of data.
      */
     static chunk(length, callback) {
         return (new this()).chunk(length, callback);
@@ -1107,7 +1080,7 @@ class Model extends Query {
      */
     has(Model, foreignKey, typeKey = "") {
         var model = Model.use(this)
-            .where(foreignKey, this.__data[this.__primary]);
+            .where(foreignKey, this._data[this._primary]);
         if (typeKey) {
             model.where(typeKey, this.constructor.name);
         }
@@ -1130,15 +1103,15 @@ class Model extends Query {
      */
     belongsTo(Model, foreignKey, typeKey = "") {
         var model = (new Model).use(this);
-        model.__caller = this;
-        model.__foreignKey = foreignKey;
-        model.__typeKey = typeKey;
+        model._caller = this;
+        model._foreignKey = foreignKey;
+        model._typeKey = typeKey;
         if (typeKey) {
-            if (Model.name != this.__data[typeKey]) {
-                return model.where(model.__primary, null);
+            if (Model.name != this._data[typeKey]) {
+                return model.where(model._primary, null);
             }
         }
-        return model.where(model.__primary, this.__data[foreignKey]);
+        return model.where(model._primary, this._data[foreignKey]);
     }
 
     /**
@@ -1161,8 +1134,8 @@ class Model extends Query {
         var model = new Model,
             _model = new MiddleModel;
         return model.use(this).whereIn(foreignKey1, query => {
-            query.select(_model.__primary).from(_model.__table)
-                .where(foreignKey2, this.__data[this.__primary]);
+            query.select(_model._primary).from(_model._table)
+                .where(foreignKey2, this._data[this._primary]);
         });
     }
 
@@ -1185,9 +1158,9 @@ class Model extends Query {
     belongsToThrough(Model, MiddleModel, foreignKey1, foreignKey2) {
         var model = new Model,
             _model = new MiddleModel;
-        return model.use(this).where(model.__primary, query => {
-            query.select(foreignKey2).from(_model.__table)
-                .where(_model.__primary, this.__data[foreignKey1]);
+        return model.use(this).where(model._primary, query => {
+            query.select(foreignKey2).from(_model._table)
+                .where(_model._primary, this._data[foreignKey1]);
         });
     }
 
@@ -1213,19 +1186,19 @@ class Model extends Query {
      */
     hasVia(Model, pivotTable, foreignKey1, foreignKey2, typeKey = "") {
         var model = new Model;
-        model.__caller = this;
-        model.__pivot = [
+        model._caller = this;
+        model._pivot = [
             pivotTable,
             foreignKey1,
             foreignKey2,
             typeKey,
             this.constructor.name
         ];
-        return model.use(this).whereIn(model.__primary, query => {
-            query.select(model.__pivot[1]).from(model.__pivot[0])
-                .where(model.__pivot[2], this.__data[this.__primary]);
-            if (model.__pivot[3]) {
-                query.where(model.__pivot[3], model.__pivot[4]);
+        return model.use(this).whereIn(model._primary, query => {
+            query.select(model._pivot[1]).from(model._pivot[0])
+                .where(model._pivot[2], this._data[this._primary]);
+            if (model._pivot[3]) {
+                query.where(model._pivot[3], model._pivot[4]);
             }
         });
     }
@@ -1252,19 +1225,19 @@ class Model extends Query {
      */
     belongsToVia(Model, pivotTable, foreignKey1, foreignKey2, typeKey = "") {
         var model = new Model;
-        model.__caller = this;
-        model.__pivot = [
+        model._caller = this;
+        model._pivot = [
             pivotTable,
             foreignKey2,
             foreignKey1,
             typeKey,
             Model.name
         ];
-        return model.use(this).whereIn(model.__primary, query => {
-            query.select(model.__pivot[1]).from(model.__pivot[0])
-                .where(model.__pivot[2], this.__data[this.__primary]);
-            if (model.__pivot[3]) {
-                query.where(model.__pivot[3], model.__pivot[4]);
+        return model.use(this).whereIn(model._primary, query => {
+            query.select(model._pivot[1]).from(model._pivot[0])
+                .where(model._pivot[2], this._data[this._primary]);
+            if (model._pivot[3]) {
+                query.where(model._pivot[3], model._pivot[4]);
             }
         });
     }
@@ -1277,28 +1250,28 @@ class Model extends Query {
      * @param  {Model}  model  A model that needs to be associated or a number
      *  that represents the value of the model's primary key.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the caller instance.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the caller instance.
      */
     associate(model) {
-        if (!(this.__caller instanceof Model)) {
+        if (!(this._caller instanceof Model)) {
             throw new Error("model.associate() can only be called after " +
                 "calling model.belongsTo().");
         }
 
-        var target = this.__caller,
+        var target = this._caller,
             id = null;
         if (!isNaN(model)) {
             id = model;
         } else if (model instanceof Model) {
-            id = model.__data[model.__primary];
+            id = model._data[model._primary];
         } else {
             throw new Error("The only argument passed to model.associate() " +
                 "must be a number or an instance of Model.");
         }
-        target.__data[this.__foreignKey] = id;
-        if (this.__typeKey)
-            target.__data[this.__typeKey] = this.constructor.name;
+        target._data[this._foreignKey] = id;
+        if (this._typeKey)
+            target._data[this._typeKey] = this.constructor.name;
         return target.save().then(target => {
             return target;
         });
@@ -1314,19 +1287,19 @@ class Model extends Query {
      * @param  {String}  [typeKey]  A field name that stores the associated 
      *  model name when you are defining a polymorphic association.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the caller instance.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the caller instance.
      */
     dissociate() {
-        if (!(this.__caller instanceof Model)) {
+        if (!(this._caller instanceof Model)) {
             throw new Error("model.dissociate() can only be called after " +
                 "calling model.belongsTo().");
         }
 
-        var target = this.__caller;
-        target.__data[this.__foreignKey] = null;
-        if (this.__typeKey)
-            target.__data[this.__typeKey] = null;
+        var target = this._caller;
+        target._data[this._foreignKey] = null;
+        if (this._typeKey)
+            target._data[this._typeKey] = null;
         return target.save().then(target => {
             return target;
         });
@@ -1344,8 +1317,8 @@ class Model extends Query {
      *  its keys represents the values of models' primary keys, and its values
      *  sets extra data in the pivot table.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the caller instance.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the caller instance.
      */
     attach(models) {
         var notArray = !(models instanceof Array);
@@ -1353,13 +1326,13 @@ class Model extends Query {
             throw new Error("The only argument passed to model.attach() " +
                 "must be an instance of Array or an instance of Object.");
         }
-        if (!(this.__caller instanceof Model)) {
+        if (!(this._caller instanceof Model)) {
             throw new Error("model.attach() can only be called after " +
                 "calling model.hasVia() or model.belongsToVia().");
         }
 
-        var target = this.__caller,
-            id1 = target.__data[target.__primary],
+        var target = this._caller,
+            id1 = target._data[target._primary],
             ids = [];
         if (notArray) {
             for (let i in models) {
@@ -1372,15 +1345,15 @@ class Model extends Query {
                 if (!isNaN(model)) {
                     ids.push(model);
                 } else if (model instanceof Model) {
-                    ids.push(model.__data[model.__primary]);
+                    ids.push(model._data[model._primary]);
                 }
             }
         }
 
-        var query = new Query(this.__pivot[0]);
-        query.use(this).where(this.__pivot[2], id1);
-        if (this.__pivot[3])
-            query.where(this.__pivot[3], this.__pivot[4]);
+        var query = new Query(this._pivot[0]);
+        query.use(this).where(this._pivot[2], id1);
+        if (this._pivot[3])
+            query.where(this._pivot[3], this._pivot[4]);
         return query.all().then(data => {
             let exists = [],
                 deletes = [],
@@ -1388,7 +1361,7 @@ class Model extends Query {
                 updates = [],
                 _data = {};
             for (let single of data) {
-                let id = single[this.__pivot[1]];
+                let id = single[this._pivot[1]];
                 exists.push(id);
                 // Store records in an object.
                 _data[id] = single;
@@ -1413,15 +1386,15 @@ class Model extends Query {
                 }
             }
 
-            let _query = (new Query(this.__pivot[0])).use(this),
+            let _query = (new Query(this._pivot[0])).use(this),
                 // Insert association records within a recursive loop.
                 doInsert = (query) => {
                     let id = inserts.shift(),
                         data = notArray ? models[id] : {};
-                    data[this.__pivot[2]] = id1;
-                    data[this.__pivot[1]] = id;
-                    if (this.__pivot[3])
-                        data[this.__pivot[3]] = this.__pivot[4];
+                    data[this._pivot[2]] = id1;
+                    data[this._pivot[1]] = id;
+                    if (this._pivot[3])
+                        data[this._pivot[3]] = this._pivot[4];
                     // Insert a new record.
                     return query.insert(data).then(query => {
                         return inserts.length ? doInsert(query) : query;
@@ -1433,16 +1406,16 @@ class Model extends Query {
                         data = notArray ? models[id] : {};
 
                     // Re-initiate the query.
-                    query.__where = "";
-                    query.__bindings = [];
+                    query._where = "";
+                    query._bindings = [];
                     query.where(
-                        this.__pivot[1], _data[id][this.__pivot[1]]);
-                    query.where(this.__pivot[2], id1);
-                    delete data[this.__pivot[2]];
-                    delete data[this.__pivot[1]];
-                    if (this.__pivot[3]) {
-                        query.where(this.__pivot[3], this.__pivot[4]);
-                        delete data[this.__pivot[3]];
+                        this._pivot[1], _data[id][this._pivot[1]]);
+                    query.where(this._pivot[2], id1);
+                    delete data[this._pivot[2]];
+                    delete data[this._pivot[1]];
+                    if (this._pivot[3]) {
+                        query.where(this._pivot[3], this._pivot[4]);
+                        delete data[this._pivot[3]];
                     }
                     // Update the record.
                     return query.update(data).then(query => {
@@ -1455,10 +1428,10 @@ class Model extends Query {
                     if (deletes.length) {
                         // Delete association records which are not in the 
                         // provided models.
-                        _query.whereIn(this.__pivot[1], deletes);
-                        _query.where(this.__pivot[2], id1);
-                        if (this.__pivot[3])
-                            _query.where(this.__pivot[3], this.__pivot[4]);
+                        _query.whereIn(this._pivot[1], deletes);
+                        _query.where(this._pivot[2], id1);
+                        if (this._pivot[3])
+                            _query.where(this._pivot[3], this._pivot[4]);
                         return _query.delete().then(_query => {
                             return updates.length ? doUpdate(_query) : _query;
                         }).then(_query => {
@@ -1495,25 +1468,25 @@ class Model extends Query {
      *  dissociated. If this parameter is not provided, all associations of 
      *  the caller model in the pivot table will be deleted.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the caller instance.
+     * @return {Promise<Model>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the caller instance.
      */
     detach(models = []) {
         if (!(models instanceof Array)) {
             throw new Error("The only argument passed to model.detach() " +
                 "must be an instance of Array.");
         }
-        if (!(this.__caller instanceof Model)) {
+        if (!(this._caller instanceof Model)) {
             throw new Error("model.attach() can only be called after " +
                 "calling model.hasVia() or model.belongsToVia().");
         }
 
-        var target = this.__caller,
-            id1 = target.__data[target.__primary],
-            query = new Query(this.__pivot[0]);
-        query.use(this).where(this.__pivot[2], id1);
-        if (this.__pivot[3])
-            query.where(this.__pivot[3], this.__pivot[4]);
+        var target = this._caller,
+            id1 = target._data[target._primary],
+            query = new Query(this._pivot[0]);
+        query.use(this).where(this._pivot[2], id1);
+        if (this._pivot[3])
+            query.where(this._pivot[3], this._pivot[4]);
         if (models.length > 0) {
             // Delete association records which are in the provided models.
             let ids = [];
@@ -1521,11 +1494,11 @@ class Model extends Query {
                 if (!isNaN(model)) {
                     ids.push(model);
                 } else if (model instanceof Model) {
-                    ids.push(model.__data[model.__primary]);
+                    ids.push(model._data[model._primary]);
                 }
             }
             if (ids.length)
-                query.whereIn(this.__pivot[1], ids);
+                query.whereIn(this._pivot[1], ids);
         }
         return query.delete().then(query => target);
     }
@@ -1536,25 +1509,25 @@ class Model extends Query {
      * This method can only be called after calling `model.hasVia()` or 
      * `model.belongsToVia()`.
      * 
-     * @param  {String|Array}  fields  A list of all target fields, each one 
+     * @param  {String[]}  fields  A list of all target fields, each one 
      *  passed as an argument, or just pass the first argument as an array 
      *  that carries all the field names.
      * 
      * @return {Model} Returns the current instance for function chaining.
      */
     withPivot(...fields) {
-        var caller = this.__caller,
-            pivotTable = this.__pivot[0],
-            foreignKey1 = pivotTable + "." + this.__pivot[1],
-            foreignKey2 = pivotTable + "." + this.__pivot[2],
-            primary = this.__table + "." + this.__primary;
+        var caller = this._caller,
+            pivotTable = this._pivot[0],
+            foreignKey1 = pivotTable + "." + this._pivot[1],
+            foreignKey2 = pivotTable + "." + this._pivot[2],
+            primary = this._table + "." + this._primary;
         if (fields[0] instanceof Array)
             fields = fields[0];
         fields = fields.map(field => pivotTable + "." + field);
-        fields.unshift(this.__table + ".*");
+        fields.unshift(this._table + ".*");
         this.select(fields)
             .join(pivotTable, foreignKey1, primary)
-            .where(foreignKey2, caller.__data[caller.__primary]);
+            .where(foreignKey2, caller._data[caller._primary]);
         return this;
     }
 
@@ -1565,17 +1538,17 @@ class Model extends Query {
      */
     valueOf() {
         var data = {};
-        for (let key of this.__fields) {
+        for (let key of this._fields) {
             let get = this.__lookupGetter__(key);
             if (get instanceof Function) {
                 // Calling getter.
-                let value = get.call(this, this.__data[key]);
+                let value = get.call(this, this._data[key]);
                 // Set this property only if getter returns an non-undefined
                 // value.
                 if (value !== undefined)
                     data[key] = value;
-            } else if (this.__data[key] !== undefined) {
-                data[key] = this.__data[key];
+            } else if (this._data[key] !== undefined) {
+                data[key] = this._data[key];
             }
         }
         return data;
@@ -1584,10 +1557,15 @@ class Model extends Query {
     /**
      * Gets the data string in a JSON that the model holds.
      * 
+     * @param  {Boolean}  [formatted]  Get formatted JSON string.
+     * 
      * @return {String} A JSON string that represents the model data.
      */
-    toString() {
-        return JSON.stringify(this);
+    toString(formatted = false) {
+        if (formatted)
+            return JSON.stringify(this, null, "  ");
+        else
+            return JSON.stringify(this);
     }
 
     /**

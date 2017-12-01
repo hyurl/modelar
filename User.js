@@ -1,5 +1,3 @@
-"use strict";
-
 const Model = require("./Model");
 const bcrypt = require("bcrypt-nodejs");
 
@@ -32,35 +30,20 @@ class User extends Model {
         }, config));
 
         // This property defines which fields can be used for logging-in.
-        this.__loginable = ["name", "email"];
-
-        this.__events = Object.assign({
-            query: [],
-            insert: [],
-            inserted: [],
-            update: [],
-            updated: [],
-            save: [],
-            saved: [],
-            delete: [],
-            deleted: [],
-            get: [],
-            // This event will be fired when the user successfully logged in.
-            login: [],
-        }, this.constructor.__events);
+        this._loginable = ["name", "email"];
 
         // When creating a new user, if no password is provided, use an empty
         // string as its password.
         this.on("save", () => {
-            if (this.__data.password === undefined)
+            if (this._data.password === undefined)
                 this.password = "";
         });
     }
 
     // The setter of password, use BCrypt to encrypt data.
     set password(v) {
-        // Model's data are stored in the __data property.
-        this.__data.password = bcrypt.hashSync(v);
+        // Model's data are stored in the _data property.
+        this._data.password = bcrypt.hashSync(v);
     }
 
     // The getter of password, always return undefined.
@@ -71,7 +54,7 @@ class User extends Model {
     }
 
     /**
-     * Tring to sign in a user. If succeeded, an `login` event will be fired, 
+     * Trying to sign in a user. If succeeded, an `login` event will be fired, 
      * if failed, throws an error indicates the reason. This method won't 
      * save user information in session or other storage materials, if you 
      * want it to, you have to do it yourself.
@@ -82,8 +65,8 @@ class User extends Model {
      *  be passed, which means trying to match all possibilities 
      *  automatically.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the user instance which is logged in.
+     * @return {Promise<User>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the user instance logged in.
      */
     login(args) {
         if (args.password === undefined) {
@@ -96,7 +79,7 @@ class User extends Model {
         if (args.user === undefined) {
             // Use a specified field for logging-in.
             for (let k in args) {
-                if (this.__loginable.includes(k)) {
+                if (this._loginable.includes(k)) {
                     _args[k] = args[k];
                 }
             }
@@ -109,7 +92,7 @@ class User extends Model {
             this.where(_args);
         } else {
             // Try to match all loginable fields.
-            for (let field of this.__loginable) {
+            for (let field of this._loginable) {
                 this.orWhere(field, args.user);
             }
         }
@@ -119,11 +102,11 @@ class User extends Model {
             for (let user of users) {
                 // Try to match password for every user, until the first one 
                 // matched.
-                let password = user.__data.password || "";
+                let password = user._data.password || "";
                 try {
                     if (bcrypt.compareSync(args.password, password)) {
-                        this.__data = user.__data
-                        this.trigger("login", this); // Fire login event.
+                        this._data = user._data
+                        this.emit("login", this); // Fire login event.
                         return this;
                     }
                 } catch (err) {
@@ -147,8 +130,8 @@ class User extends Model {
      *  be passed, which means trying to match all possibilities 
      *  automatically.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed
-     *  to the callback of `then()` is the user instance which is logged in.
+     * @return {Promise<User>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the user instance logged in.
      */
     static login(args) {
         return (new this()).login(args);

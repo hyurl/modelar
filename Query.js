@@ -1,5 +1,3 @@
-"use strict";
-
 const DB = require("./DB");
 
 /**
@@ -16,49 +14,25 @@ class Query extends DB {
      */
     constructor(table = "") {
         super();
-        this.__table = table; // The table that this query binds to.
-        this.__inserts = ""; // Data of insert statement.
-        this.__updates = ""; // Data of update statement.
-        this.__selects = "*"; // Data of select statement.
-        this.__distinct = ""; // Distinct clause.
-        this.__join = ""; // Join clause.
-        this.__where = ""; // Where clause.
-        this.__orderBy = ""; // Order-by clause.
-        this.__groupBy = ""; // Group-by clause.
-        this.__having = ""; // Having clause.
-        this.__limit = ""; // Limit condition.
-        this.__union = ""; // Union clause.
-        this.__bindings = []; // Data bound to select statement.
-
-        // Event handlers.
-        this.__events = Object.assign({
-            // This event will be fired when a SQL statement is about to be
-            // executed.
-            query: [],
-            // This event will be fired when a new model is about to be 
-            // inserted into the database.
-            insert: [],
-            // This event will be fired when a new model is successfully 
-            // inserted into the database.
-            inserted: [],
-            // This event will be fired when a model is about to be updated.
-            update: [],
-            // This event will be fired when a model is successfully updated.
-            updated: [],
-            // This event will be fired when a model is about to be deleted.
-            delete: [],
-            // This event will be fired when a model is successfully deleted.
-            deleted: [],
-            // This event will be fired when a model is successfully fetched 
-            // from the database.
-            get: [],
-        }, this.constructor.__events);
+        this._table = table; // The table that this query binds to.
+        this._inserts = ""; // Data of insert statement.
+        this._updates = ""; // Data of update statement.
+        this._selects = "*"; // Data of select statement.
+        this._distinct = ""; // Distinct clause.
+        this._join = ""; // Join clause.
+        this._where = ""; // Where clause.
+        this._orderBy = ""; // Order-by clause.
+        this._groupBy = ""; // Group-by clause.
+        this._having = ""; // Having clause.
+        this._limit = ""; // Limit condition.
+        this._union = ""; // Union clause.
+        this._bindings = []; // Data bound to select statement.
     }
 
     /**
      * Sets what fields that need to be fetched.
      * 
-     * @param  {String|Array}  fields  A list of all target fields, each one 
+     * @param  {String[]}  fields  A list of all target fields, each one 
      *  passed as an argument, or just pass the first argument as an array 
      *  that carries all the field names.
      * 
@@ -68,7 +42,7 @@ class Query extends DB {
         if (fields[0] instanceof Array)
             fields = fields[0];
         fields = fields.map(field => this.backquote(field));
-        this.__selects = fields.join(", ");
+        this._selects = fields.join(", ");
         return this;
     }
 
@@ -80,11 +54,11 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     table(table) {
-        this.__table = table;
+        this._table = table;
         return this;
     }
 
-    /** An alias of Query.table() */
+    /** An alias of query.table() */
     from(table) {
         return this.table(table);
     }
@@ -108,7 +82,7 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     join(table, field1, operator, field2 = "") {
-        return this.__handleJoin(table, field1, operator, field2);
+        return this._handleJoin(table, field1, operator, field2);
     }
 
     /**
@@ -130,7 +104,7 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     leftJoin(table, field1, operator, field2 = "") {
-        return this.__handleJoin(table, field1, operator, field2, "left");
+        return this._handleJoin(table, field1, operator, field2, "left");
     }
 
     /**
@@ -152,7 +126,7 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     rightJoin(table, field1, operator, field2 = "") {
-        return this.__handleJoin(table, field1, operator, field2, "right");
+        return this._handleJoin(table, field1, operator, field2, "right");
     }
 
     /**
@@ -174,7 +148,7 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     fullJoin(table, field1, operator, field2 = "") {
-        return this.__handleJoin(table, field1, operator, field2, "full");
+        return this._handleJoin(table, field1, operator, field2, "full");
     }
 
     /**
@@ -196,21 +170,21 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     crossJoin(table, field1, operator, field2 = "") {
-        return this.__handleJoin(table, field1, operator, field2, "cross");
+        return this._handleJoin(table, field1, operator, field2, "cross");
     }
 
     /** Handles join clauses. */
-    __handleJoin(table, field1, operator, field2, type = "inner") {
+    _handleJoin(table, field1, operator, field2, type = "inner") {
         if (!field2) {
             field2 = operator;
             operator = "=";
         }
-        if (!this.__join) { // One join.
-            this.__join = this.backquote(this.__table);
+        if (!this._join) { // One join.
+            this._join = this.backquote(this._table);
         } else { // Multiple joins.
-            this.__join = "(" + this.__join + ")";
+            this._join = "(" + this._join + ")";
         }
-        this.__join += " " + type + " join " + this.backquote(table) +
+        this._join += " " + type + " join " + this.backquote(table) +
             " on " + this.backquote(field1) + " " + operator + " " +
             this.backquote(field2);
         return this;
@@ -222,7 +196,7 @@ class Query extends DB {
      * @param  {String|Function|Object}  field  This could be a field name, or
      *  an object that sets multiple `=` (equal) conditions for the clause. Or
      *  pass a callback function to generate nested conditions, the only 
-     *  argument passed to the callback is a new Query instance with its 
+     *  argument passed to the callback is a new Query instance with all 
      *  features.
      * 
      * @param  {String|Function}  [operator]  Condition operator, if the 
@@ -239,18 +213,18 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     where(field, operator = null, value = undefined) {
-        if (field instanceof Object && !(field instanceof Function)) {
+        if (typeof field === "object") {
             for (let key in field) {
                 this.where(key, "=", field[key]);
             }
         } else {
-            if (this.__where) this.__where += " and ";
+            if (this._where) this._where += " and ";
             if (field instanceof Function) {
-                this.__handleNestedWhere(field);
+                this._handleNestedWhere(field);
             } else if (operator instanceof Function) {
-                this.__handleWhereChild(field, operator);
+                this._handleWhereChild(field, operator);
             } else {
-                this.__handleWhere(field, operator, value);
+                this._handleWhere(field, operator, value);
             }
         }
         return this;
@@ -262,7 +236,7 @@ class Query extends DB {
      * @param  {String|Function|Object}  field  This could be a field name, or
      *  an object that sets multiple `=` (equal) conditions for the clause. Or
      *  pass a callback function to generate nested conditions, the only 
-     *  argument passed to the callback is a new Query instance with its 
+     *  argument passed to the callback is a new Query instance with all 
      *  features.
      * 
      * @param  {String|Function}  [operator]  Condition operator, if the 
@@ -279,56 +253,56 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     orWhere(field, operator = null, value = undefined) {
-        if (field instanceof Object && !(field instanceof Function)) {
+        if (typeof field === "object") {
             for (let key in field) {
                 this.orWhere(key, "=", field[key]);
             }
         } else {
-            if (this.__where) this.__where += " or ";
+            if (this._where) this._where += " or ";
             if (field instanceof Function) {
-                this.__handleNestedWhere(field);
+                this._handleNestedWhere(field);
             } else if (operator instanceof Function) {
-                this.__handleWhereChild(field, operator);
+                this._handleWhereChild(field, operator);
             } else {
-                this.__handleWhere(field, operator, value);
+                this._handleWhere(field, operator, value);
             }
         }
         return this;
     }
 
     /** Handles where (or) clauses. */
-    __handleWhere(field, operator, value) {
+    _handleWhere(field, operator, value) {
         if (value === undefined) {
             value = operator;
             operator = "=";
         }
-        this.__where += this.backquote(field) + " " + operator + " ?";
-        this.__bindings.push(value);
+        this._where += this.backquote(field) + " " + operator + " ?";
+        this._bindings.push(value);
         return this;
     }
 
-    /** Handles nested where... (or...) clauses. */
-    __handleNestedWhere(callback) {
+    /** Handles nested where...(or...) clauses. */
+    _handleNestedWhere(callback) {
         var query = new Query(); // Create a new instance for nested scope.
         callback.call(query, query);
-        if (query.__where) {
-            this.__where += "(" + query.__where + ")";
-            this.__bindings = this.__bindings.concat(query.__bindings);
+        if (query._where) {
+            this._where += "(" + query._where + ")";
+            this._bindings = this._bindings.concat(query._bindings);
         }
         return this;
     }
 
     /** Handles where... child-SQL statements. */
-    __handleWhereChild(field, callback) {
-        var query = this.__getQueryBy(callback);
-        this.__where += this.backquote(field) + " = (" +
+    _handleWhereChild(field, callback) {
+        var query = this._getQueryBy(callback);
+        this._where += this.backquote(field) + " = (" +
             query.sql + ")";
-        this.__bindings = this.__bindings.concat(query.__bindings);
+        this._bindings = this._bindings.concat(query._bindings);
         return this;
     }
 
     /** Gets a query by a callback function. */
-    __getQueryBy(callback) {
+    _getQueryBy(callback) {
         var query = new Query(); // Create a new instance for nested scope.
         callback.call(query, query);
         query.sql = query.getSelectSQL();
@@ -347,11 +321,11 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     whereBetween(field, range) {
-        return this.__handleBetween(field, range);
+        return this._handleBetween(field, range);
     }
 
     /**
-     * Sets a where...not between clause for the SQL statement.
+     * Sets a where...not between... clause for the SQL statement.
      * 
      * @param  {String}  field  A field name in the table that currently 
      *  binds to.
@@ -362,15 +336,45 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     whereNotBetween(field, range) {
-        return this.__handleBetween(field, range, false);
+        return this._handleBetween(field, range, false);
+    }
+
+    /**
+     * Sets a where...or...between... clause for the SQL statement.
+     * 
+     * @param  {String}  field  A field name in the table that currently 
+     *  binds to.
+     * 
+     * @param  {Array}  range  An array that carries only two elements which
+     *  represent the start point and the end point.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
+     */
+    orWhereBetween(field, range) {
+        return this._handleBetween(field, range, true, "or");
+    }
+
+    /**
+     * Sets a where...or... not between... clause for the SQL statement.
+     * 
+     * @param  {String}  field  A field name in the table that currently 
+     *  binds to.
+     * 
+     * @param  {Array}  range  An array that carries only two elements which
+     *  represent the start point and the end point.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
+     */
+    orWhereNotBetween(field, range) {
+        return this._handleBetween(field, range, false, "or");
     }
 
     /** Handles where...(not ) between... clauses. */
-    __handleBetween(field, range, between = true) {
-        if (this.__where) this.__where += " and ";
-        this.__where += this.backquote(field) + (between ? "" : " not") +
+    _handleBetween(field, range, between = true, conj = "and") {
+        if (this._where) this._where += ` ${conj} `;
+        this._where += this.backquote(field) + (between ? "" : " not") +
             " between ? and ?";
-        this.__bindings = this.__bindings.concat(range);
+        this._bindings = this._bindings.concat(range);
         return this;
     }
 
@@ -388,7 +392,7 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     whereIn(field, values) {
-        return this.__handleIn(field, values);
+        return this._handleIn(field, values);
     }
 
     /**
@@ -405,29 +409,63 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     whereNotIn(field, values) {
-        return this.__handleIn(field, values, false);
+        return this._handleIn(field, values, false);
     }
 
-    /** Handles where...(not ) in... clauses. */
-    __handleIn(field, values, isIn = true) {
-        if (this.__where) this.__where += " and ";
+    /**
+     * Sets a where...or...in... clause for the SQL statement.
+     * 
+     * @param  {String}  field  A field name in the table that currently 
+     *  binds to.
+     * 
+     * @param  {Function|Array}  values  An array that carries all possible 
+     *  values. Or pass a callback function to generate child-SQL statement, 
+     *  the only argument passed to the callback is a new Query instance, so 
+     *  that you can use its features to generate a SQL statement.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
+     */
+    orWhereIn(field, values) {
+        return this._handleIn(field, values, true, "or");
+    }
+
+    /**
+     * Sets a where...or...not in... clause for the SQL statement.
+     * 
+     * @param  {String}  field  A field name in the table that currently 
+     *  binds to.
+     * 
+     * @param  {Function|Array}  values  An array that carries all possible 
+     *  values. Or pass a callback function to generate child-SQL statement, 
+     *  the only argument passed to the callback is a new Query instance, so 
+     *  that you can use its features to generate a SQL statement.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
+     */
+    orWhereNotIn(field, values) {
+        return this._handleIn(field, values, false, "or");
+    }
+
+    /** Handles where... (not ) in... clauses. */
+    _handleIn(field, values, isIn = true, conj = "and") {
+        if (this._where) this._where += ` ${conj} `;
         if (values instanceof Function) {
-            return this.__handleInChild(field, values, isIn);
+            return this._handleInChild(field, values, isIn);
         } else {
             var _values = Array(values.length).fill("?");
-            this.__where += this.backquote(field) + (isIn ? "" : " not") +
+            this._where += this.backquote(field) + (isIn ? "" : " not") +
                 " in (" + _values.join(", ") + ")";
-            this.__bindings = this.__bindings.concat(values);
+            this._bindings = this._bindings.concat(values);
             return this;
         }
     }
 
     /** Handles where...in... child-SQL statements. */
-    __handleInChild(field, callback, isIn = true) {
-        var query = this.__getQueryBy(callback);
-        this.__where += this.backquote(field) + (isIn ? "" : " not") +
+    _handleInChild(field, callback, isIn = true) {
+        var query = this._getQueryBy(callback);
+        this._where += this.backquote(field) + (isIn ? "" : " not") +
             " in (" + query.sql + ")";
-        this.__bindings = this.__bindings.concat(query.__bindings);
+        this._bindings = this._bindings.concat(query._bindings);
         return this;
     }
 
@@ -440,7 +478,7 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     whereNull(field) {
-        return this.__handleWhereNull(field);
+        return this._handleWhereNull(field);
     }
 
     /**
@@ -452,13 +490,37 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     whereNotNull(field) {
-        return this.__handleWhereNull(field, false);
+        return this._handleWhereNull(field, false);
+    }
+
+    /**
+     * Sets a where...or...is null clause for the SQL statement.
+     * 
+     * @param  {String}  field  A field name in the table that currently binds
+     *  to.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
+     */
+    orWhereNull(field) {
+        return this._handleWhereNull(field, true, "or");
+    }
+
+    /**
+     * Sets a where...or...is not null clause for the SQL statement.
+     * 
+     * @param  {String}  field  A field name in the table that currently binds
+     *  to.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
+     */
+    orWhereNotNull(field) {
+        return this._handleWhereNull(field, false, "or");
     }
 
     /** Handles where...is (not) null clauses. */
-    __handleWhereNull(field, isNull = true) {
-        if (this.__where) this.__where += " and ";
-        this.__where += this.backquote(field) + " is " +
+    _handleWhereNull(field, isNull = true, conj = "and") {
+        if (this._where) this._where += ` ${conj} `;
+        this._where += this.backquote(field) + " is " +
             (isNull ? "" : "not ") + "null";
         return this;
     }
@@ -466,37 +528,65 @@ class Query extends DB {
     /**
      * Sets a where exists... clause for the SQL statement.
      * 
-     * @param  {Function}  callback  Pass a callback function to generate 
-     *  child-SQL statement, the only argument passed to the callback is a new
-     *  Query instance, so that you can use its features to generate a SQL 
-     *  statement.
+     * @param  {(query: Query)=>void}  callback  Pass a callback function to
+     *  generate child-SQL statement, the only argument passed to the callback
+     *  is a new Query instance, so that you can use its features to generate
+     *  a SQL statement.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
     whereExists(callback) {
-        return this.__handleExists(callback);
+        return this._handleExists(callback);
     }
 
     /**
      * Sets a where not exists... clause for the SQL statement.
      * 
-     * @param  {Function}  callback  Pass a callback function to generate 
-     *  child-SQL statement, the only argument passed to the callback is a new
-     *  Query instance, so that you can use its features to generate a SQL 
-     *  statement.
+     * @param  {(query: Query)=>void}  callback  Pass a callback function to 
+     *  generate child-SQL statement, the only argument passed to the callback
+     *  is a new Query instance, so that you can use its features to generate 
+     *  a SQL statement.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
     whereNotExists(callback) {
-        return this.__handleExists(callback, false);
+        return this._handleExists(callback, false);
+    }
+
+    /**
+     * Sets a where...or exists... clause for the SQL statement.
+     * 
+     * @param  {(query: Query)=>void}  callback  Pass a callback function to
+     *  generate child-SQL statement, the only argument passed to the callback
+     *  is a new Query instance, so that you can use its features to generate
+     *  a SQL statement.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
+     */
+    orWhereExists(callback) {
+        return this._handleExists(callback, true, "or");
+    }
+
+    /**
+     * Sets a where...or not exists... clause for the SQL statement.
+     * 
+     * @param  {(query: Query)=>void}  callback  Pass a callback function to
+     *  generate child-SQL statement, the only argument passed to the callback
+     *  is a new Query instance, so that you can use its features to generate
+     *  a SQL statement.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
+     */
+    orWhereNotExists(callback) {
+        return this._handleExists(callback, false, "or");
     }
 
     /** Handles where (not) exists... clauses. */
-    __handleExists(callback, exists = true) {
-        if (this.__where) this.__where += " and ";
-        var query = this.__getQueryBy(callback);
-        this.__where += (exists ? "" : "not ") + "exists (" + query.sql + ")";
-        this.__bindings = this.__bindings.concat(query.__bindings);
+    _handleExists(callback, exists = true, conj = "and") {
+        if (this._where) this._where += ` ${conj} `;
+        var query = this._getQueryBy(callback);
+        this._where += (exists ? "" : "not ") + "exists (" + query.sql + ")";
+        this._bindings = this._bindings.concat(query._bindings);
         return this;
     }
 
@@ -506,33 +596,36 @@ class Query extends DB {
      * @param  {String}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @param  {String}  [sequence]  The way of how records are ordered, it
+     * @param  {String}  [sequence]  The way of how records are ordered, it 
      *  could be either `asc` or `desc`.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
     orderBy(field, sequence = "") {
-        var comma = this.__orderBy ? ", " : "";
-        this.__orderBy += comma + this.backquote(field);
-        if (sequence) this.__orderBy += " " + sequence;
+        var comma = this._orderBy ? ", " : "";
+        this._orderBy += comma + this.backquote(field);
+        if (sequence) this._orderBy += " " + sequence;
         return this;
     }
 
     /**
-     * Sets that the records will be ordered in random sequence.
+     * Sets that records will be ordered in random sequence.
      * 
      * @return {Query} Returns the current instance for function chaining.
      */
     random() {
-        if (this.__driver.random instanceof Function)
-            this.__driver.random(this);
-        return this;
+        if (this._adapter.random instanceof Function) {
+            return this._adapter.random(this);
+        } else {
+            this._orderBy = "random()";
+            return this;
+        }
     }
 
     /**
      * Sets a group by... clause for the SQL statement.
      * 
-     * @param  {String|Array}  fields  A list of all target fields, each one 
+     * @param  {String[]}  fields  A list of all target fields, each one 
      *  passed as an argument. Or just pass the first argument as an array 
      *  that carries all the field names.
      * 
@@ -542,7 +635,7 @@ class Query extends DB {
         if (fields[0] instanceof Array)
             fields = fields[0];
         fields = fields.map(field => this.backquote(field));
-        this.__groupBy = fields.join(", ");
+        this._groupBy = fields.join(", ");
         return this;
     }
 
@@ -554,7 +647,7 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     having(raw) {
-        this.__having += (this.__having ? " and " : "") + raw;
+        this._having += (this._having ? " and " : "") + raw;
     }
 
     /**
@@ -568,11 +661,12 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     limit(length, offset = 0) {
-        if (this.__driver.limit instanceof Function)
-            this.__driver.limit(this, length, offset);
-        else
-            this.__limit = offset ? offset + ", " + length : length;
-        return this;
+        if (this._adapter.limit instanceof Function) {
+            return this._adapter.limit(this, length, offset);
+        } else {
+            this._limit = offset ? offset + ", " + length : length;
+            return this;
+        }
     }
 
     /**
@@ -581,7 +675,7 @@ class Query extends DB {
      * @return {Query} Returns the current instance for function chaining.
      */
     distinct() {
-        this.__distinct = "distinct";
+        this._distinct = "distinct";
         return this;
     }
 
@@ -599,9 +693,9 @@ class Query extends DB {
     union(query, all = false) {
         if (query instanceof Query) {
             query.sql = query.getSelectSQL();
-            this.__union += " union " + (all ? "all " : "") + query.sql;
+            this._union += " union " + (all ? "all " : "") + query.sql;
         } else if (typeof query == "string") {
-            this.__union += " union " + (all ? "all " : "") + query;
+            this._union += " union " + (all ? "all " : "") + query;
         }
         return this;
     }
@@ -612,8 +706,8 @@ class Query extends DB {
      * @param  {Object}  data  An object that carries fields and their values,
      *  or pass all values in an array that fulfil all the fields.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<Query>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     insert(data) {
         var bindings = [],
@@ -630,17 +724,15 @@ class Query extends DB {
         }
         if (isObj) fields = fields.join(", ");
         values = values.join(", ");
-        this.__inserts = (isObj ? `(${fields}) ` : "") + `values (${values})`;
-        this.sql = `insert into ${this.backquote(this.__table)} ` +
-            `${this.__inserts}`;
-        // Fire event and trigger event handlers.
-        this.trigger("insert", this);
-        return this.query(this.sql, bindings).then(db => {
+        this._inserts = (isObj ? `(${fields}) ` : "") + `values (${values})`;
+        this.sql = `insert into ${this.backquote(this._table)} ` +
+            `${this._inserts}`;
+        // Fire event and call its listeners.
+        this.emit("insert", this);
+        return this.query(this.sql, bindings).then(query => {
             this.bindings = Object.assign([], bindings);
-            this.insertId = db.insertId;
-            this.affectedRows = db.affectedRows;
-            // Fire event and trigger event handlers.
-            this.trigger("inserted", this);
+            // Fire event and call its listeners.
+            this.emit("inserted", this);
             return this;
         });
     }
@@ -650,8 +742,8 @@ class Query extends DB {
      * 
      * @param  {Object}  data An object that carries fields and their values.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<Query>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     update(data) {
         var parts = [],
@@ -660,7 +752,7 @@ class Query extends DB {
             parts.push(this.backquote(field) + " = ?");
             bindings.push(data[field]);
         }
-        return this.__handleUpdate(parts, bindings);
+        return this._handleUpdate(parts, bindings);
     }
 
     /**
@@ -673,11 +765,11 @@ class Query extends DB {
      * @param  {Number}  [number]  A number that needs to be raised, default 
      *  is `1`.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<Query>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     increase(field, number = 1) {
-        return this.__handleCrease(field, number, "+");
+        return this._handleCrease(field, number, "+");
     }
 
     /**
@@ -690,15 +782,15 @@ class Query extends DB {
      * @param  {Number}  [number]  A number that needs to be reduced, default 
      * is `1`.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
+     * @return {Promise<Query>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     decrease(field, number = 1) {
-        return this.__handleCrease(field, number, "-");
+        return this._handleCrease(field, number, "-");
     }
 
     /** Handles increasing and decreasing. */
-    __handleCrease(field, number, type) {
+    _handleCrease(field, number, type) {
         if (typeof field == "object") {
             var data = field;
         } else {
@@ -714,25 +806,24 @@ class Query extends DB {
                 parts.push(`${field} = ${field} ${type} ?`);
             }
         }
-        return this.__handleUpdate(parts, bindings);
+        return this._handleUpdate(parts, bindings);
     }
 
     /** Handles update statements. */
-    __handleUpdate(parts, bindings) {
+    _handleUpdate(parts, bindings) {
         if (Object.keys(parts).length === 0) {
             throw new Error("No valid data were given for updating.");
         }
-        bindings = bindings.concat(this.__bindings);
-        this.__updates = parts.join(", ");
-        this.sql = `update ${this.backquote(this.__table)} set ` +
-            this.__updates + (this.__where ? " where " + this.__where : "");
-        // Fire event and trigger event handlers.
-        this.trigger("update", this);
-        return this.query(this.sql, bindings).then(db => {
+        bindings = bindings.concat(this._bindings);
+        this._updates = parts.join(", ");
+        this.sql = `update ${this.backquote(this._table)} set ` +
+            this._updates + (this._where ? " where " + this._where : "");
+        // Fire event and call its listeners.
+        this.emit("update", this);
+        return this.query(this.sql, bindings).then(query => {
             this.bindings = Object.assign([], bindings);
-            this.affectedRows = db.affectedRows;
-            // Fire event and trigger event handlers.
-            this.trigger("updated", this);
+            // Fire event and call its listeners.
+            this.emit("updated", this);
             return this;
         });
     }
@@ -740,19 +831,18 @@ class Query extends DB {
     /**
      * Deletes an existing record.
      * 
-     * @return  {Promise}  Returns a Promise, and the the only argument passed
-     *   to the callback of `then()` is the current instance.
+     * @return {Promise<Query>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
      */
     delete() {
-        this.sql = "delete from " + this.backquote(this.__table) +
-            (this.__where ? " where " + this.__where : "");
-        // Fire event and trigger event handlers.
-        this.trigger("delete", this);
-        return this.query(this.sql, this.__bindings).then(db => {
-            this.bindings = Object.assign([], this.__bindings);
-            this.affectedRows = db.affectedRows;
-            // Fire event and trigger event handlers.
-            this.trigger("deleted", this);
+        this.sql = "delete from " + this.backquote(this._table) +
+            (this._where ? " where " + this._where : "");
+        // Fire event and call its listeners.
+        this.emit("delete", this);
+        return this.query(this.sql, this._bindings).then(query => {
+            this.bindings = Object.assign([], this._bindings);
+            // Fire event and call its listeners.
+            this.emit("deleted", this);
             return this;
         });
     }
@@ -760,31 +850,31 @@ class Query extends DB {
     /**
      * Gets a record from the database.
      * 
-     * @return  {Promise}  Returns a Promise, and the the only argument passed
+     * @return {Promise} Returns a Promise, and the the only argument passed 
      *  to the callback of `then()` is the fetched data.
      */
     get() {
-        var promise = this.limit(1).__handleSelect().then(data => data[0]);
-        // Fire event and trigger event handlers only if the current instance 
-        // is an Query instance, not its subclasses' instances.
-        if (this.constructor.name == "Query")
-            this.trigger("get", this);
+        var promise = this.limit(1)._handleSelect().then(data => data[0]);
+        // Fire event and call its listeners only if the current instance is 
+        // the Query instance, not its subclasses' instances.
+        if (this.constructor === Query)
+            this.emit("get", this);
         return promise;
     }
 
     /**
      * Gets all records from the database.
      * 
-     * @return  {Promise}  Returns a Promise, and the the only argument passed
-     *  to the callback of `then()` is all the fetched data  carried in an 
+     * @return {Promise} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is all the fetched data  carried in an 
      *  array.
      */
     all() {
-        var promise = this.__handleSelect();
-        // Fire event and trigger event handlers only if the current instance 
-        // is an Query instance, not its subclasses' instances.
-        if (this.constructor.name == "Query")
-            this.trigger("get", this);
+        var promise = this._handleSelect();
+        // Fire event and call its listeners only if the current instance is 
+        // the Query instance, not its subclasses' instances.
+        if (this.constructor === Query)
+            this.emit("get", this);
         return promise;
     }
 
@@ -793,14 +883,14 @@ class Query extends DB {
      * 
      * @param  {String}  [field]  Count a specified field.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is a number that represents the count of 
-     *  records.
+     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is a number that represents the 
+     *  count of records.
      */
     count(field = "*") {
-        if (field != "*" && this.__distinct)
+        if (field != "*" && this._distinct)
             field = "distinct " + this.backquote(field);
-        return this.__handleAggregate("count", field);
+        return this._handleAggregate("count", field);
     }
 
     /**
@@ -808,11 +898,11 @@ class Query extends DB {
      * 
      * @param {String} field The specified field.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the maximum value fetched.
+     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the maximum value fetched.
      */
     max(field) {
-        return this.__handleAggregate("max", field);
+        return this._handleAggregate("max", field);
     }
 
     /**
@@ -820,11 +910,11 @@ class Query extends DB {
      * 
      * @param  {String}  field The specified field.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the minimum value fetched.
+     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the minimum value fetched.
      */
     min(field) {
-        return this.__handleAggregate("min", field);
+        return this._handleAggregate("min", field);
     }
 
     /**
@@ -832,11 +922,11 @@ class Query extends DB {
      * 
      * @param  {String}  field The specified field.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the average value fetched.
+     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the average value fetched.
      */
     avg(field) {
-        return this.__handleAggregate("avg", field);
+        return this._handleAggregate("avg", field);
     }
 
     /**
@@ -844,11 +934,11 @@ class Query extends DB {
      * 
      * @param  {String}  field The specified field.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the summarized value fetched.
+     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the summarized value fetched.
      */
     sum(field) {
-        return this.__handleAggregate("sum", field);
+        return this._handleAggregate("sum", field);
     }
 
     /**
@@ -857,14 +947,18 @@ class Query extends DB {
      * @param  {Number}  length  The top limit of how many records that each 
      *  chunk will carry.
      * 
-     * @param  {Function}  callback  A function for processing every chunked 
-     *  data, the only argument passed to it is the data that current chunk 
-     *  carries. If the callback returns `false`, stop chunking.
+     * @param  {(data: Array)=>void|Boolean}  callback  A function for 
+     *  processing every chunked data, the only argument passed to it is the 
+     *  data that current chunk carries. If the callback returns `false`, stop
+     *  chunking.
      * 
-     * @return {Promise} Returns a Promise, and the only argument passed to
-     *  the callback of `then()` is the last chunk of data.
+     * @return {Promise<Array>} Returns a Promise, and the only argument 
+     *  passed to the callback of `then()` is the last chunk of data.
      */
     chunk(length, callback) {
+        if (this._adapter.chunk instanceof Function) {
+            return this._adapter.chunk(this, length, callback);
+        }
         var offset = 0,
             loop = () => {
                 return this.limit(length, offset).all().then(data => {
@@ -900,10 +994,13 @@ class Query extends DB {
      *  * `data` An array that carries all fetched data.
      */
     paginate(page, length = 0) {
+        if (this._adapter.paginate instanceof Function) {
+            return this._adapter.paginate(this, page, length);
+        }
         if (!length)
-            length = parseInt(this.__limit) || 10;
+            length = parseInt(this._limit) || 10;
         var offset = (page - 1) * length;
-        var selects = this.__selects;
+        var selects = this._selects;
         // Get all counts of records.
         return this.count().then(total => {
             if (!total) { // If there is no record, return immediately.
@@ -915,7 +1012,7 @@ class Query extends DB {
                     data: [],
                 }
             } else { // If the are records, continue fetching data.
-                this.__selects = selects;
+                this._selects = selects;
                 return this.limit(length, offset).all().then(data => {
                     return {
                         page,
@@ -930,18 +1027,18 @@ class Query extends DB {
     }
 
     /** Handles aggregate functions. */
-    __handleAggregate(name, field) {
-        this.__selects = name + "(" + this.backquote(field) + ") as alias";
-        this.__limit = "";
-        return this.__handleSelect().then(data => data[0].alias);
+    _handleAggregate(name, field) {
+        this._selects = name + "(" + this.backquote(field) + ") as alias";
+        this._limit = "";
+        return this._handleSelect().then(data => data[0].alias || data[0].ALIAS);
     }
 
     /** Handles select statements. */
-    __handleSelect() {
+    _handleSelect() {
         this.sql = this.getSelectSQL();
-        return this.query(this.sql, this.__bindings).then(db => {
-            this.bindings = Object.assign([], this.__bindings);
-            return db.__data;
+        return this.query(this.sql, this._bindings).then(query => {
+            this.bindings = Object.assign([], this._bindings);
+            return query._data;
         });
     }
 
@@ -951,21 +1048,21 @@ class Query extends DB {
      * @return {String} The select statement.
      */
     getSelectSQL() {
-        if (this.__driver.getSelectSQL instanceof Function) {
-            return this.__driver.getSelectSQL(this);
+        if (this._adapter.getSelectSQL instanceof Function) {
+            return this._adapter.getSelectSQL(this);
         } else {
-            var isCount = (/count\(distinct\s\S+\)/i).test(this.__selects);
+            var isCount = (/count\(distinct\s\S+\)/i).test(this._selects);
             return "select " +
-                (this.__distinct && !isCount ? "distinct " : "") +
-                this.__selects + " from " +
-                (!this.__join ? this.backquote(this.__table) : "") +
-                this.__join +
-                (this.__where ? " where " + this.__where : "") +
-                (this.__orderBy ? " order by " + this.__orderBy : "") +
-                (this.__groupBy ? " group by " + this.__groupBy : "") +
-                (this.__having ? "having " + this.__having : "") +
-                (this.__limit ? " limit " + this.__limit : "") +
-                (this.__union ? " union " + this.__union : "");
+                (this._distinct && !isCount ? "distinct " : "") +
+                this._selects + " from " +
+                (!this._join ? this.backquote(this._table) : "") +
+                this._join +
+                (this._where ? " where " + this._where : "") +
+                (this._orderBy ? " order by " + this._orderBy : "") +
+                (this._groupBy ? " group by " + this._groupBy : "") +
+                (this._having ? "having " + this._having : "") +
+                (this._limit ? " limit " + this._limit : "") +
+                (this._union ? " union " + this._union : "");
         }
     }
 }

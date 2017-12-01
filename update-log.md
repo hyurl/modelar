@@ -1,5 +1,16 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 2.0.0 (**Important**)
+
+(2017-11-30 12:00 UTC+0800)
+
+1. All classes extends from EventEmitter.
+2. Properties like `__data`, `__events` are all changed to the style of 
+    `_data`, `_events`.
+3. Uses adapters to support more databases, currently supports `MySQL/MariaDB`,
+    `Postgres`, `MSSQL`, `OracleDB`, `DB2`, `SQLite`.
+4. More features added and efficiency improved.
+
 ## 1.1.0
 
 (2017-11-30 12:40 UTC+0800)

@@ -1,5 +1,3 @@
-"use strict";
-
 const DB = require('./DB');
 
 /**
@@ -17,9 +15,9 @@ class Table extends DB {
      */
     constructor(table) {
         super();
-        this.__table = table;
-        this.__fields = []; // The field list of this table.
-        this.__index = -1; // Internal pointer.
+        this._table = table;
+        this._fields = []; // The field list of this table.
+        this._index = -1; // Internal pointer.
     }
 
     /**
@@ -27,7 +25,7 @@ class Table extends DB {
      * 
      * @param  {String}  name  The name of the field.
      * 
-     * @param  {String}  type  The type of the field.
+     * @param  {String}  [type]  The type of the field.
      * 
      * @param  {Number}  [length]  The top limit of length that this field can
      *  store, also it could be an array carries only two numbers that 
@@ -35,16 +33,12 @@ class Table extends DB {
      * 
      * @return {Table} Returns the current instance for function chaining.
      */
-    addColumn(name, type, length = 0) {
-        this.__index += 1; // Move the pointer forward.
-        if (length) {
-            if (length instanceof Array)
-                length = length.join(",");
-            type += "(" + length + ")";
-        }
-        this.__fields.push(Object.assign({
+    addColumn(name, type = "", length = 0) {
+        this._index += 1; // Move the pointer forward.
+        this._fields.push(Object.assign({
             name: "",
             type: "",
+            length: 0,
             notNull: false,
             default: undefined,
             primary: false,
@@ -55,14 +49,14 @@ class Table extends DB {
             foreignKey: {
                 table: "", // The name of the foreign table.
                 field: "", // The binding field in the foreign table.
+                // An action will be triggered when the record is deleted.
+                // Optional value is: no action, set null, cascade, restrict
+                onDelete: "set null",
                 // An action will be triggered when the record is updated.
                 // Optional value is: no action, set null, cascade, restrict
                 onUpdate: "no action",
-                // An action will be triggered when the record is deleted.
-                // Optional value is: no action, set null, cascade, restrict
-                onDelete: "no action",
             },
-        }, { name, type }));
+        }, { name, type, length }));
         return this;
     }
 
@@ -74,17 +68,21 @@ class Table extends DB {
      * @return {Table} Returns the current instance for function chaining.
      */
     primary() {
-        this.__fields[this.__index].primary = true;
+        this._fields[this._index].primary = true;
         return this;
     }
 
     /**
      * Sets the current field to be auto-increment.
      * 
+     * @param  {Number}  [start]  The initial value.
+     * 
+     * @param  {Number}  [step]  The step length.
+     * 
      * @return {Table} Returns the current instance for function chaining.
      */
-    autoIncrement() {
-        this.__fields[this.__index].autoIncrement = true;
+    autoIncrement(start = 1, step = 1) {
+        this._fields[this._index].autoIncrement = [start, step];
         return this;
     }
 
@@ -94,7 +92,7 @@ class Table extends DB {
      * @return {Table} Returns the current instance for function chaining.
      */
     unique() {
-        this.__fields[this.__index].unique = true;
+        this._fields[this._index].unique = true;
         return this;
     }
 
@@ -105,8 +103,8 @@ class Table extends DB {
      * 
      * @return {Table} Returns the current instance for function chaining.
      */
-    default (value) {
-        this.__fields[this.__index].default = value;
+    default(value) {
+        this._fields[this._index].default = value;
         return this;
     }
 
@@ -116,7 +114,7 @@ class Table extends DB {
      * @return {Table} Returns the current instance for function chaining.
      */
     notNull() {
-        this.__fields[this.__index].notNull = true;
+        this._fields[this._index].notNull = true;
         return this;
     }
 
@@ -126,7 +124,7 @@ class Table extends DB {
      * @return {Table} Returns the current instance for function chaining.
      */
     unsigned() {
-        this.__fields[this.__index].unsigned = true;
+        this._fields[this._index].unsigned = true;
         return this;
     }
 
@@ -138,7 +136,7 @@ class Table extends DB {
      * @return {Table} Returns the current instance for function chaining.
      */
     comment(text) {
-        this.__fields[this.__index].comment = value;
+        this._fields[this._index].comment = value;
         return this;
     }
 
@@ -149,50 +147,35 @@ class Table extends DB {
      *  in, it is also possible to pass this argument an object that sets all 
      *  the information of the constraint.
      * 
-     * @param  {String}  [field]  A field in the foreign table that related to
+     * @param  {String}  field  A field in the foreign table that related to
      *  the current field.
      * 
-     * @param  {String}  [onUpdate]  An action triggered when the record is 
-     *  updated. optional values are: 
+     * @param  {String}  [onDelete]  An action triggered when the record is
+     *  deleted. optional values are:
      *  - `no action`
-     *  - `set null`
+     *  - `set null` (by default)
      *  - `cascade`
      *  - `restrict`
      * 
-     * @param  {String}  [onDelete]  An action triggered when the record is 
-     *  deleted. optional values are: 
-     *  - `no action`
+     * @param  {String}  [onUpdate]  An action triggered when the record is 
+     *  updated (not supported by every database). optional values are:
+     *  - `no action` (by default)
      *  - `set null`
      *  - `cascade`
      *  - `restrict`
      * 
      * @return {Table} Returns the current instance for function chaining.
      */
-    foreignKey(table, field = "", onUpdate = "no action", onDelete = "no action") {
+    foreignKey(table, field, onDelete = "set null", onUpdate = "no action") {
         if (table instanceof Object)
             var foreignKey = table;
         else
-            var foreignKey = { table, field, onUpdate, onDelete };
-        this.__fields[this.__index].foreignKey = Object.assign(
-            this.__fields[this.__index].foreignKey,
+            var foreignKey = { table, field, onDelete, onUpdate };
+        this._fields[this._index].foreignKey = Object.assign(
+            this._fields[this._index].foreignKey,
             foreignKey
         );
         return this;
-    }
-
-    /********************************************************************/
-
-    /**
-     * Saves the table, this method actually creates a new table in the 
-     * database.
-     * 
-     * @return {Promise} Returns a Promise, and the the only argument passed 
-     *  to the callback of `then()` is the current instance.
-     */
-    save() {
-        return this.query(this.getDDL()).then(table => {
-            return table;
-        });
     }
 
     /**
@@ -201,81 +184,52 @@ class Table extends DB {
      * @return {String} Returns the DDL statement.
      */
     getDDL() {
-        var columns = [],
-            foreigns = [],
-            primary = "",
-            isSqlite = this.__config.type == "sqlite",
-            isMysql = this.__config.type == "mysql",
-            isPostgres = this.__config.type == "postgres";
+        return this._adapter.getDDL(this);
+    }
 
-        for (let field of this.__fields) {
-            let column = this.backquote(field.name) + " " + field.type;
-            // Deal with primary key.
-            if (field.primary){
-                if (isSqlite)
-                    column += " primary key";
-                else
-                    primary = field.name;
-            }
-            // Deal with auto-increment.
-            if (field.autoIncrement) {
-                if (isSqlite)
-                    column += " autoincrement"; // SQLite
-                else if (isMysql)
-                    column += " auto_increment"; // MySQL
-            }
-            if (field.default === null) {
-                column += " default null";
-            } else if (field.default !== undefined) {
-                if (typeof field.default == "string" &&
-                    !(isPostgres && field.default.indexOf("::") > 0)) {
-                    column += " default " + this.quote(field.default);
-                } else {
-                    column += " default " + field.default;
-                }
-            }
-            if (field.notNull) column += " not null";
-            if (field.unsigned) column += " unsigned";
-            if (field.unique) column += " unique";
-            if (field.comment)
-                column += " comment " + this.quote(field.comment);
-            if (field.foreignKey.table) {
-                let foreign = " references " +
-                    this.backquote(field.foreignKey.table) +
-                    " (" + this.backquote(field.foreignKey.field) +
-                    ") on delete " +
-                    field.foreignKey.onDelete + " on update " +
-                    field.foreignKey.onUpdate;
-                if (isSqlite) {
-                    column += foreign;
-                } else if (isMysql || isPostgres) {
-                    // MySQL puts foreign key constraints at the end of DDL.
-                    foreign = "foreign key (" + this.backquote(field.name) +
-                        ")" + foreign;
-                    foreigns.push(foreign);
-                }
-            };
-            columns.push(column);
+    /**
+     * Creates the table in the database.
+     * 
+     * @return {Promise<Table>} Returns a Promise, and the the only argument 
+     *  passed to the callback of `then()` is the current instance.
+     */
+    create() {
+        if (this._adapter.create instanceof Function) {
+            return this._adapter.create(this);
+        } else {
+            return this.query(this.getDDL());
         }
+    }
 
-        this.sql = "create table " + this.backquote(this.__table) +
-            " (\n\t" + columns.join(",\n\t");
+    /** An alias of table.create(). */
+    save() {
+        return this.create();
+    }
 
-        // Handle primary key for MySQL or PostgreSQL.
-        if (isMysql || isPostgres && primary)
-            this.sql += ",\n\tprimary key(" + this.backquote(primary) + ")";
-
-        // Handle foreign key constraints for MySQL or PostgreSQL.
-        if (foreigns.length)
-            this.sql += ",\n\t" + foreigns.join(",\n\t");
-
-        this.sql += "\n)";
-
-        if (isMysql) { // Set the engine and charset for MySQL.
-            this.sql += " engine=InnoDB default charset=" +
-                this.__config.charset;
+    /**
+     * Drops the table from the database.
+     * 
+     * @return {Promise<Table>} Returns a Promise, and the the only argument
+     *  passed to the callback of `then()` is the current instance.
+     */
+    drop() {
+        if (this._adapter.drop instanceof Function) {
+            return this._adapter.drop(this);
+        } else {
+            return this.query(`drop table ${this.backquote(this._table)}`);
         }
-        return this.sql;
+    }
+
+    /**
+     * Drops the table from the database.
+     * 
+     * @param {String} table The table name you're going to drop.
+     * 
+     * @return {Promise<Table>} Returns a Promise, and the the only argument
+     *  passed to the callback of `then()` is a new table instance.
+     */
+    static drop(table) {
+        return (new this(table)).drop();
     }
 }
 

@@ -1,24 +1,30 @@
 {
     "name": "modelar",
-    "version": "1.1.0",
-    "description": "An expressive Model with Promise functionality and Query constructor.",
-    "main": "Model.js",
+    "version": "2.0.0",
+    "description": "An expressive ORM with query builder and supports multiple databases.",
+    "main": "index.js",
+    "scripts": {
+        "test": "node test"
+    },
     "dependencies": {
-        "bcrypt-nodejs": "0.0.3"
+        "bcrypt-nodejs": "^0.0.3",
+        "modelar-mysql-adapter": "^0.1.0",
+        "modelar-postgres-adapter": "^0.1.0"
     },
     "keywords": [
-        "promise",
         "model",
+        "orm",
         "database",
-        "query constructor",
+        "query builder",
         "model associations",
         "event listener",
-        "es2015"
+        "es2015",
+        "promise"
     ],
     "author": {
         "name": "Ayon Lee",
         "email": "i@hyurl.com",
-        "url": "hyurl.com"
+        "url": "http://hyurl.com"
     },
     "repository": {
         "type": "git",
