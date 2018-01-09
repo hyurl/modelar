@@ -1,5 +1,12 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 2.0.1
+
+(2018-01-9 22:03 UTC+0800)
+
+1. Fix a bug.
+2. Add TypeScript declarations.
+
 ## 2.0.0 (**Important**)
 
 (2017-11-30 12:00 UTC+0800)

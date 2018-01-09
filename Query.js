@@ -206,7 +206,7 @@ class Query extends DB {
      *  argument passed to the callback is a new Query instance, so that you
      *  can use its features to generate a SQL statement.
      * 
-     * @param  {String|Number}  [value]  A value that needs to be compared 
+     * @param  {String|Number|Function}  [value]  A value that needs to be compared 
      *  with `field`. If this argument is missing, then `operator` will 
      *  replace it, and the operator will become an `=`.
      * 
@@ -223,6 +223,8 @@ class Query extends DB {
                 this._handleNestedWhere(field);
             } else if (operator instanceof Function) {
                 this._handleWhereChild(field, operator);
+            } else if (value instanceof Function) {
+                this._handleWhereChild(field, value, operator);
             } else {
                 this._handleWhere(field, operator, value);
             }
@@ -246,7 +248,7 @@ class Query extends DB {
      *  argument passed to the callback is a new Query instance, so that you
      *  can use its features to generate a SQL statement.
      * 
-     * @param  {String|Number}  [value]  A value that needs to be compared 
+     * @param  {String|Number|Function}  [value]  A value that needs to be compared 
      *  with `field`. If this argument is missing, then `operator` will 
      *  replace it, and the operator will become an `=`.
      * 
@@ -263,6 +265,8 @@ class Query extends DB {
                 this._handleNestedWhere(field);
             } else if (operator instanceof Function) {
                 this._handleWhereChild(field, operator);
+            } else if (value instanceof Function) {
+                this._handleWhereChild(field, value, operator);
             } else {
                 this._handleWhere(field, operator, value);
             }
@@ -293,10 +297,9 @@ class Query extends DB {
     }
 
     /** Handles where... child-SQL statements. */
-    _handleWhereChild(field, callback) {
+    _handleWhereChild(field, callback, operator = "=") {
         var query = this._getQueryBy(callback);
-        this._where += this.backquote(field) + " = (" +
-            query.sql + ")";
+        this._where += this.backquote(field) + ` ${operator} (${query.sql})`;
         this._bindings = this._bindings.concat(query._bindings);
         return this;
     }
@@ -648,6 +651,7 @@ class Query extends DB {
      */
     having(raw) {
         this._having += (this._having ? " and " : "") + raw;
+        return this;
     }
 
     /**
@@ -865,7 +869,7 @@ class Query extends DB {
     /**
      * Gets all records from the database.
      * 
-     * @return {Promise} Returns a Promise, and the the only argument 
+     * @return {Promise<any[]>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is all the fetched data  carried in an 
      *  array.
      */
@@ -978,7 +982,7 @@ class Query extends DB {
     /**
      * Gets paginated information of all records that suit given conditions.
      * 
-     * @param  {Number}  [page]  The current page, default is `1`.
+     * @param  {Number}  page The current page.
      * 
      * @param  {Number}  [length]  The top limit of per page, default is `10`.
      *  Also you can call `query.limit()` to specify a length before calling 

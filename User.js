@@ -98,7 +98,6 @@ class User extends Model {
         }
 
         return this.all().then(users => { // Get all matched users.
-
             for (let user of users) {
                 // Try to match password for every user, until the first one 
                 // matched.

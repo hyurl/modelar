@@ -7,8 +7,7 @@ This feature is done by the [model.has()](/Docs/TheModelClass#model_has) and
 [model.belongsTo()](/Docs/TheModelClass#model_belongsTo).
 
 ```javascript
-const DB = require("modelar/DB");
-const Model = require("modelar/Model");
+const { DB, Model } = require("modelar");
 
 DB.init({
     type: "sqlite",
@@ -79,8 +78,7 @@ const app = require('express')();
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
-const DB = require("modelar/DB");
-const User = require("modelar/User");
+const { DB, User } = require("modelar");
 
 // This variable is used to store database connections for socket clients.
 const connections = {};
@@ -144,7 +142,7 @@ Since Node.js 7.6.0, you can use `async/await` to handle asynchronous
 operations, before that, you can optionally use `co` module instead.
 
 ```javascript
-const User = require("modelar/User");
+const { User } = require("modelar");
 
 User.init({
     type: "mysql",

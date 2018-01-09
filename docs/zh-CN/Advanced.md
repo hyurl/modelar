@@ -6,8 +6,7 @@
 [model.belongsTo()](/Docs/TheModelClass#model_belongsTo) 来实现的。
 
 ```javascript
-const DB = require("modelar/DB");
-const Model = require("modelar/Model");
+const { DB, Model } = require("modelar");
 
 DB.init({
     type: "sqlite",
@@ -76,8 +75,7 @@ const app = require('express')();
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
-const DB = require("modelar/DB");
-const User = require("modelar/User");
+const { DB, User } = require("modelar");
 
 // 这个变量用来为 socket 客户端存储数据库连接。
 const connections = {};
@@ -141,7 +139,7 @@ socket.on("news", function(data) {
 使用 `co` 模块来实现替代的效果。
 
 ```javascript
-const User = require("modelar/User");
+const { User } = require("modelar");
 
 User.init({
     type: "mysql",

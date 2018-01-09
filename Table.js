@@ -27,7 +27,7 @@ class Table extends DB {
      * 
      * @param  {String}  [type]  The type of the field.
      * 
-     * @param  {Number}  [length]  The top limit of length that this field can
+     * @param  {Number|number[]}  [length]  The top limit of length that this field can
      *  store, also it could be an array carries only two numbers that 
      *  represents a range between bottom and top.
      * 
@@ -136,7 +136,7 @@ class Table extends DB {
      * @return {Table} Returns the current instance for function chaining.
      */
     comment(text) {
-        this._fields[this._index].comment = value;
+        this._fields[this._index].comment = text;
         return this;
     }
 

@@ -82,13 +82,14 @@ class DB extends EventEmitter {
     /**
      * Adds quote to a specified value.
      * 
-     * @param  {String|Number}  value  A value that needs to be quoted.
+     * @param  {string}  value  A value that needs to be quoted.
      * 
-     * @return {String|Number} The quoted values.
+     * @return {string} The quoted values.
      */
     quote(value) {
-        if (typeof value == "number" || value === null)
+        if (typeof value != "string")
             return value;
+
         value = value.replace(/\\/g, "\\\\");
         var quote = this._adapter.quote || "'",
             re = new RegExp(quote, "g");
@@ -198,12 +199,12 @@ class DB extends EventEmitter {
      * Sets adapter for a specified database type.
      * 
      * @param  {String}  type  Database type.
-     * @param  {String}  Adapter  The adapter class.
+     * @param  {Adapter}  adapter  The adapter instance.
      * 
      * @return {DB} Returns the class itself for function chaining.
      */
-    static setAdapter(type, Adapter) {
-        this._adapters[type] = Adapter;
+    static setAdapter(type, adapter) {
+        this._adapters[type] = adapter;
         return this;
     }
 

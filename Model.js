@@ -483,7 +483,7 @@ class Model extends Query {
      *  argument passed to the callback is a new Query instance, so that you
      *  can use its features to generate a SQL statement.
      * 
-     * @param  {String|Number}  [value]  A value that needs to be compared 
+     * @param  {String|Number|Function}  [value]  A value that needs to be compared 
      *  with `field`. If this argument is missing, then `operator` will 
      *  replace it, and the operator will become an `=`.
      * 
@@ -852,6 +852,15 @@ class Model extends Query {
      */
     static limit(length, offset = 0) {
         return (new this()).limit(length, offset);
+    }
+
+    /**
+     * Sets a distinct condition to get unique results in a select statement.
+     * 
+     * @return {Query} Returns the current instance for function chaining.
+     */
+    static distinct() {
+        return (new this()).distinct();
     }
 
     /**
@@ -1272,20 +1281,13 @@ class Model extends Query {
         target._data[this._foreignKey] = id;
         if (this._typeKey)
             target._data[this._typeKey] = this.constructor.name;
-        return target.save().then(target => {
-            return target;
-        });
+        return target.save();
     }
 
     /**
      * Removes the association bound by `model.associate()`.
      * 
      * This method can only be called after calling `model.belongsTo()`.
-     * 
-     * @param  {String}  foreignKey  A foreign key in the current model.
-     * 
-     * @param  {String}  [typeKey]  A field name that stores the associated 
-     *  model name when you are defining a polymorphic association.
      * 
      * @return {Promise<Model>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the caller instance.
@@ -1300,9 +1302,7 @@ class Model extends Query {
         target._data[this._foreignKey] = null;
         if (this._typeKey)
             target._data[this._typeKey] = null;
-        return target.save().then(target => {
-            return target;
-        });
+        return target.save();
     }
 
     /**

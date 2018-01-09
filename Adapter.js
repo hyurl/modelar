@@ -99,7 +99,7 @@ module.exports = class Adapter extends EventEmitter {
     /**
      * Gets the DDL statement.
      * @param  {Table} table
-     * @return {Table}
+     * @return {String}
      */
     getDDL(table) {
         throw new Error("Must be implemented first!");
