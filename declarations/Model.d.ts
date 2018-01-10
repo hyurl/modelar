@@ -99,7 +99,7 @@ export declare class Model extends Query {
     /** Gets a model from the database. */
     get(): Promise<this>;
     /** Gets all matched models from the database. */
-    all(): Promise<Model[]>;
+    all(): Promise<this[]>;
     /**
      * Processes chunked data with a specified length.
      * @param length The top limit of how many records that each chunk will
@@ -189,9 +189,6 @@ export declare class Model extends Query {
             done: boolean;
         };
     };
-    static set(config: DBConfig): Model;
-    /** Sets database configurations for the current instance. */
-    static set(name: string, value: any): Model;
     static use(db: DB): Model;
     static transaction(): Promise<Model>;
     static transaction(cb: (db: DB) => void): Promise<Model>;
@@ -226,7 +223,6 @@ export declare class Model extends Query {
     static orderBy(field: string, sequence?: "asc" | "desc"): Model;
     static random(): Model;
     static groupBy(fields: string[]): Model;
-    /** Sets a `group by...` clause for the SQL statement. */
     static groupBy(...fields: string[]): Model;
     static having(raw: string): Model;
     static limit(length: number, offset?: number): Model;
@@ -251,15 +247,10 @@ export declare class Model extends Query {
         data: Model[];
     }>;
     static getMany(options?: {
-        /** Default `1`. */
         page?: number;
-        /** Default `10` */
         limit?: number;
-        /** Default `model._primary` */
         orderBy?: string;
-        /** Default `asc`. */
         sequence?: "asc" | "desc" | "rand";
-        /** Used for vague searching. */
         keywords?: string | string[];
     }): Promise<{
         page: number;

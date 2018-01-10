@@ -2,7 +2,7 @@
 
 ## 2.0.1
 
-(2018-01-9 22:03 UTC+0800)
+(2018-01-10 22:03 UTC+0800)
 
 1. Fix a bug.
 2. Add TypeScript declarations.
