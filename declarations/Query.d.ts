@@ -179,26 +179,26 @@ export declare class Query extends DB {
      * @param range An array carries only two elements which represent the
      *  minimum and maximum number.
      */
-    whereBetween(field: string, range: number[]): this;
+    whereBetween(field: string, range: [number, number]): this;
     /**
      * Sets a where...not between... clause for the SQL statement.
      * @param range An array carries only two elements which represent the
      *  minimum and maximum number.
      */
-    whereNotBetween(field: string, range: number[]): this;
+    whereNotBetween(field: string, range: [number, number]): this;
     /**
      * Sets a where...or...between... clause for the SQL statement.
      * @param range An array carries only two elements which represent the
      *  minimum and maximum number.
      */
-    orWhereBetween(field: string, range: number[]): this;
+    orWhereBetween(field: string, range: [number, number]): this;
     /**
      * Sets a where...or...not between... clause for the SQL statement.
      * @param range An array carries only two elements which represent the
      *  minimum and maximum number.
      */
-    orWhereNotBetween(field: string, range: number[]): this;
-    protected _handleBetween(field: string, range: number[], between?: boolean, conj?: string): this;
+    orWhereNotBetween(field: string, range: [number, number]): this;
+    protected _handleBetween(field: string, range: [number, number], between?: boolean, conj?: string): this;
     /**
      * Sets a where...in... clause for the SQL statement.
      * @param values An array carries all possible values.

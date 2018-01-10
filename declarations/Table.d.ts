@@ -16,7 +16,7 @@ export declare class Table extends DB {
     constructor(name: string);
     addColumn(name: string): this;
     addColumn(name: string, type: string): this;
-    addColumn(name: string, type: string, length: number | number[]): this;
+    addColumn(name: string, type: string, length: number | [number, number]): this;
     addColumn(field: FieldConfig): this;
     /** Sets the current field to be the primary key of the table. */
     primary(): this;

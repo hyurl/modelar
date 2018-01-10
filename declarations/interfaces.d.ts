@@ -39,9 +39,9 @@ export interface ForeignKeyConfig {
 export interface FieldConfig {
     name: string;
     type?: string;
-    length?: number | number[];
+    length?: number | [number, number];
     primary?: boolean;
-    autoIncrement?: boolean | number[];
+    autoIncrement?: boolean | [number, number];
     unique?: boolean;
     default?: any;
     unsigned?: boolean;

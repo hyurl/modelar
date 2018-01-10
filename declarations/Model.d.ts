@@ -1,6 +1,6 @@
-import { ModelConfig, DBConfig } from "./interfaces";
 import { DB } from "./DB";
 import { Query } from "./Query";
+import { ModelConfig, DBConfig } from "./interfaces";
 /**
  * *Model Wrapper and beyond.*
  *
@@ -16,18 +16,18 @@ import { Query } from "./Query";
  * for...of... loop, like `for(let [field, value] of model)`.
  */
 export declare class Model extends Query {
-    protected __lookupGetter__: Function;
-    protected __lookupSetter__: Function;
-    protected _caller: this;
-    protected _foreignKey: string;
-    protected _typeKey: string;
-    protected _pivot: string[];
+    protected __lookupGetter__?: Function;
+    protected __lookupSetter__?: Function;
+    protected _caller?: this;
+    protected _foreignKey?: string;
+    protected _typeKey?: string;
+    protected _pivot?: string[];
     /** Fields in the model's table */
     protected _fields: string[];
-    /** Primary key of the model's table. */
-    protected _primary: string;
     /** Searchable fields in the model's table. */
     protected _searchable: string[];
+    /** Primary key of the model's table. */
+    protected _primary: string;
     /** The true data of the model. */
     _data: {
         [field: string]: any;
@@ -55,6 +55,10 @@ export declare class Model extends Query {
         bindings: any[];
     };
     constructor();
+    /** Creates a new instance with initial data */
+    constructor(data: {
+        [field: string]: any;
+    });
     /**  Creates a new instance with initial data and model configurations. */
     constructor(data: {
         [field: string]: any;
@@ -95,9 +99,9 @@ export declare class Model extends Query {
     protected _handleCrease(field: string | object, step: number, type: "+" | "-"): Promise<this>;
     protected _resetWhere(resetState?: boolean): this;
     /** Deletes the current model. */
-    delete(): Promise<this>;
+    delete(id?: number): Promise<this>;
     /** Gets a model from the database. */
-    get(): Promise<this>;
+    get(id?: number): Promise<this>;
     /** Gets all matched models from the database. */
     all(): Promise<this[]>;
     /**
@@ -106,7 +110,7 @@ export declare class Model extends Query {
      *  carry.
      * @param cb A function for processing every chunked data.
      */
-    chunk(length: number, cb: (data: Model[]) => false | void): Promise<Model[]>;
+    chunk(length: number, cb: (data: Model[]) => false | void): Promise<this[]>;
     /**
      * Gets paginated information of all records that suit given conditions.
      * @param page The current page.
@@ -212,8 +216,8 @@ export declare class Model extends Query {
     static where(nested: (query: Query) => void): Model;
     static where(field: string, nested: (query: Query) => void): Model;
     static where(field: string, operator: string, nested: (query: Query) => void): Model;
-    static whereBetween(field: string, range: number[]): Model;
-    static whereNotBetween(field: string, range: number[]): Model;
+    static whereBetween(field: string, range: [number, number]): Model;
+    static whereNotBetween(field: string, range: [number, number]): Model;
     static whereIn(field: string, values: string[] | number[]): Model;
     static whereIn(field: string, nested: (query: Query) => void): Model;
     static whereNull(field: string): Model;
@@ -353,9 +357,9 @@ export declare class Model extends Query {
      */
     protected belongsToVia(ModelClass: typeof Model, pivotTable: string, foreignKey1: string, foreignKey2: string, typeKey: string): Model;
     /** Gets extra data from the pivot table. */
-    protected withPivot(fields: string[]): this;
+    withPivot(fields: string[]): this;
     /** Gets extra data from the pivot table. */
-    protected withPivot(...fields: string[]): this;
+    withPivot(...fields: string[]): this;
     /**
      * Makes an association to a specified model.
      *

@@ -1,6 +1,9 @@
 import { Model } from "./Model";
 import { ModelConfig } from "./interfaces";
 export declare class User extends Model {
+    id?: number;
+    name: string;
+    email: string;
     protected _loginable: string[];
     constructor();
     constructor(data: {
@@ -27,5 +30,5 @@ export declare class User extends Model {
     static login(options: {
         [field: string]: string;
         password: string;
-    }): Promise<Model>;
+    }): Promise<User>;
 }

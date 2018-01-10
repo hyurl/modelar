@@ -6,7 +6,7 @@ import { Query } from "./Query";
 export declare abstract class Adapter extends EventEmitter {
     connection: any;
     quote: string;
-    backquote: string | string[];
+    backquote: string | [string, string];
     create?: (table: Table) => Promise<Table>;
     drop?: (table: Table) => Promise<Table>;
     random?: (query: Query) => Query;
