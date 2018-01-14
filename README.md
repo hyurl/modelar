@@ -7,7 +7,7 @@ See the [API documentation](http://modelar.hyurl.com) at *modelar.hyurl.com*.
 **WARNING**
 
 There is a design fault in Modelar 2.0, MUST update to **2.1** or above, and 
-update all adapters you manually include (id any).
+update all adapters you manually include (if any).
 
 ## Install
 
