@@ -64,7 +64,7 @@ class Model extends Query {
 
     /** Whether the current model is new. */
     get isNew() {
-        return this.data[this.primary] != undefined;
+        return this._data[this.primary] != undefined;
     }
 
     /** 
@@ -115,14 +115,14 @@ class Model extends Query {
                     if (set instanceof Function) {
                         set.call(this, data[key]); // Calling setter
                     } else {
-                        this.data[key] = data[key];
+                        this._data[key] = data[key];
                     }
                 } else {
-                    this.data[key] = data[key];
+                    this._data[key] = data[key];
                 }
 
                 if (!isNew && key != this.primary) {
-                    this._modified[key] = this.data[key];
+                    this._modified[key] = this._data[key];
                 }
             } else {
                 this._extra[key] = data[key];
