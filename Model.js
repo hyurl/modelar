@@ -64,7 +64,7 @@ class Model extends Query {
 
     /** Whether the current model is new. */
     get isNew() {
-        return this._data[this.primary] != undefined;
+        return this._data[this.primary] === undefined;
     }
 
     /** 
