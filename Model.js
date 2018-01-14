@@ -62,15 +62,17 @@ class Model extends Query {
         }
     }
 
+    /** Whether the current model is new. */
+    get isNew() {
+        return this.data[this.primary] != undefined;
+    }
+
     /** 
      * Defines setters and getters for model fields, if they're not defined.
      */
     _defineProperties(fields) {
         for (let field of fields) {
-            let hasGetter = this.__lookupGetter__(field) instanceof Function,
-                hasSetter = this.__lookupSetter__(field) instanceof Function,
-                isProp = this.hasOwnProperty(field);
-            if (!hasGetter && !hasSetter && !isProp) {
+            if (!(field in this)) {
                 Object.defineProperty(this, field, {
                     // Getter
                     get: () => this._data[field] || null,
@@ -112,12 +114,15 @@ class Model extends Query {
                     let set = this.__lookupSetter__(key);
                     if (set instanceof Function) {
                         set.call(this, data[key]); // Calling setter
-                        continue;
+                    } else {
+                        this.data[key] = data[key];
                     }
+                } else {
+                    this.data[key] = data[key];
                 }
-                this._data[key] = data[key];
-                if (!isNew && key != this._primary) {
-                    this._modified[key] = data[key];
+
+                if (!isNew && key != this.primary) {
+                    this._modified[key] = this.data[key];
                 }
             } else {
                 this._extra[key] = data[key];

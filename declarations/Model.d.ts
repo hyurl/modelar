@@ -63,6 +63,8 @@ export declare class Model extends Query {
     constructor(data: {
         [field: string]: any;
     }, config: ModelConfig);
+    /** Whether the current model is new. */
+    readonly isNew: boolean;
     protected _defineProperties(fields: string[]): void;
     /**
      * Assigns data to the model instance.
