@@ -160,24 +160,9 @@ export declare class Model extends Query {
      * Sets an extra `where...` clause for the SQL statement when updating or
      * deleting the model to mark the state.
      */
-    whereState(equals: {
+    whereState(fields: {
         [field: string]: string | number | boolean | Date;
     }): this;
-    /**
-     * Sets an extra `where...` clause for the SQL statement when updating or
-     * deleting the model to mark the state.
-     */
-    whereState(nested: (query: Query) => void): this;
-    /**
-     * Sets an extra `where...` clause for the SQL statement when updating or
-     * deleting the model to mark the state.
-     */
-    whereState(field: string, nested: (query: Query) => void): this;
-    /**
-     * Sets an extra `where...` clause for the SQL statement when updating or
-     * deleting the model to mark the state.
-     */
-    whereState(field: string, operator: string, nested: (query: Query) => void): this;
     /** Gets the data that the model represents. */
     valueOf(): {
         [field: string]: any;
@@ -367,7 +352,7 @@ export declare class Model extends Query {
      *
      * @param id The value of associative model's primary key.
      */
-    associate(id: number): Promise<this>;
+    associate(id: number): Promise<Model>;
     /**
      * Makes an association to a specified model.
      *
@@ -375,13 +360,13 @@ export declare class Model extends Query {
      *
      * @param model Associative model instance.
      */
-    associate(model: Model): Promise<this>;
+    associate(model: Model): Promise<Model>;
     /**
      * Removes the association bound by `model.associate()`.
      *
      * This method can only be called after calling `model.belongsTo()`.
      */
-    dissociate(): Promise<this>;
+    dissociate(): Promise<Model>;
     /**
      * Updates associations in a pivot table.
      *
@@ -390,7 +375,7 @@ export declare class Model extends Query {
      *
      * @param ids Values of associative models' primary keys.
      */
-    attach(ids: number[]): Promise<this>;
+    attach(ids: number[]): Promise<Model>;
     /**
      * Updates associations in a pivot table.
      *
@@ -399,7 +384,7 @@ export declare class Model extends Query {
      *
      * @param models Associative model instances.
      */
-    attach(models: Model[]): Promise<this>;
+    attach(models: Model[]): Promise<Model>;
     /**
      * Updates associations in a pivot table with additional fields.
      *
@@ -413,7 +398,7 @@ export declare class Model extends Query {
         [id: number]: {
             [field: string]: any;
         };
-    }): Promise<this>;
+    }): Promise<Model>;
     /**
      * Deletes associations in a pivot table.
      *
@@ -422,7 +407,7 @@ export declare class Model extends Query {
      *
      * @param ids Values of associative models' primary keys.
      */
-    detach(ids: number[]): Promise<this>;
+    detach(ids?: number[]): Promise<Model>;
     /**
      * Deletes associations in a pivot table.
      *
@@ -431,5 +416,5 @@ export declare class Model extends Query {
      *
      * @param models Associative model instances.
      */
-    detach(models: Model[]): Promise<this>;
+    detach(models?: Model[]): Promise<Model>;
 }

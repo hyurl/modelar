@@ -118,7 +118,7 @@ export declare class DB extends EventEmitter {
      * @param type Database type.
      * @param adateper The adapter instance.
      */
-    static setAdapter(type: string, adapter: Adapter): typeof DB;
+    static setAdapter(type: string, adapter: typeof Adapter): typeof DB;
     /** Closes all connections in all pools. */
     static close(): void;
     /** An alias of DB.close(). */

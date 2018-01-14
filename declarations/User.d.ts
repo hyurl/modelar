@@ -25,10 +25,12 @@ export declare class User extends Model {
      */
     login(options: {
         [field: string]: string;
+        user?: string;
         password: string;
     }): Promise<this>;
     static login(options: {
         [field: string]: string;
+        user?: string;
         password: string;
     }): Promise<User>;
 }

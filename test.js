@@ -41,6 +41,5 @@ DB.on("query", (db) => {
     } catch (e) {
         console.log(e);
     }
-    if (db)
-        db.close();
+    DB.close();
 })();

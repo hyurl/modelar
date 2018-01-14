@@ -1,9 +1,8 @@
 /// <reference types="node" />
-import { EventEmitter } from "events";
 import { DB } from "./DB";
 import { Table } from "./Table";
 import { Query } from "./Query";
-export declare abstract class Adapter extends EventEmitter {
+export declare abstract class Adapter {
     connection: any;
     quote: string;
     backquote: string | [string, string];
@@ -24,9 +23,9 @@ export declare abstract class Adapter extends EventEmitter {
     abstract query(db: DB, sql: string, bindings?: any[]): Promise<DB>;
     abstract release(): void;
     abstract close(): void;
-    abstract closeAll(): void;
     abstract getDDL(table: Table): string;
     transaction(db: DB, cb: (db: DB) => void): Promise<DB>;
     commit(db: DB): Promise<DB>;
     rollback(db: DB): Promise<DB>;
+    static close(): void;
 }

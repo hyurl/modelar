@@ -1,8 +1,5 @@
-const EventEmitter = require("events");
-
-module.exports = class Adapter extends EventEmitter {
+module.exports = class Adapter {
     constructor() {
-        super();
         this.connection = null;
         this.quote = "'";
         this.backquote = "`";
@@ -50,7 +47,7 @@ module.exports = class Adapter extends EventEmitter {
      * Closes all connections in the pool.
      * @return {void}
      */
-    closeAll() {
+    static close() {
         throw new Error("Must be implemented first!");
     }
 

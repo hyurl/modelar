@@ -52,11 +52,14 @@ class Model extends Query {
         this._modified = {};
 
         // Define pseudo-properties.
-        this._defineProperties(this._fields);
+        if (this._fields.length)
+            this._defineProperties(this._fields);
 
         // Assign data to the instance.
-        delete data[this._primary]; // Filter primary key.
-        this.assign(data, true);
+        if (data) {
+            delete data[this._primary]; // Filter primary key.
+            this.assign(data, true);
+        }
     }
 
     /** 
@@ -1111,7 +1114,7 @@ class Model extends Query {
      *  its features to handle data.
      */
     belongsTo(Model, foreignKey, typeKey = "") {
-        var model = (new Model).use(this);
+        var model = Model.use(this);
         model._caller = this;
         model._foreignKey = foreignKey;
         model._typeKey = typeKey;
@@ -1140,10 +1143,9 @@ class Model extends Query {
      *  its features to handle data.
      */
     hasThrough(Model, MiddleModel, foreignKey1, foreignKey2) {
-        var model = new Model,
-            _model = new MiddleModel;
-        return model.use(this).whereIn(foreignKey1, query => {
-            query.select(_model._primary).from(_model._table)
+        var model = new MiddleModel;
+        return Model.use(this).whereIn(foreignKey1, query => {
+            query.select(model._primary).from(model._table)
                 .where(foreignKey2, this._data[this._primary]);
         });
     }
@@ -1279,8 +1281,11 @@ class Model extends Query {
                 "must be a number or an instance of Model.");
         }
         target._data[this._foreignKey] = id;
-        if (this._typeKey)
+        target._modified[this._foreignKey] = id;
+        if (this._typeKey) {
             target._data[this._typeKey] = this.constructor.name;
+            target._modified[this._typeKey] = this.constructor.name;
+        }
         return target.save();
     }
 
@@ -1300,8 +1305,11 @@ class Model extends Query {
 
         var target = this._caller;
         target._data[this._foreignKey] = null;
-        if (this._typeKey)
-            target._data[this._typeKey] = null;
+        target._modified[this._foreignKey] = null;
+        if (this._typeKey) {
+            target.data[this._typeKey] = null;
+            target._modified[this._typeKey] = null;
+        }
         return target.save();
     }
 
@@ -1408,8 +1416,7 @@ class Model extends Query {
                     // Re-initiate the query.
                     query._where = "";
                     query._bindings = [];
-                    query.where(
-                        this._pivot[1], _data[id][this._pivot[1]]);
+                    query.where(this._pivot[1], _data[id][this._pivot[1]]);
                     query.where(this._pivot[2], id1);
                     delete data[this._pivot[2]];
                     delete data[this._pivot[1]];
@@ -1436,21 +1443,15 @@ class Model extends Query {
                             return updates.length ? doUpdate(_query) : _query;
                         }).then(_query => {
                             return inserts.length ? doInsert(_query) : _query;
-                        }).then(_query => {
-                            return target;
                         });
                     } else if (updates.length) {
                         return doUpdate(_query).then(_query => {
                             return inserts.length ? doInsert(_query) : _query;
-                        }).then(_query => {
-                            return target;
                         });
                     } else if (inserts.length) {
-                        return doInsert(_query).then(_query => {
-                            return target;
-                        });
+                        return doInsert(_query);
                     }
-                });
+                }).then(() => target);
             } else {
                 return target;
             }
@@ -1516,6 +1517,11 @@ class Model extends Query {
      * @return {Model} Returns the current instance for function chaining.
      */
     withPivot(...fields) {
+        if (!(this._caller instanceof Model)) {
+            throw new Error("model.withPivot() can only be called after " +
+                "calling model.hasVia() or model.belongsToVia().");
+        }
+
         var caller = this._caller,
             pivotTable = this._pivot[0],
             foreignKey1 = pivotTable + "." + this._pivot[1],

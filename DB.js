@@ -1,4 +1,5 @@
 const EventEmitter = require("events");
+const Adapter = require("./Adapter");
 const MysqlAdapter = require("modelar-mysql-adapter");
 const PostgresAdapter = require("modelar-postgres-adapter");
 
@@ -51,7 +52,7 @@ class DB extends EventEmitter {
         this._events = Object.assign({}, this.constructor._events);
         this._eventsCount = Object.keys(this._events).length;
 
-        this._adapter = this.constructor._adapters[this._config.type];
+        this._adapter = new this.constructor._adapters[this._config.type];
     }
 
     /** Gets the data source name by the given configuration. */
@@ -105,6 +106,9 @@ class DB extends EventEmitter {
      * @return {String|Number} The quoted identifier.
      */
     backquote(identifier) {
+        if(typeof identifier !== "string")
+            return identifier;
+
         var parts = identifier.split("."),
             exception = /[~`!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:"'<>,\?\/\s]/,
             quote;
@@ -164,11 +168,10 @@ class DB extends EventEmitter {
 
         // This property stores all available adapters.
         if (this._adapters === undefined) {
-            this._adapters = {
-                mysql: MysqlAdapter,
-                maria: MysqlAdapter,
-                postgres: PostgresAdapter,
-            };
+            this._adapters = {};
+            this.setAdapter("mysql", MysqlAdapter)
+                .setAdapter("maria", MysqlAdapter)
+                .setAdapter("postgres", PostgresAdapter);
         }
 
         return this;
@@ -204,6 +207,7 @@ class DB extends EventEmitter {
      * @return {DB} Returns the class itself for function chaining.
      */
     static setAdapter(type, adapter) {
+        adapter = adapter instanceof Adapter ? adapter.constructor : adapter;
         this._adapters[type] = adapter;
         return this;
     }
@@ -259,6 +263,12 @@ class DB extends EventEmitter {
      *  passed to the callback of `then()` is the current instance.
      */
     query(sql, ...bindings) {
+        if (this._adapter.connection === null) {
+            return this.connect().then(db => {
+                return this.query(sql, ...bindings);
+            });
+        }
+        
         if(bindings[0] instanceof Array)
             bindings = bindings[0];
         this.sql = sql.trim();
@@ -337,7 +347,7 @@ class DB extends EventEmitter {
      */
     static close() {
         for (let i in this._adapters) {
-            this._adapters[i].closeAll();
+            this._adapters[i].close();
         }
     }
 
