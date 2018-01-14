@@ -75,7 +75,7 @@ class Model extends Query {
             if (!(field in this)) {
                 Object.defineProperty(this, field, {
                     // Getter
-                    get: () => this._data[field] || null,
+                    get: () => this._data[field],
                     // Setter
                     set: (v) => {
                         // Primary key cannot be set through pseudo-property.
