@@ -18,6 +18,12 @@ shell or CMD:
 npm install modelar --save
 ```
 
+### Update
+
+```sh
+npm update modelar
+```
+
 ## Supported Databases
 
 This module currently supports these databases:
