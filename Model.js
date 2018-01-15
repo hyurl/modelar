@@ -52,7 +52,7 @@ class Model extends Query {
         this._modified = {};
 
         // Define pseudo-properties.
-        if (this._fields.length)
+        if (this._fields.length && !this._initiated)
             this._defineProperties(this._fields);
 
         // Assign data to the instance.
@@ -64,31 +64,46 @@ class Model extends Query {
 
     /** Whether the current model is new. */
     get isNew() {
-        return this._data[this.primary] == undefined;
+        return this._data[this._primary] == undefined;
     }
 
     /** 
      * Defines setters and getters for model fields, if they're not defined.
      */
     _defineProperties(fields) {
+        let props = {};
         for (let field of fields) {
             if (!(field in this)) {
-                Object.defineProperty(this, field, {
-                    // Getter
-                    get: () => this._data[field],
-                    // Setter
-                    set: (v) => {
+                props[field] = {
+                    get() {
+                        return this._data[field];
+                    },
+                    set(v) {
                         // Primary key cannot be set through pseudo-property.
                         if (field != this._primary) {
                             this._data[field] = v;
-                            if (this._data[this._primary]) {
+                            if (!this.isNew)
                                 this._modified[field] = v;
-                            }
                         }
-                    },
-                });
+                    }
+                };
+            }
+            else {
+                let desc = Object.getOwnPropertyDescriptor(this.__proto__, field);
+                if (desc && desc.set) {
+                    // Rewrite the setter.
+                    let oringin = desc.set;
+                    desc.set = function set(v) {
+                        oringin.call(this, v);
+                        if (!this.isNew)
+                            this._modified[field] = this._data[field];
+                    };
+                    props[field] = desc;
+                }
             }
         }
+        Object.defineProperties(this.__proto__, props);
+        this.__proto__._initiated = true;
     }
 
     /**
@@ -120,7 +135,7 @@ class Model extends Query {
                     this._data[key] = data[key];
                 }
 
-                if (!this.isNew && key != this.primary) {
+                if (!this.isNew && key != this._primary) {
                     this._modified[key] = this._data[key];
                 }
             } else {
@@ -335,7 +350,7 @@ class Model extends Query {
      */
     get(id = 0) {
         if (id) {
-            return this.where(this._primary, id).get();    
+            return this.where(this._primary, id).get();
         }
 
         return super.get().then(data => {
@@ -434,11 +449,13 @@ class Model extends Query {
         for (let field of this._fields) {
             if (args[field] && defaults[field] === undefined) {
                 let operator = "=",
-                    value = args[field],
-                    match = value.match(/^(<>|!=|<=|>=|<|>|=)\w+/);
-                if (match) { // Handle values which start with an operator.
-                    operator = match[1];
-                    value = value.substring(operator.length);
+                    value = options[field];
+                if (typeof value === "string") {
+                    let match = value.match(/^(<>|!=|<=|>=|<|>|=)\w+/);
+                    if (match) { // Handle values which start with an operator.
+                        operator = match[1];
+                        value = value.substring(operator.length);
+                    }
                 }
                 this.where(field, operator, value);
             }
@@ -1311,7 +1328,7 @@ class Model extends Query {
         target._data[this._foreignKey] = null;
         target._modified[this._foreignKey] = null;
         if (this._typeKey) {
-            target.data[this._typeKey] = null;
+            target._data[this._typeKey] = null;
             target._modified[this._typeKey] = null;
         }
         return target.save();

@@ -37,6 +37,12 @@ DB.on("query", (db) => {
         user.email = "luna@hyurl.com";
         user.password = "12345";
         user = await user.use(db).save();
+
+        // Modified the user:
+        user.password = "161301";
+        user.name = "Luna";
+
+        await user.save();
         console.log(user);
     } catch (e) {
         console.log(e);

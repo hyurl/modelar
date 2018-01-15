@@ -44,10 +44,6 @@ class User extends Model {
     set password(v) {
         // Model's data are stored in the _data property.
         this._data.password = bcrypt.hashSync(v);
-
-        if (!this.isNew) {
-            this._modified.password = this.data.password;
-        }
     }
 
     // The getter of password, always return undefined.
