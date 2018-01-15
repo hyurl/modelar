@@ -1,7 +1,7 @@
 import { Model } from "./Model";
 import { ModelConfig } from "./interfaces";
 export declare class User extends Model {
-    id?: number;
+    id: number;
     name: string;
     email: string;
     protected _loginable: string[];

@@ -64,7 +64,7 @@ class Model extends Query {
 
     /** Whether the current model is new. */
     get isNew() {
-        return this._data[this.primary] === undefined;
+        return this._data[this.primary] == undefined;
     }
 
     /** 
@@ -106,7 +106,6 @@ class Model extends Query {
             // _data extends from DB class, so it could be an array.
             this._data = {};
         }
-        var isNew = !this._data[this._primary];
         for (let key in data) {
             if (this._fields.includes(key)) {
                 // Only accept those fields that `_fields` sets.
@@ -121,7 +120,7 @@ class Model extends Query {
                     this._data[key] = data[key];
                 }
 
-                if (!isNew && key != this.primary) {
+                if (!this.isNew && key != this.primary) {
                     this._modified[key] = this._data[key];
                 }
             } else {
@@ -290,27 +289,27 @@ class Model extends Query {
      *  passed to the callback of `then()` is the current instance.
      */
     delete(id = 0) {
-        if (id == 0) {
-            this._resetWhere();
-            if (this._whereState.where) {
-                var state = this._whereState;
-                this._where += " and " + state.where;
-                this._bindings = this._bindings.concat(state.bindings);
-            }
-            return super.delete().then(model => {
-                if (model.affectedRows == 0) {
-                    // If no model is affected, throw an error.
-                    throw new Error("No " + this.constructor.name +
-                        " was deleted by matching the given condition.");
-                } else {
-                    return model;
-                }
-            });
-        } else {
+        if (id) {
             return this.get(id).then(model => {
                 return model.delete();
             });
         }
+
+        this._resetWhere();
+        if (this._whereState.where) {
+            var state = this._whereState;
+            this._where += " and " + state.where;
+            this._bindings = this._bindings.concat(state.bindings);
+        }
+        return super.delete().then(model => {
+            if (model.affectedRows == 0) {
+                // If no model is affected, throw an error.
+                throw new Error("No " + this.constructor.name +
+                    " was deleted by matching the given condition.");
+            } else {
+                return model;
+            }
+        });
     }
 
     /** Resets the where... clause */
@@ -335,28 +334,28 @@ class Model extends Query {
      *  passed to the callback of `then()` is the fetched model.
      */
     get(id = 0) {
-        if (id == 0) {
-            return super.get().then(data => {
-                if (!data || Object.keys(data).length === 0) {
-                    // If no model is retrieved, throw an error.
-                    throw new Error("No " + this.constructor.name +
-                        " was found by matching the given condition.");
-                } else {
-                    // Remove temporary property.
-                    delete this._caller;
-                    delete this._foreignKey;
-                    delete this._typeKey;
-                    delete this._pivot;
-                    // Assign data and emit event listeners.
-                    this.assign(data);
-                    this._modified = {};
-                    this.emit("get", this);
-                    return this;
-                }
-            });
-        } else {
-            return this.where(this._primary, id).get();
+        if (id) {
+            return this.where(this._primary, id).get();    
         }
+
+        return super.get().then(data => {
+            if (!data || Object.keys(data).length === 0) {
+                // If no model is retrieved, throw an error.
+                throw new Error("No " + this.constructor.name +
+                    " was found by matching the given condition.");
+            } else {
+                // Remove temporary property.
+                delete this._caller;
+                delete this._foreignKey;
+                delete this._typeKey;
+                delete this._pivot;
+                // Assign data and emit event listeners.
+                this.assign(data);
+                this._modified = {};
+                this.emit("get", this);
+                return this;
+            }
+        });
     }
 
     /**

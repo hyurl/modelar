@@ -170,10 +170,10 @@ export declare class Query extends DB {
      * query.
      */
     orWhere(field: string, operator: string, nested: (query: Query) => void): this;
-    protected _handleWhere(field: string, operator: string, value?: string | number | boolean | Date): this;
-    protected _handleNestedWhere(cb: (query: Query) => void): this;
-    protected _handleWhereChild(field: string, cb: (query: Query) => void, operator?: string): this;
-    protected _getQueryBy(cb: (query: Query) => void): Query;
+    private _handleWhere(field: string, operator: string, value?: string | number | boolean | Date): this;
+    private _handleNestedWhere(cb: (query: Query) => void): this;
+    private _handleWhereChild(field: string, cb: (query: Query) => void, operator?: string): this;
+    private _getQueryBy(cb: (query: Query) => void): Query;
     /**
      * Sets a where...between... clause for the SQL statement.
      * @param range An array carries only two elements which represent the
@@ -198,7 +198,7 @@ export declare class Query extends DB {
      *  minimum and maximum number.
      */
     orWhereNotBetween(field: string, range: [number, number]): this;
-    protected _handleBetween(field: string, range: [number, number], between?: boolean, conj?: string): this;
+    private _handleBetween(field: string, range: [number, number], between?: boolean, conj?: string): this;
     /**
      * Sets a where...in... clause for the SQL statement.
      * @param values An array carries all possible values.
@@ -239,8 +239,8 @@ export declare class Query extends DB {
      * nested query.
      */
     orWhereNotIn(field: string, nested: (query: Query) => void): this;
-    protected _handleIn(field: string, values: string[] | number[] | ((query: Query) => void), isIn?: boolean, conj?: string): this;
-    protected _handleInChild(field: string, cb: (query: Query) => void, isIn?: boolean): this;
+    private _handleIn(field: string, values: string[] | number[] | ((query: Query) => void), isIn?: boolean, conj?: string): this;
+    private _handleInChild(field: string, cb: (query: Query) => void, isIn?: boolean): this;
     /** Sets a `where...is null` clause for the SQL statement. */
     whereNull(field: string): this;
     /** Sets a `where...is not null` clause for the SQL statement. */
@@ -249,7 +249,7 @@ export declare class Query extends DB {
     orWhereNull(field: string): this;
     /** Sets a `where...or...is not null` clause for the SQL statement. */
     orWhereNotNull(field: string): this;
-    protected _handleWhereNull(field: string, isNull?: boolean, conj?: string): this;
+    private _handleWhereNull(field: string, isNull?: boolean, conj?: string): this;
     /**
      * Sets a `where exists...` clause for the SQL statement with a nested
      * query.
@@ -270,7 +270,7 @@ export declare class Query extends DB {
      * nested query.
      */
     orWhereNotExists(nested: (query: Query) => void): this;
-    protected _handleExists(nested: (query: Query) => void, exists?: boolean, conj?: string): this;
+    private _handleExists(nested: (query: Query) => void, exists?: boolean, conj?: string): this;
     /** Sets an `order by...` clause for the SQL statement. */
     orderBy(field: string, sequence?: "asc" | "desc"): this;
     /** Sets that records will be ordered in random sequence. */
@@ -355,8 +355,8 @@ export declare class Query extends DB {
         total: number;
         data: any[];
     }>;
-    protected _handleAggregate(name: string, field: string): Promise<number>;
-    protected _handleSelect(): Promise<any[] | {
+    private _handleAggregate(name: string, field: string): Promise<number>;
+    private _handleSelect(): Promise<any[] | {
         [field: string]: any;
     }>;
     /** Gets the select statement from the current instance. */

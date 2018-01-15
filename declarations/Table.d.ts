@@ -10,8 +10,7 @@ import { DB } from "./DB";
 export declare class Table extends DB {
     protected _table: string;
     protected _fields: FieldConfig[];
-    protected _index: number;
-    static readonly field: FieldConfig;
+    private _index: number;
     /** Creates a new instance with a specified table name. */
     constructor(name: string);
     addColumn(name: string): this;

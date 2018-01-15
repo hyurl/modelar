@@ -16,12 +16,12 @@ import { ModelConfig, DBConfig } from "./interfaces";
  * for...of... loop, like `for(let [field, value] of model)`.
  */
 export declare class Model extends Query {
-    protected __lookupGetter__?: Function;
-    protected __lookupSetter__?: Function;
-    protected _caller?: this;
-    protected _foreignKey?: string;
-    protected _typeKey?: string;
-    protected _pivot?: string[];
+    protected __lookupGetter__: Function;
+    protected __lookupSetter__: Function;
+    private _caller?: Model;
+    private _foreignKey?: string;
+    private _typeKey?: string;
+    private _pivot?: string[];
     /** Fields in the model's table */
     protected _fields: string[];
     /** Searchable fields in the model's table. */
@@ -50,7 +50,7 @@ export declare class Model extends Query {
      * Sets an extra where... clause for the SQL statement when updating or
      * deleting the model.
      */
-    protected _whereState: {
+    private _whereState: {
         where: string;
         bindings: any[];
     };
@@ -65,7 +65,7 @@ export declare class Model extends Query {
     }, config: ModelConfig);
     /** Whether the current model is new. */
     readonly isNew: boolean;
-    protected _defineProperties(fields: string[]): void;
+    private _defineProperties(fields: string[]): void;
     /**
      * Assigns data to the model instance.
      * @param useSetter Use setters (if any) to process the data.

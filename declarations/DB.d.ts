@@ -31,8 +31,8 @@ export declare class DB extends EventEmitter {
     _dsn: string;
     /** Database configurations of the current instance. */
     _config: DBConfig;
-    protected _events: object;
-    protected _eventsCount: number;
+    private _events: object;
+    private _eventsCount: number;
     protected _adapter: Adapter;
     static _events: object;
     static _config: DBConfig;
@@ -43,7 +43,7 @@ export declare class DB extends EventEmitter {
     constructor(database: string);
     /** Creates a new DB instance with specified configurations. */
     constructor(config?: DBConfig);
-    protected _getDSN(): string;
+    private _getDSN(): string;
     /**
      * Adds quotes to a specified value.
      *
