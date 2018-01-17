@@ -19,8 +19,8 @@ module.exports = class Adapter {
     /**
      * Runs a SQL statement.
      * @param  {DB} db
-     * @param  {String} sql
-     * @param  {Array} bindings
+     * @param  {string} sql
+     * @param  {any[]} bindings
      * @return {DB}
      */
     query(db, sql, bindings = []) {
@@ -54,13 +54,18 @@ module.exports = class Adapter {
     /**
      * Begins a transaction.
      * @param  {DB} db
-     * @param  {(db: DB)=>void} callback 
+     * @param  {(db: DB)=>Promise<any>} callback
      * @return {DB}
      */
     transaction(db, callback = null) {
         if (typeof callback == "function") {
             return this.query(db, "begin").then(db => {
-                return callback.call(db, db);
+                var res = callback.call(db, db);
+                if (res.then instanceof Function) {
+                    return res.then(() => db);
+                } else {
+                    return db;
+                }
             }).then(db => {
                 return this.commit(db);
             }).catch(err => {
@@ -96,7 +101,7 @@ module.exports = class Adapter {
     /**
      * Gets the DDL statement.
      * @param  {Table} table
-     * @return {String}
+     * @return {string}
      */
     getDDL(table) {
         throw new Error("Must be implemented first!");

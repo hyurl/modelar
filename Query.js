@@ -10,7 +10,7 @@ class Query extends DB {
     /**
      * Creates a new Query instance with a specified table name.
      * 
-     * @param  {String}  [table]  The table name bound to the instance.
+     * @param  {string}  [table]  The table name bound to the instance.
      */
     constructor(table = "") {
         super();
@@ -32,11 +32,11 @@ class Query extends DB {
     /**
      * Sets what fields that need to be fetched.
      * 
-     * @param  {String[]}  fields  A list of all target fields, each one 
+     * @param  {string[]}  fields  A list of all target fields, each one 
      *  passed as an argument, or just pass the first argument as an array 
      *  that carries all the field names.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     select(...fields) {
         if (fields[0] instanceof Array)
@@ -49,9 +49,9 @@ class Query extends DB {
     /**
      * Sets the table name that the current instance binds to.
      * 
-     * @param  {String}  table  The table name.
+     * @param  {string}  table  The table name.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     table(table) {
         this._table = table;
@@ -66,20 +66,20 @@ class Query extends DB {
     /**
      * Sets a inner join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to be joined with.
+     * @param  {string}  table  A table name that needs to be joined with.
      * 
-     * @param  {String}  field1  A field name in the table that currently 
+     * @param  {string}  field1  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {String}  operator  Condition operator, if the `field2` isn't 
+     * @param  {string}  operator  Condition operator, if the `field2` isn't 
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  [field2]  A field in `table` that needs to be 
+     * @param  {string}  [field2]  A field in `table` that needs to be 
      *  compared with `field1`. If this argument is missing, then `operator` 
      *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     join(table, field1, operator, field2 = "") {
         return this._handleJoin(table, field1, operator, field2);
@@ -88,20 +88,20 @@ class Query extends DB {
     /**
      * Sets a left join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to be joined with.
+     * @param  {string}  table  A table name that needs to be joined with.
      * 
-     * @param  {String}  field1  A field name in the table that currently 
+     * @param  {string}  field1  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {String}  operator Condition operator, if the `field2` isn't 
+     * @param  {string}  operator Condition operator, if the `field2` isn't 
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  [field2]  A field in `table` that needs to be 
+     * @param  {string}  [field2]  A field in `table` that needs to be 
      *  compared with `field1`. If this argument is missing, then `operator` 
      *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     leftJoin(table, field1, operator, field2 = "") {
         return this._handleJoin(table, field1, operator, field2, "left");
@@ -110,20 +110,20 @@ class Query extends DB {
     /**
      * Sets a right join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to be joined with.
+     * @param  {string}  table  A table name that needs to be joined with.
      * 
-     * @param  {String}  field1  A field name in the table that currently 
+     * @param  {string}  field1  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {String}  operator Condition operator, if the `field2` isn't 
+     * @param  {string}  operator Condition operator, if the `field2` isn't 
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  [field2]  A field in `table` that needs to be 
+     * @param  {string}  [field2]  A field in `table` that needs to be 
      *  compared with `field1`. If this argument is missing, then `operator` 
      *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     rightJoin(table, field1, operator, field2 = "") {
         return this._handleJoin(table, field1, operator, field2, "right");
@@ -132,20 +132,20 @@ class Query extends DB {
     /**
      * Sets a full join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to be joined with.
+     * @param  {string}  table  A table name that needs to be joined with.
      * 
-     * @param  {String}  field1  A field name in the table that currently 
+     * @param  {string}  field1  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {String}  operator Condition operator, if the `field2` isn't 
+     * @param  {string}  operator Condition operator, if the `field2` isn't 
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  [field2]  A field in `table` that needs to be 
+     * @param  {string}  [field2]  A field in `table` that needs to be 
      *  compared with `field1`. If this argument is missing, then `operator` 
      *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     fullJoin(table, field1, operator, field2 = "") {
         return this._handleJoin(table, field1, operator, field2, "full");
@@ -154,20 +154,20 @@ class Query extends DB {
     /**
      * Sets a cross join... clause for the SQL statement.
      * 
-     * @param  {String}  table  A table name that needs to be joined with.
+     * @param  {string}  table  A table name that needs to be joined with.
      * 
-     * @param  {String}  field1  A field name in the table that currently 
+     * @param  {string}  field1  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {String}  operator Condition operator, if the `field2` isn't 
+     * @param  {string}  operator Condition operator, if the `field2` isn't 
      *  passed, then this argument will replace it, and the operator will 
      *  become an `=`.
      * 
-     * @param  {String}  [field2]  A field in `table` that needs to be 
+     * @param  {string}  [field2]  A field in `table` that needs to be 
      *  compared with `field1`. If this argument is missing, then `operator` 
      *  will replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     crossJoin(table, field1, operator, field2 = "") {
         return this._handleJoin(table, field1, operator, field2, "cross");
@@ -193,24 +193,24 @@ class Query extends DB {
     /**
      * Sets a where... clause for the SQL statement.
      * 
-     * @param  {String|Function|Object}  field  This could be a field name, or
+     * @param  {string|Function|object}  field  This could be a field name, or
      *  an object that sets multiple `=` (equal) conditions for the clause. Or
      *  pass a callback function to generate nested conditions, the only 
      *  argument passed to the callback is a new Query instance with all 
      *  features.
      * 
-     * @param  {String|Function}  [operator]  Condition operator, if the 
+     * @param  {string|Function}  [operator]  Condition operator, if the 
      *  `value` isn't passed, then this argument will replace it, and the 
      *  operator will become an `=`. It is also possible to pass this argument
      *  a callback function to generate a child-SQL statement, the only 
      *  argument passed to the callback is a new Query instance, so that you
      *  can use its features to generate a SQL statement.
      * 
-     * @param  {String|Number|Function}  [value]  A value that needs to be compared 
+     * @param  {string|number|Function}  [value]  A value that needs to be compared 
      *  with `field`. If this argument is missing, then `operator` will 
      *  replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     where(field, operator = null, value = undefined) {
         if (typeof field === "object") {
@@ -235,24 +235,24 @@ class Query extends DB {
     /**
      * Sets a where...or... clause for the SQL statement.
      * 
-     * @param  {String|Function|Object}  field  This could be a field name, or
+     * @param  {string|Function|object}  field  This could be a field name, or
      *  an object that sets multiple `=` (equal) conditions for the clause. Or
      *  pass a callback function to generate nested conditions, the only 
      *  argument passed to the callback is a new Query instance with all 
      *  features.
      * 
-     * @param  {String|Function}  [operator]  Condition operator, if the 
+     * @param  {string|Function}  [operator]  Condition operator, if the 
      *  `value` isn't passed, then this argument will replace it, and the 
      *  operator will become an `=`. It is also possible to pass this argument
      *  a callback function to generate a child-SQL statement, the only 
      *  argument passed to the callback is a new Query instance, so that you
      *  can use its features to generate a SQL statement.
      * 
-     * @param  {String|Number|Function}  [value]  A value that needs to be compared 
+     * @param  {string|number|Function}  [value]  A value that needs to be compared 
      *  with `field`. If this argument is missing, then `operator` will 
      *  replace it, and the operator will become an `=`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     orWhere(field, operator = null, value = undefined) {
         if (typeof field === "object") {
@@ -315,13 +315,13 @@ class Query extends DB {
     /**
      * Sets a where...between... clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently 
+     * @param  {string}  field  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {Array}  range  An array that carries only two elements which
+     * @param  {[number, number]}  range  An array that carries only two elements which
      *  represent the start point and the end point.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     whereBetween(field, range) {
         return this._handleBetween(field, range);
@@ -330,13 +330,13 @@ class Query extends DB {
     /**
      * Sets a where...not between... clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently 
+     * @param  {string}  field  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {Array}  range  An array that carries only two elements which
+     * @param  {[number, number]}  range  An array that carries only two elements which
      *  represent the start point and the end point.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     whereNotBetween(field, range) {
         return this._handleBetween(field, range, false);
@@ -345,13 +345,13 @@ class Query extends DB {
     /**
      * Sets a where...or...between... clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently 
+     * @param  {string}  field  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {Array}  range  An array that carries only two elements which
+     * @param  {[number, number]}  range  An array that carries only two elements which
      *  represent the start point and the end point.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     orWhereBetween(field, range) {
         return this._handleBetween(field, range, true, "or");
@@ -360,13 +360,13 @@ class Query extends DB {
     /**
      * Sets a where...or... not between... clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently 
+     * @param  {string}  field  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {Array}  range  An array that carries only two elements which
+     * @param  {[number, number]}  range  An array that carries only two elements which
      *  represent the start point and the end point.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     orWhereNotBetween(field, range) {
         return this._handleBetween(field, range, false, "or");
@@ -384,15 +384,15 @@ class Query extends DB {
     /**
      * Sets a where...in... clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently 
+     * @param  {string}  field  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {Function|Array}  values  An array that carries all possible 
+     * @param  {Function|any[]}  values  An array that carries all possible 
      *  values. Or pass a callback function to generate child-SQL statement, 
      *  the only argument passed to the callback is a new Query instance, so 
      *  that you can use its features to generate a SQL statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     whereIn(field, values) {
         return this._handleIn(field, values);
@@ -401,15 +401,15 @@ class Query extends DB {
     /**
      * Sets a where...not in... clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently 
+     * @param  {string}  field  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {Function|Array}  values  An array that carries all possible 
+     * @param  {Function|any[]}  values  An array that carries all possible 
      *  values. Or pass a callback function to generate child-SQL statement, 
      *  the only argument passed to the callback is a new Query instance, so 
      *  that you can use its features to generate a SQL statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     whereNotIn(field, values) {
         return this._handleIn(field, values, false);
@@ -418,15 +418,15 @@ class Query extends DB {
     /**
      * Sets a where...or...in... clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently 
+     * @param  {string}  field  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {Function|Array}  values  An array that carries all possible 
+     * @param  {Function|any[]}  values  An array that carries all possible 
      *  values. Or pass a callback function to generate child-SQL statement, 
      *  the only argument passed to the callback is a new Query instance, so 
      *  that you can use its features to generate a SQL statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     orWhereIn(field, values) {
         return this._handleIn(field, values, true, "or");
@@ -435,15 +435,15 @@ class Query extends DB {
     /**
      * Sets a where...or...not in... clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently 
+     * @param  {string}  field  A field name in the table that currently 
      *  binds to.
      * 
-     * @param  {Function|Array}  values  An array that carries all possible 
+     * @param  {Function|any[]}  values  An array that carries all possible 
      *  values. Or pass a callback function to generate child-SQL statement, 
      *  the only argument passed to the callback is a new Query instance, so 
      *  that you can use its features to generate a SQL statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     orWhereNotIn(field, values) {
         return this._handleIn(field, values, false, "or");
@@ -475,10 +475,10 @@ class Query extends DB {
     /**
      * Sets a where...is null clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently binds
+     * @param  {string}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     whereNull(field) {
         return this._handleWhereNull(field);
@@ -487,10 +487,10 @@ class Query extends DB {
     /**
      * Sets a where...is not null clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently binds
+     * @param  {string}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     whereNotNull(field) {
         return this._handleWhereNull(field, false);
@@ -499,10 +499,10 @@ class Query extends DB {
     /**
      * Sets a where...or...is null clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently binds
+     * @param  {string}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     orWhereNull(field) {
         return this._handleWhereNull(field, true, "or");
@@ -511,10 +511,10 @@ class Query extends DB {
     /**
      * Sets a where...or...is not null clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently binds
+     * @param  {string}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     orWhereNotNull(field) {
         return this._handleWhereNull(field, false, "or");
@@ -536,7 +536,7 @@ class Query extends DB {
      *  is a new Query instance, so that you can use its features to generate
      *  a SQL statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     whereExists(callback) {
         return this._handleExists(callback);
@@ -550,7 +550,7 @@ class Query extends DB {
      *  is a new Query instance, so that you can use its features to generate 
      *  a SQL statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     whereNotExists(callback) {
         return this._handleExists(callback, false);
@@ -564,7 +564,7 @@ class Query extends DB {
      *  is a new Query instance, so that you can use its features to generate
      *  a SQL statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     orWhereExists(callback) {
         return this._handleExists(callback, true, "or");
@@ -578,7 +578,7 @@ class Query extends DB {
      *  is a new Query instance, so that you can use its features to generate
      *  a SQL statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     orWhereNotExists(callback) {
         return this._handleExists(callback, false, "or");
@@ -596,13 +596,13 @@ class Query extends DB {
     /**
      * Sets an order by... clause for the SQL statement.
      * 
-     * @param  {String}  field  A field name in the table that currently binds
+     * @param  {string}  field  A field name in the table that currently binds
      *  to.
      * 
-     * @param  {String}  [sequence]  The way of how records are ordered, it 
+     * @param  {string}  [sequence]  The way of how records are ordered, it 
      *  could be either `asc` or `desc`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     orderBy(field, sequence = "") {
         var comma = this._orderBy ? ", " : "";
@@ -614,7 +614,7 @@ class Query extends DB {
     /**
      * Sets that records will be ordered in random sequence.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     random() {
         if (this._adapter.random instanceof Function) {
@@ -628,11 +628,11 @@ class Query extends DB {
     /**
      * Sets a group by... clause for the SQL statement.
      * 
-     * @param  {String[]}  fields  A list of all target fields, each one 
+     * @param  {string[]}  fields  A list of all target fields, each one 
      *  passed as an argument. Or just pass the first argument as an array 
      *  that carries all the field names.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     groupBy(...fields) {
         if (fields[0] instanceof Array)
@@ -645,9 +645,9 @@ class Query extends DB {
     /**
      * Sets a having... clause for the SQL statement.
      * 
-     * @param  {String}  raw  A SQL clause for defining comparing conditions.
+     * @param  {string}  raw  A SQL clause for defining comparing conditions.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     having(raw) {
         this._having += (this._having ? " and " : "") + raw;
@@ -657,12 +657,12 @@ class Query extends DB {
     /**
      * Sets a limit... clause for the SQL statement.
      * 
-     * @param  {Number}  length  The top limit of how many counts that this 
+     * @param  {number}  length  The top limit of how many counts that this 
      *  query will fetch.
      * 
-     * @param  {Number}  [offset]  The start point, count from `0`.
+     * @param  {number}  [offset]  The start point, count from `0`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     limit(length, offset = 0) {
         if (this._adapter.limit instanceof Function) {
@@ -676,7 +676,7 @@ class Query extends DB {
     /**
      * Sets a distinct condition to get unique results in a select statement.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     distinct() {
         this._distinct = "distinct";
@@ -686,13 +686,13 @@ class Query extends DB {
     /**
      * Unites two SQL statements into one.
      * 
-     * @param  {String|Query}  query Could be a SQL statement, or a Query 
+     * @param  {string|Query}  query Could be a SQL statement, or a Query 
      *  instance.
      * 
-     * @param  {Boolean}  [all]  Use `union all` to concatenate results, 
+     * @param  {boolean}  [all]  Use `union all` to concatenate results, 
      *  default is `false`.
      * 
-     * @return {Query} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     union(query, all = false) {
         if (query instanceof Query) {
@@ -707,10 +707,10 @@ class Query extends DB {
     /**
      * Inserts a new record into the database.
      * 
-     * @param  {Object}  data  An object that carries fields and their values,
+     * @param  {object}  data  An object that carries fields and their values,
      *  or pass all values in an array that fulfil all the fields.
      * 
-     * @return {Promise<Query>} Returns a Promise, and the the only argument 
+     * @return {Promise<this>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the current instance.
      */
     insert(data) {
@@ -744,9 +744,9 @@ class Query extends DB {
     /**
      * Updates an existing record.
      * 
-     * @param  {Object}  data An object that carries fields and their values.
+     * @param  {object}  data An object that carries fields and their values.
      * 
-     * @return {Promise<Query>} Returns a Promise, and the the only argument 
+     * @return {Promise<this>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the current instance.
      */
     update(data) {
@@ -762,14 +762,14 @@ class Query extends DB {
     /**
      * Increases a specified field with a specified number.
      * 
-     * @param  {String|Object}  field  The field name of which record needs to
+     * @param  {string|object}  field  The field name of which record needs to
      *  be increased. It is also possible to pass this argument an object to 
      *  increase multiple fields.
      * 
-     * @param  {Number}  [number]  A number that needs to be raised, default 
+     * @param  {number}  [number]  A number that needs to be raised, default 
      *  is `1`.
      * 
-     * @return {Promise<Query>} Returns a Promise, and the the only argument 
+     * @return {Promise<this>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the current instance.
      */
     increase(field, number = 1) {
@@ -779,14 +779,14 @@ class Query extends DB {
     /**
      * Decreases a specified field with a specified number.
      * 
-     * @param  {String|Object}  field  The field name of which record needs to
+     * @param  {string|object}  field  The field name of which record needs to
      *  be decreased. It is also possible to pass this argument an object to 
      *  decrease multiple fields.
      * 
-     * @param  {Number}  [number]  A number that needs to be reduced, default 
+     * @param  {number}  [number]  A number that needs to be reduced, default 
      * is `1`.
      * 
-     * @return {Promise<Query>} Returns a Promise, and the the only argument 
+     * @return {Promise<this>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the current instance.
      */
     decrease(field, number = 1) {
@@ -835,7 +835,7 @@ class Query extends DB {
     /**
      * Deletes an existing record.
      * 
-     * @return {Promise<Query>} Returns a Promise, and the the only argument 
+     * @return {Promise<this>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the current instance.
      */
     delete() {
@@ -885,9 +885,9 @@ class Query extends DB {
     /**
      * Gets all counts of records or a specified field.
      * 
-     * @param  {String}  [field]  Count a specified field.
+     * @param  {string}  [field]  Count a specified field.
      * 
-     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     * @return {Promise<number>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is a number that represents the 
      *  count of records.
      */
@@ -900,9 +900,9 @@ class Query extends DB {
     /**
      * Gets the maximum value of a specified field in the table.
      * 
-     * @param {String} field The specified field.
+     * @param {string} field The specified field.
      * 
-     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     * @return {Promise<number>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the maximum value fetched.
      */
     max(field) {
@@ -912,9 +912,9 @@ class Query extends DB {
     /**
      * Gets the minimum value of a specified field in the table.
      * 
-     * @param  {String}  field The specified field.
+     * @param  {string}  field The specified field.
      * 
-     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     * @return {Promise<number>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the minimum value fetched.
      */
     min(field) {
@@ -924,9 +924,9 @@ class Query extends DB {
     /**
      * Gets the average value of a specified field in the table.
      * 
-     * @param  {String}  field The specified field.
+     * @param  {string}  field The specified field.
      * 
-     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     * @return {Promise<number>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the average value fetched.
      */
     avg(field) {
@@ -936,9 +936,9 @@ class Query extends DB {
     /**
      * Gets the summarized value of a specified field in the table.
      * 
-     * @param  {String}  field The specified field.
+     * @param  {string}  field The specified field.
      * 
-     * @return {Promise<Number>} Returns a Promise, and the the only argument 
+     * @return {Promise<number>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the summarized value fetched.
      */
     sum(field) {
@@ -948,21 +948,18 @@ class Query extends DB {
     /**
      * Processes chunked data with a specified length.
      * 
-     * @param  {Number}  length  The top limit of how many records that each 
+     * @param  {number}  length  The top limit of how many records that each 
      *  chunk will carry.
      * 
-     * @param  {(data: Array)=>void|Boolean}  callback  A function for 
+     * @param  {(data: any[])=>void|boolean}  callback  A function for 
      *  processing every chunked data, the only argument passed to it is the 
      *  data that current chunk carries. If the callback returns `false`, stop
      *  chunking.
      * 
-     * @return {Promise<Array>} Returns a Promise, and the only argument 
+     * @return {Promise<any[]>} Returns a Promise, and the only argument 
      *  passed to the callback of `then()` is the last chunk of data.
      */
     chunk(length, callback) {
-        if (this._adapter.chunk instanceof Function) {
-            return this._adapter.chunk(this, length, callback);
-        }
         var offset = 0,
             loop = () => {
                 return this.limit(length, offset).all().then(data => {
@@ -982,9 +979,9 @@ class Query extends DB {
     /**
      * Gets paginated information of all records that suit given conditions.
      * 
-     * @param  {Number}  page The current page.
+     * @param  {number}  page The current page.
      * 
-     * @param  {Number}  [length]  The top limit of per page, default is `10`.
+     * @param  {number}  [length]  The top limit of per page, default is `10`.
      *  Also you can call `query.limit()` to specify a length before calling 
      *  this method.
      * 
@@ -998,15 +995,16 @@ class Query extends DB {
      *  * `data` An array that carries all fetched data.
      */
     paginate(page, length = 0) {
-        if (this._adapter.paginate instanceof Function) {
-            return this._adapter.paginate(this, page, length);
-        }
         if (!length)
             length = parseInt(this._limit) || 10;
-        var offset = (page - 1) * length;
-        var selects = this._selects;
+        var offset = (page - 1) * length,
+            query = new Query(this.table);
+
+        query._where = this._where;
+        query._join = this._join;
+        
         // Get all counts of records.
-        return this.count().then(total => {
+        return query.count().then(total => {
             if (!total) { // If there is no record, return immediately.
                 return {
                     page,
@@ -1016,8 +1014,14 @@ class Query extends DB {
                     data: [],
                 }
             } else { // If the are records, continue fetching data.
-                this._selects = selects;
                 return this.limit(length, offset).all().then(data => {
+                    if (data.length && data[0].rn === undefined) {
+                        let first = (page - 1) * length + 1;
+                        for (let record of data) {
+                            record.rn = first++;
+                        }
+                    }
+
                     return {
                         page,
                         pages: Math.ceil(total / length),
@@ -1049,7 +1053,7 @@ class Query extends DB {
     /**
      * Generates a select statement.
      * 
-     * @return {String} The select statement.
+     * @return {string} The select statement.
      */
     getSelectSQL() {
         if (this._adapter.getSelectSQL instanceof Function) {

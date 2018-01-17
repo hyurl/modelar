@@ -11,7 +11,7 @@ class Table extends DB {
     /**
      * Creates a new instance with a specified table name.
      * 
-     * @param  {String}  table The table name.
+     * @param  {string}  table The table name.
      */
     constructor(table) {
         super();
@@ -23,11 +23,11 @@ class Table extends DB {
     /**
      * Adds a new column to the table.
      * 
-     * @param  {String}  name  The name of the field.
+     * @param  {string}  name  The name of the field.
      * 
-     * @param  {String}  [type]  The type of the field.
+     * @param  {string}  [type]  The type of the field.
      * 
-     * @param  {Number|number[]}  [length]  The top limit of length that this field can
+     * @param  {number|number[]}  [length]  The top limit of length that this field can
      *  store, also it could be an array carries only two numbers that 
      *  represents a range between bottom and top.
      * 
@@ -65,7 +65,7 @@ class Table extends DB {
     /**
      * Sets the current field to be the primary key of the table.
      * 
-     * @return {Table} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     primary() {
         this._fields[this._index].primary = true;
@@ -75,11 +75,11 @@ class Table extends DB {
     /**
      * Sets the current field to be auto-increment.
      * 
-     * @param  {Number}  [start]  The initial value.
+     * @param  {number}  [start]  The initial value.
      * 
-     * @param  {Number}  [step]  The step length.
+     * @param  {number}  [step]  The step length.
      * 
-     * @return {Table} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     autoIncrement(start = 1, step = 1) {
         this._fields[this._index].autoIncrement = [start, step];
@@ -89,7 +89,7 @@ class Table extends DB {
     /**
      * Sets the current field's value to be unique.
      * 
-     * @return {Table} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     unique() {
         this._fields[this._index].unique = true;
@@ -99,9 +99,9 @@ class Table extends DB {
     /**
      * Sets a default value for the current field.
      * 
-     * @param  {String}  value  The default value.
+     * @param  {string}  value  The default value.
      * 
-     * @return {Table} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     default(value) {
         this._fields[this._index].default = value;
@@ -111,7 +111,7 @@ class Table extends DB {
     /**
      * Sets the current field cannot be null.
      * 
-     * @return {Table} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     notNull() {
         this._fields[this._index].notNull = true;
@@ -121,7 +121,7 @@ class Table extends DB {
     /**
      * Sets the current field to be unsigned.
      * 
-     * @return {Table} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     unsigned() {
         this._fields[this._index].unsigned = true;
@@ -131,9 +131,9 @@ class Table extends DB {
     /**
      * Adds a comment to the current field.
      * 
-     * @param  {String}  text  The comment text.
+     * @param  {string}  text  The comment text.
      * 
-     * @return {Table} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     comment(text) {
         this._fields[this._index].comment = text;
@@ -143,21 +143,21 @@ class Table extends DB {
     /**
      * Sets a foreign key constraint of the current field.
      * 
-     * @param  {String|Object}  table  A table where the the foreign key is 
+     * @param  {string|object}  table  A table where the the foreign key is 
      *  in, it is also possible to pass this argument an object that sets all 
      *  the information of the constraint.
      * 
-     * @param  {String}  field  A field in the foreign table that related to
+     * @param  {string}  field  A field in the foreign table that related to
      *  the current field.
      * 
-     * @param  {String}  [onDelete]  An action triggered when the record is
+     * @param  {string}  [onDelete]  An action triggered when the record is
      *  deleted. optional values are:
      *  - `no action`
      *  - `set null` (by default)
      *  - `cascade`
      *  - `restrict`
      * 
-     * @param  {String}  [onUpdate]  An action triggered when the record is 
+     * @param  {string}  [onUpdate]  An action triggered when the record is 
      *  updated (not supported by every database). optional values are:
      *  - `no action` (by default)
      *  - `set null`
@@ -181,7 +181,7 @@ class Table extends DB {
     /**
      * Gets the DDL statement by the definition.
      * 
-     * @return {String} Returns the DDL statement.
+     * @return {string} Returns the DDL statement.
      */
     getDDL() {
         return this._adapter.getDDL(this);
@@ -190,7 +190,7 @@ class Table extends DB {
     /**
      * Creates the table in the database.
      * 
-     * @return {Promise<Table>} Returns a Promise, and the the only argument 
+     * @return {Promise<this>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the current instance.
      */
     create() {
@@ -209,7 +209,7 @@ class Table extends DB {
     /**
      * Drops the table from the database.
      * 
-     * @return {Promise<Table>} Returns a Promise, and the the only argument
+     * @return {Promise<this>} Returns a Promise, and the the only argument
      *  passed to the callback of `then()` is the current instance.
      */
     drop() {
@@ -223,9 +223,9 @@ class Table extends DB {
     /**
      * Drops the table from the database.
      * 
-     * @param {String} table The table name you're going to drop.
+     * @param {string} table The table name you're going to drop.
      * 
-     * @return {Promise<Table>} Returns a Promise, and the the only argument
+     * @return {Promise<this>} Returns a Promise, and the the only argument
      *  passed to the callback of `then()` is a new table instance.
      */
     static drop(table) {

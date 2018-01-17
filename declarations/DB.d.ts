@@ -22,21 +22,31 @@ export declare class DB extends EventEmitter {
      */
     affectedRows: number;
     /** The last executed SQL command. */
+    command: string;
+    /** Deprecated, use `command` instead. */
     _command: string;
     /** The data fetched by executing a select statement. */
+    data: any[] | {
+        [field: string]: any;
+    };
+    /** Deprecated, use `data` instead. */
     _data: any[] | {
         [field: string]: any;
     };
     /** Data source name of the current instance. */
+    dsn: string;
+    /** Deprecated, use `dsn` instead. */
     _dsn: string;
     /** Database configurations of the current instance. */
+    config: DBConfig;
+    /** Deprecated, use `config` instead. */
     _config: DBConfig;
     private _events: object;
     private _eventsCount: number;
     protected _adapter: Adapter;
-    static _events: object;
-    static _config: DBConfig;
-    static _adapters: {
+    private static _events: object;
+    private static _config: DBConfig;
+    private static _adapters: {
         [type: string]: Adapter | any;
     };
     /** Creates a new DB instance with a specified database name. */
@@ -92,7 +102,7 @@ export declare class DB extends EventEmitter {
      *  automatically committed, otherwise it will be automatically rolled
      *  back.
      */
-    transaction(cb: (db: this) => void): Promise<this>;
+    transaction(cb: (db: this) => Promise<any>): Promise<this>;
     /** Commits the transaction when things going well. */
     commit(): Promise<this>;
     /** Rolls the transaction back when things going wrong. */

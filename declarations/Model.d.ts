@@ -29,6 +29,10 @@ export declare class Model extends Query {
     /** Primary key of the model's table. */
     protected _primary: string;
     /** The true data of the model. */
+    data: {
+        [field: string]: any;
+    };
+    /** Deprecated, use `data` instead. */
     _data: {
         [field: string]: any;
     };
@@ -39,6 +43,10 @@ export declare class Model extends Query {
      * `model._fields` will be stored in this property, and they won't be used
      * when inserting or updating the model.
      */
+    extra: {
+        [field: string]: any;
+    };
+    /** Deprecated, use `extra` instead. */
     _extra: {
         [field: string]: any;
     };
@@ -182,7 +190,7 @@ export declare class Model extends Query {
     };
     static use(db: DB): Model;
     static transaction(): Promise<Model>;
-    static transaction(cb: (db: DB) => void): Promise<Model>;
+    static transaction(cb: (model: Model) => Promise<any>): Promise<Model>;
     static select(fields: string[]): Model;
     static select(...fields: string[]): Model;
     static join(table: string, field1: string, field2: string): Model;
@@ -229,7 +237,7 @@ export declare class Model extends Query {
     static min(field: string): Promise<number>;
     static avg(field: string): Promise<number>;
     static sum(field: string): Promise<number>;
-    static chunk(length: number, cb: (data: any[]) => false | void): Promise<Model[]>;
+    static chunk(length: number, cb: (data: Model[]) => false | void): Promise<Model[]>;
     static paginate(page: number, length?: number): Promise<{
         page: number;
         limit: number;

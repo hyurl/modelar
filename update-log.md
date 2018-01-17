@@ -1,5 +1,14 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 2.1.2
+
+(2018-01-18 0:00 UTC+0800)
+
+1. Fix a bug in paginating.
+2. Deprecate some properties to prepare for the next version 3.0.
+3. When fetching paginated data, `rn` (row number) field for every record is 
+    always available.
+
 ## 2.1.1
 
 (2018-01-15 20:00 UTC+0800)

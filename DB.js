@@ -14,7 +14,7 @@ class DB extends EventEmitter {
     /**
      * Creates a new DB instance with specified configurations.
      * 
-     * @param  {Object}  [config]  An object that carries configurations for 
+     * @param  {string|object}  [config]  An object that carries configurations for 
      *  the current instance, or a string that sets only the database name.
      */
     constructor(config = {}) {
@@ -83,9 +83,9 @@ class DB extends EventEmitter {
     /**
      * Adds quote to a specified value.
      * 
-     * @param  {string}  value  A value that needs to be quoted.
+     * @param  {any}  value  A value that needs to be quoted.
      * 
-     * @return {string} The quoted values.
+     * @return {any} The quoted values.
      */
     quote(value) {
         if (typeof value != "string")
@@ -100,13 +100,13 @@ class DB extends EventEmitter {
     /**
      * Adds back-quote to a specified identifier.
      * 
-     * @param  {String|Number}  identifier  An identifier (a table name or 
+     * @param  {string}  identifier  An identifier (a table name or 
      *  field name) that needs to be quoted.
      * 
-     * @return {String|Number} The quoted identifier.
+     * @return {string} The quoted identifier.
      */
     backquote(identifier) {
-        if(typeof identifier !== "string")
+        if (typeof identifier !== "string")
             return identifier;
 
         var parts = identifier.split("."),
@@ -140,9 +140,9 @@ class DB extends EventEmitter {
     /**
      * Initiates the DB class for every instances.
      * 
-     * @param  {Object}  [config]  An object that carries configurations.
+     * @param  {object}  [config]  An object that carries configurations.
      * 
-     * @return {DB} Returns the class itself for function chaining.
+     * @return {typeof DB} Returns the class itself for function chaining.
      */
     static init(config = {}) {
         // This object carries basic database configurations for every 
@@ -180,12 +180,12 @@ class DB extends EventEmitter {
     /**
      * Binds a listener to an event for all DB instances.
      * 
-     * @param  {String|symbol}  event  The event name.
+     * @param  {string|symbol}  event  The event name.
      * 
      * @param  {(...args: any[])=>void}  listener  A function called when the 
      *  event fires.
      * 
-     * @return {DB} Returns the class itself for function chaining.
+     * @return {typeof DB} Returns the class itself for function chaining.
      */
     static on(event, listener) {
         if (this._events[event] instanceof Function) {
@@ -201,10 +201,10 @@ class DB extends EventEmitter {
     /**
      * Sets adapter for a specified database type.
      * 
-     * @param  {String}  type  Database type.
-     * @param  {Adapter}  adapter  The adapter instance.
+     * @param  {string}  type  Database type.
+     * @param  {typeof Adapter}  adapter  The adapter class.
      * 
-     * @return {DB} Returns the class itself for function chaining.
+     * @return {typeof DB} Returns the class itself for function chaining.
      */
     static setAdapter(type, adapter) {
         adapter = adapter instanceof Adapter ? adapter.constructor : adapter;
@@ -214,9 +214,9 @@ class DB extends EventEmitter {
 
     /** 
      * An alias of `db.emit()`.
-     * @param {String|symbol} event
-     * @param {Any[]} ...args
-     * @return {Boolean}
+     * @param {string|symbol} event
+     * @param {any[]} ...args
+     * @return {boolean}
      */
     trigger(event, ...args) {
         return this.emit(event, ...args);
@@ -225,10 +225,10 @@ class DB extends EventEmitter {
     /**
      * Acquires a connection to the database.
      * 
-     * @return {Promise<DB>} Returns a Promise, and the the only argument 
+     * @return {Promise<this>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the current instance.
      */
-    connect(){
+    connect() {
         return this._adapter.connect(this);
     }
 
@@ -242,7 +242,7 @@ class DB extends EventEmitter {
      * 
      * @param  {DB}  db  A DB instance that is already created.
      * 
-     * @return {DB} Returns the current instance for function chaining.
+     * @return {this} Returns the current instance for function chaining.
      */
     use(db) {
         this._config = db._config;
@@ -254,12 +254,12 @@ class DB extends EventEmitter {
     /**
      * Executes a SQL statement.
      * 
-     * @param  {String}  sql  The SQL statement.
+     * @param  {string}  sql  The SQL statement.
      * 
-     * @param  {String[]}  [bindings]  The data bound to the SQL statement, 
+     * @param  {any[]}  [bindings]  The data bound to the SQL statement, 
      *  pass each one as an argument, or just pass the first one an array.
      * 
-     * @return {Promise<DB>} Returns a Promise, and the the only argument 
+     * @return {Promise<this>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the current instance.
      */
     query(sql, ...bindings) {
@@ -268,8 +268,8 @@ class DB extends EventEmitter {
                 return this.query(sql, ...bindings);
             });
         }
-        
-        if(bindings[0] instanceof Array)
+
+        if (bindings[0] instanceof Array)
             bindings = bindings[0];
         this.sql = sql.trim();
         this.bindings = Object.assign([], bindings);
@@ -283,14 +283,14 @@ class DB extends EventEmitter {
     /**
      * Begins transaction.
      * 
-     * @param  {(db: DB)=>void}  [callback]  If a function is passed, the code 
+     * @param  {(db: DB)=>Promise<any>}  [callback]  If a function is passed, the code
      *  in it will be automatically handled, that means if the program goes 
      *  well, the transaction will be automatically committed, otherwise it 
      *  will be automatically rolled back. If no function is passed, it just 
      *  begin the transaction, that means you have to commit and roll back 
      *  manually.
      * 
-     * @return {Promise<DB>} Returns a Promise, and the the only argument 
+     * @return {Promise<this>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the current instance.
      */
     transaction(callback = null) {
@@ -300,7 +300,7 @@ class DB extends EventEmitter {
     /**
      * Commits the transaction when things going well.
      * 
-     * @return {Promise<DB>} Returns a Promise, and the the only argument 
+     * @return {Promise<this>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the current instance.
      */
     commit() {
@@ -310,7 +310,7 @@ class DB extends EventEmitter {
     /**
      * Rolls the transaction back when things going wrong.
      * 
-     * @return {Promise<DB>} Returns a Promise, and the the only argument 
+     * @return {Promise<this>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the current instance.
      */
     rollback() {
@@ -360,3 +360,42 @@ class DB extends EventEmitter {
 DB.init(); // Initiate configurations.
 
 module.exports = DB;
+
+// Prepare for Modelar 3.0.
+Object.defineProperties(DB.prototype, {
+    dsn: {
+        get() {
+            return this._dsn;
+        },
+        set(v) {
+            this._dsn = v;
+        }
+    },
+
+    command: {
+        get() {
+            return this._command;
+        },
+        set(v) {
+            this._command = v;
+        }
+    },
+
+    config: {
+        get() {
+            return this._config;
+        },
+        set(v) {
+            this._config = v;
+        }
+    },
+
+    data: {
+        get() {
+            return this._data;
+        },
+        set(v) {
+            this._data = v;
+        }
+    }
+});

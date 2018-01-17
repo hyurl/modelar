@@ -11,9 +11,9 @@ class User extends Model {
     /**
      *  Creates a new User instance with initial data and configurations.
      * 
-     * @param  {Object}  [data]  Initial data of the model.
+     * @param  {object}  [data]  Initial data of the model.
      * 
-     * @param  {Object}  [config]  Initial configuration of the model, they 
+     * @param  {object}  [config]  Initial configuration of the model, they 
      *  could be:
      *  * `table` The table name that the instance binds to.
      *  * `fields` Fields of the table in an array.
@@ -59,13 +59,13 @@ class User extends Model {
      * save user information in session or other storage materials, if you 
      * want it to, you have to do it yourself.
      * 
-     * @param  {Object}  args  This parameter can carry one or more 
+     * @param  {object}  args  This parameter can carry one or more 
      *  `loginable` fields and values, and a `password` field must be passed 
      *  at the same time. If no `loginable` fields are passed, a `user` must 
      *  be passed, which means trying to match all possibilities 
      *  automatically.
      * 
-     * @return {Promise<User>} Returns a Promise, and the the only argument 
+     * @return {Promise<this>} Returns a Promise, and the the only argument 
      *  passed to the callback of `then()` is the user instance logged in.
      */
     login(args) {
@@ -123,7 +123,7 @@ class User extends Model {
      * save user information in session or other storage materials, if you 
      * want it to, you have to do it yourself.
      * 
-     * @param  {Object}  args  This parameter can carry one or more 
+     * @param  {object}  args  This parameter can carry one or more 
      *  `loginable` fields and values, and a `password` field must be passed 
      *  at the same time. If no `loginable` fields are passed, a `user` must 
      *  be passed, which means trying to match all possibilities 
