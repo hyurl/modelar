@@ -1,26 +1,30 @@
 {
     "name": "modelar",
-    "version": "2.2.0",
+    "version": "3.0.0",
     "description": "An expressive ORM with query builder and supports multiple databases.",
-    "main": "index.js",
-    "types": "declarations/index.d.ts",
+    "main": "dist/index.js",
+    "types": "src/index.ts",
     "scripts": {
-        "test": "node test"
+        "test": "node dist/test"
     },
     "dependencies": {
-        "bcrypt-nodejs": "0.0.3",
-        "mysql": "^2.15.0",
-        "pg": "^7.4.1"
+        "bcrypt-nodejs": "^0.0.3",
+        "hide-protected-properties": "^0.1.0",
+        "modelar-mysql-adapter": "^3.0.2",
+        "modelar-postgres-adapter": "^3.0.2",
+        "source-map-support": "^0.5.4",
+        "tslib": "^1.9.0"
     },
     "keywords": [
         "model",
         "orm",
         "database",
-        "query builder",
-        "model associations",
-        "event listener",
-        "es2015",
-        "promise"
+        "mysql",
+        "postgresql",
+        "oracledb",
+        "mssql",
+        "db2",
+        "sqlite"
     ],
     "author": {
         "name": "Ayon Lee",

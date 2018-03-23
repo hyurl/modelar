@@ -2,9 +2,9 @@
 #### Table of Contents
 
 * [The DB Class](#The-DB-Class)
+    * [Events](#Events)
     * [db.constructor()](#db_constructor)
-    * [DB.init()](#DB_init)
-    * [DB.on()](#DB_on)
+    * [db.set()](#db_set)
     * [db.on()](#db_on)
     * [db.once()](#db_once)
     * [db.emit()](#db_emit)
@@ -18,8 +18,10 @@
     * [db.backquote()](#db_backquote)
     * [db.close()](#db_close)
     * [db.release()](#db_release)
+    * [DB.init()](#DB_init)
+    * [DB.setAdapter()](#DB_setAdapter)
+    * [DB.on()](#DB_on)
     * [DB.destroy()](#DB_destroy)
-    * [Pre-defined Events](#Pre-defined-Events)
     * [Wrap DB in Express](#Wrap-DB-in-Express)
 
 ## The DB Class
@@ -30,14 +32,39 @@ This class provides an internal pool for connections, when a connection has
 done its job, it could be recycled and retrieved, there for saving the 
 resources and speeding up the program.
 
+### Events
+
+- `query` Fired when [db.query()](#db_query) is called.
+
+All the listeners bound to this event accept a parameter, which is the current
+DB instance.
+
+You can either use [DB.on()](#DB_on) or [db.on()](#db_on) to bind event 
+listeners to events, but be aware of the difference they act.
+
 ### db.constructor()
 
-*Creates a new instance with specified configurations.*
+**signatures:**
 
-**parameters:**
+- `new DB(database: string)` Creates a new DB instance with a specified 
+    database name.
+- `new DB(config?: DBConfig)` Creates a new DB instance with specified 
+    configurations.
 
-- `[config]` An object that carries configurations for the current instance, 
-    or a string that sets only the database name.
+`DBConfig` includes:
+
+- `type?: string` Sets the database type (default: `sqlite`).
+- `database: string` Sets the database name that needs to open.
+- `host?: string` Sets the server name of the database.
+- `port?: number` Sets the server port.
+- `user?: string` Sets the username that used to log in.
+- `password?: string` Sets the password of the user.
+- `charset?: string` Sets the charset (default: `utf8`).
+- `timeout?: number` Sets both the connection timeout and query timeout 
+    (default: `5000` msec.).
+- `ssl?: { rejectUnauthorized?: Boolean, ca?: String, key?: String, cert?: String }`.
+- `max?: number` (Since 1.0.7) Sets the maximum count of connections in the 
+    database pool (default: `50`).
 
 ```javascript
 var db = new DB({
@@ -48,21 +75,6 @@ var db = new DB({
 // database name for configuration, like this:
 var db = new DB("./modelar.db"); //This is the same as above.
 ```
-
-All supported configurations are:
-
-- `type` Sets the database type (default: `sqlite`).
-- `database` Sets the database name that needs to open.
-- `host` Sets the server name of the database.
-- `port` Sets the server port.
-- `user` Sets the username that used to log in.
-- `password` Sets the password of the user.
-- `charset` Sets the charset (default: `utf8`).
-- `timeout` Sets both the connection timeout and query timeout(default: `5000`
-    msec.).
-- `ssl` SSL option supports: `{ rejectUnauthorized: Boolean, ca: String, key: String, cert: String }`.
-- `max` (Since 1.0.7) Sets the maximum count of connections in the database 
-    pool (default: `50`).
 
 When a instance is created, the connection to the database is not yet 
 established. The connection will be established when you call 
@@ -76,121 +88,33 @@ connection will be established, well, there will be not.
 Also, DB class saves connections by there specifications, so you don't need to
 worry that they will mess up in the connection pool.
 
-### DB.init()
+### db.set()
 
-*Initiates configurations for every DB instance.*
+*Sets database configurations for the current instance.*
 
-**parameters:**
+**signatures:**
 
-- `config` An object that carries configurations.
-
-**return:**
-
-Returns the class itself for function chaining.
+- `set(config: DBConfig): this`
+- `set(name: string, value: any): this`
 
 ```javascript
-const { DB } = require("modelar");
+var db = new DB;
 
-DB.init({
-    type: "mysql", // Support mysql, maria and postgres by default.
-    host: "localhost",
-    port: 3306,
-    user: "user",
-    password: "",
-    database: "modelar",
-});
-```
-
-The difference between the `db.constructor()` and `DB.init()` is that 
-`db.constructor()` only sets the configuration for one instance, while 
-`DB.init()` will initiate all instances.
-
-### DB.on()
-
-*Binds a listener to an event for all DB instances.*
-
-**parameters:**
-
-- `event` The event name.
-- `callback` A function called when the event fires.
-
-**return:**
-
-Returns the class itself for function chaining.
-
-```javascript
-const { DB } = require("modelar");
-
-DB.on("query", db => {
-    // Make a log when a SQL statement is run.
-    // `db.sql` is the SQL statement while `db.bindings` is an array of values
-    // bound to it.
-    console.log(db.sql, db.bindings);
+db.set("host", "localhost");
+db.set({
+    host: "localhost"
 });
 ```
 
 ### db.on()
 
-*Binds a listener to an event.*
-
-**parameters:**
-
-- `event` The event name.
-- `callback` A function called when the event fires.
-
-**returns:**
-
-Returns the current instance for function chaining.
-
 This method inherits from [EventEmitter](https://nodejs.org/dist/latest-v8.x/docs/api/events.html).
-
-```javascript
-const { DB } = require("modelar");
-
-var db = new DB();
-db.on("query", db=>{
-    // Print out the SQL statement and its bindings.
-    console.log(db.sql, db.bindings);
-});
-```
 
 ### db.once()
 
-*Binds a listener to an event that will only run once.*
-
-**parameters:**
-
-- `event` The event name.
-- `callback` A function called when the event fires.
-
-**returns:**
-
-Returns the current instance for function chaining.
-
 This method inherits from [EventEmitter](https://nodejs.org/dist/latest-v8.x/docs/api/events.html).
 
-```javascript
-const { DB } = require("modelar");
-
-var db = new DB();
-db.on("query", db=>{
-    // Print out the SQL statement and its bindings.
-    console.log(db.sql, db.bindings);
-});
-```
-
-### db.trigger()
-
-*Fires an event and triggers its listeners.*
-
-**parameters:**
-
-- `event` The event name.
-- `...args`  Arguments passed to event listeners.
-
-**return:**
-
-Returns `true` if the event had listeners, `false` otherwise.
+### db.emit()
 
 **alias:**
 
@@ -202,17 +126,16 @@ This method inherits from [EventEmitter](https://nodejs.org/dist/latest-v8.x/doc
 
 *Acquires a connection.*
 
-**return:**
+**signatures:**
 
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the current instance.
+- `connect(): Promise<this>`
 
 **alias:**
 
 - `db.acquire()`
 
 ```javascript
-const DB = require("modelar/DB");
+const { DB } = require("modelar");
 
 var db = new DB();
 db.connect().then(db=>{
@@ -230,13 +153,9 @@ automatically.
 
 *Uses a DB instance and share its connection to the database.*
 
-**parameters:**
+**signatures:**
 
-- `db` A DB instance that is already created.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `use(db: DB): this`
 
 ```javascript
 const { DB } = reuiqre("modelar");
@@ -262,15 +181,10 @@ speeding up the program.
 
 *Executes a SQL statement.*
 
-**parameters:**
+**signatures:**
 
-- `sql` The SQL statement.
-- `[...bindings]` The data bound to the SQL statement.
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the current instance.
+- `query(sql: string, bindings?: any[]): Promise<this>`
+- `query(sql: string, ...bindings: any[]): Promise<this>`
 
 This method is a common API to execute SQL statements in a compatible way for
 all database drivers that Modelar supports, so when you are calling this 
@@ -283,9 +197,9 @@ var db = new DB();
 
 //selects
 db.query("select * from users where id = ?", 1).then(db=>{
-    //db has a _data property that carries all the data that the sql 
+    //db has a `data` property that carries all the data that the sql 
     //fetches.
-    console.log(db._data); //Print out all the data.
+    console.log(db.data); //Print out all the data.
 }).catch(err=>{
     console.log(err);
 });
@@ -335,20 +249,14 @@ you want the `insertId` to be available.
 
 ### db.transaction()
 
-*Begins transaction and handle actions in it.*
+**signatures:**
 
-**parameters:**
-
-- `[callback]`  If a function is passed, the code in it will be automatically
-    handled, that means if the program goes well, the transaction will be 
-    automatically committed, otherwise it will be automatically rolled back. 
-    If no function is passed, it just start the transaction, that means you 
-    have to commit and roll back manually.
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the current instance.
+- `transaction(): Promise<this>` Begins transaction.
+- `transaction(cb: (db: this) => void): Promise<this>` Begins transaction and 
+    handle actions in a callback function.
+    - `cb` The actions in this function will be automatically handled, that 
+        means if the program goes well, the transaction will be automatically 
+        committed, otherwise it will be automatically rolled back.
 
 ```javascript
 var db = new DB();
@@ -382,33 +290,27 @@ db.transaction().then(db=>{
 
 ### db.commit()
 
-*Commits the transaction.*
+*Commits the transaction when things going well.*
 
-**return:**
+**signatures:**
 
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the current instance.
+- `commit(): Promise<this>`
 
 ### db.rollback()
 
-*Rollbacks the transaction.*
+*Rolls the transaction back when things going wrong.*
 
-**return:**
+**signatures:**
 
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the current instance.
+- `rollback(): Promise<this>`
 
 ### db.quote()
 
 *Adds quote marks to a specified value.*
 
-**parameters:**
+**signatures:**
 
-- `value` A value that needs to be quoted.
-
-**return:**
-
-The quoted value.
+- `quote(value: string): string`
 
 ```javascript
 const { DB } = require("modelar");
@@ -423,21 +325,16 @@ console.log(db.quote(value));
 
 *Adds back-quote marks to a specified identifier.*
 
-**parameters:**
+**signatures:**
 
-- `identifier` An identifier (a table name or a field name) that needs to be 
-    quoted.
-
-**return:**
-
-The quoted identifier.
+- `backquote(identifier: string): string`
 
 ```javascript
 const { DB } = require("modelar");
 
 var db = new DB();
 var name = "table_name";
-console.log(db.quote(name));
+console.log(db.backquote(name));
 // `table_name` in MySQL, "table_name" in PostgreSQL.
 ```
 
@@ -445,7 +342,9 @@ console.log(db.quote(name));
 
 *Closes the the connection.*
 
-This method returns void.
+**signatures:**
+
+- `close(): void`
 
 ```javascript
 var db = new DB();
@@ -462,18 +361,20 @@ db.query("select * from users where id is not null").then(db => {
 
 *Releases the connection.*
 
+**signatures:**
+
+- `release(): void`
+
 **alias:**
 
 - `db.recycle()`
-
-This method returns void.
 
 ```javascript
 const { DB } = require("modelar");
 
 var db = new DB();
 db.query("select * from `users` where `id` = ?", [1]).then(db=>{
-    console.log(db._data);
+    console.log(db.data);
     // Recycle the connection, it will be put in the internal connection pool.
     // Remember, when a connetion is closed or recycled, this instance cannot 
     // run SQL statements any more.
@@ -488,24 +389,81 @@ db.query("select * from `users` where `id` = ?", [1]).then(db=>{
 });
 ```
 
+### DB.init()
+
+*Initiates database configurations for all instances.*
+
+**signatures:**
+
+- `init(config: DBConfig): typeof DB`
+
+```javascript
+const { DB } = require("modelar");
+
+DB.init({
+    type: "mysql", // Support mysql, maria and postgres by default.
+    host: "localhost",
+    port: 3306,
+    user: "user",
+    password: "",
+    database: "modelar",
+});
+```
+
+The difference between the `db.constructor()`,  `db.set()` and `DB.init()` is 
+that the former two only sets the configuration for one instance, while 
+`DB.init()` will initiate all instances.
+
+Since 3.0, static methods like [DB.init()](#DB_init), 
+[DB.setAdapter()](#DB_setAdapter), [DB.on()](#DB_on) and 
+[DB.destroy()](#DB_destroy) only affect the instances of the current class or 
+subclasses, that means if you called `Model.init()`, only models will be 
+initiated, while `DB` and `Query` instances will not.
+
+### DB.setAdapter()
+
+*Sets adapter for a specified database type.*
+
+**signatures:**
+
+- `setAdapter(type: string, adapter: Adapter): typeof DB`
+
+```javascript
+const MssqlAdapter = require("modelar-mssql-adapter");
+
+DB.setAdapter("mssql", MssqlAdapter);
+```
+
+### DB.on()
+
+*Binds a listener to an event for all instances.*
+
+**signatures:**
+
+- `on(event: string | symbol, listener: (...args: any[]) => void): typeof DB`
+
+```javascript
+const { DB } = require("modelar");
+
+DB.on("query", db => {
+    // Make a log when a SQL statement is run.
+    // `db.sql` is the SQL statement while `db.bindings` is an array of values
+    // bound to it.
+    console.log(db.sql, db.bindings);
+});
+```
+
 ### DB.destroy()
 
 *Closes all connections in all pools.*
 
+**signatures:**
+
+- `close(): void`
+
 **alias:**
 
 - `DB.close()`
-
-This method returns void.
-
-### Pre-defined Events
-
-At DB level, there is only one event `query`, every time calling 
-[db.query()](#db_query) to run a SQL statement, this event will be fired and 
-all the handlers bound to it will be triggered.
-
-You can either use [DB.on()](#DB_on) or [db.on()](#db_on) to bind event 
-listeners to this event, but be aware of the difference they act.
 
 ### Wrap DB in Express
 

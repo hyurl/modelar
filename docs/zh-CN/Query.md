@@ -2,9 +2,10 @@
 #### 内容列表
 
 * [The Query Class](#The-Query-Class)
+    * [事件](#事件)
     * [query.constructor()](#query_constructor)
     * [query.select()](#query_select)
-    * [query.table()](#query_table)
+    * [query.from()](#query_table)
     * [query.where()](#query_where)
     * [query.orWhere()](#query_orWhere)
     * [query.whereBetween()](#query_whereBetween)
@@ -50,7 +51,6 @@
     * [query.chunk()](#query_chunk)
     * [query.paginate()](#query_paginate)
     * [query.getSelectSQL()](#query_getSelectSQL)
-    * [预定义事件](#预定义事件)
 
 ## Query 类
 
@@ -59,13 +59,26 @@
 这个类提供了一大堆的方法，用来提供以面向对象的特性来产生 SQL 语句，并使用更简单和高效
 的方式来操作数据。
 
+
+### 事件
+
+- `insert` 将会在一条新记录即将被插入数据库时触发。
+- `inserted` 将会在一条新记录被成功插入数据库后触发。
+- `update` 将会在一条记录即将被更新时触发。
+- `updated` 将会在一条记录被成功更新后触发。
+- `delete` 将会在一条记录即将被删除时触发。
+- `deleted` 将会在一条记录被成功删除时触发。
+- `get` 将会在一条记录被从数据库中成功取回时触发。
+
+所有绑定到这些事件上的监听器函数都支持一个参数，即当前的 Query 实例。
+
 ### query.constructor()
 
-*创建一个新实例，并绑定一个特定的数据表名。*
+*创建一个新实例，并指定一个数据表名。*
 
-**参数：**
+**签名：**
 
-- `[table]` 绑定到实例上的数据表名。
+- `new Query(table?: string)`
 
 ```javascript
 const { Query } = require("modelar");
@@ -78,34 +91,25 @@ var query = new Query("users");
 
 *设置需要获取数据的字段。*
 
-**参数：**
+**签名：**
 
-- `fields` 一个包含所有字段的列表，每一个字段作为一个参数传入，或者只传入第一个参数
-    为一个包含多个字段的数组。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `select(...fields: string[]): this`
+- `select(fields: string[]): this`
 
 ```javascript
 var query = new Query("users");
 
 query.select("id", "name", "email");
-// 或者传入一个数组作为第一个参数。
 query.select(["id", "name", "email"]);
 ```
 
-### query.table()
+### query.from()
 
 *设置当前实例绑定的数据表名称。*
 
-**参数：**
+**签名：**
 
-- `table` 数据表名。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `from(table: string): this`
 
 **别名：**
 
@@ -123,23 +127,16 @@ query.select("id", "name", "email").from("users");
 
 ### query.where()
 
-*为 SQL 语句设置一个 where 子句。*
+*为 SQL 语句设置一个 `where...` 子句。*
 
-**参数：**
+**签名：**
 
-- `field` 这可以是一个字段名，或者使用一个对象来同时设置多个 `=`（相等）条件。或者
-    传递一个回调函数来产生嵌套的条件子句，唯一一个传递到回调函数中的参数是一个新的
-    Query 对象。
-- `[operator]` 条件运算符，如果 `value` 没有被传入，那么这个参数将替换它，而运算符
-    将变成一个 `=`。另外也可以将这个参数传递为一个回调函数来产生一个 SQL 子查询语句，
-    唯一一个传递到回调函数中的参数是一个新的 Query 实例，从而可以用它的特性来产生 
-    SQL 语句。
-- `[value]` 一个用来与 `field` 进行比较的值，如果这个参数没有传递，那么将用 
-    `operator` 替换它，而运算符将变成一个 `=`。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `where(field: string, value: string | number | boolean | Date): this`
+- `where(field: string, operator: string, value: string | number | boolean | Date): this`
+- `where(fields: { [field: string]: string | number | boolean | Date }): this`
+- `where(nested: (query: Query) => void): this`
+- `where(field: string, nested: (query: Query) => void): this`
+- `where(field: string, operator: string, nested: (query: Query) => void): this`
 
 ```javascript
 var query = new Query("users");
@@ -171,22 +168,17 @@ query.where("id", _query=>{
 
 ### query.orWhere()
 
-*为 SQL 语句设置一个 where...or... 子句。*
+*为 SQL 语句设置一个 `where...or...` 子句。*
 
 这个方法和 [query.where()](#query_where) 是相似的，请查看上面的文档。
 
 ### query.whereBetween()
 
-*为 SQL 语句设置一个 where...between... 子句。*
+*为 SQL 语句设置一个 `where...between...` 子句。*
 
-**参数：**
+**签名：**
 
-- `field` 一个当前实例所绑定的数据表中的字段名。
-- `range` 一个携带者两个元素的的数组，用来表示开始和结束的区间。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `whereBetween(field: string, [min, max]: [number, number]): this`
 
 ```javascript
 var query = new Query("users");
@@ -196,39 +188,33 @@ query.whereBetween("id", [1, 10]); // where `id` between 1 and 10;
 
 ### query.orWhereBetween()
 
-*为 SQL 语句设置一个 where...or...between... 子句。*
+*为 SQL 语句设置一个 `where...or...between...` 子句。*
 
 这个方法和 [query.whereBetween()](#query_whereBetween) 是相似的，请查看上面的
 文档。
 
 ### query.whereNotBetween()
 
-*为 SQL 语句设置一个 where...not between... 子句。*
+*为 SQL 语句设置一个 `where...not between...` 子句。*
 
 这个方法和 [query.whereBetween()](#query_whereBetween) 是相似的，请查看上面的
 文档。
 
 ### query.orWhereNotBetween()
 
-*为 SQL 语句设置一个 where...or...not between... 子句。*
+*为 SQL 语句设置一个 `where...or...not between...` 子句。*
 
 这个方法和 [query.whereBetween()](#query_whereBetween) 是相似的，请查看上面的
 文档。
 
 ### query.whereIn()
 
-*为 SQL 语句设置一个 where...in... 子句。*
+*为 SQL 语句设置一个 `where...in...` 子句。*
 
-**参数：**
+**签名：**
 
-- `field` 一个当前实例所绑定的数据表中的字段名。
-- `values` 一个包含所有可能值的数组。或者传递一个回调函数以便用来产生 SQL 子查询
-    语句，唯一一个传递到回调函数中的参数是一个新的 Query 实例，从而你可以使用它的
-    特性来产生 SQL 语句。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `whereIn(field: string, values: string[] | number[]): this`
+- `whereIn(field: string, nested: (query: Query) => void): this`
 
 ```javascript
 var query = new Query("users");
@@ -245,34 +231,30 @@ query.whereIn("id", _query => {
 
 ### query.orWhereIn()
 
-*为 SQL 语句设置一个 where...or...in... 子句。*
+*为 SQL 语句设置一个 `where...or...in...` 子句。*
 
 这个方法和 [query.whereIn()](#query_whereIn) 是相似的，请查看上面的文档。
 
 
 ### query.whereNotIn()
 
-*为 SQL 语句设置一个 where...not in... 子句。*
+*为 SQL 语句设置一个 `where...not in...` 子句。*
 
 这个方法和 [query.whereIn()](#query_whereIn) 是相似的，请查看上面的文档。
 
 ### query.orWhereNotIn()
 
-*为 SQL 语句设置一个 where...or...not in... 子句。*
+*为 SQL 语句设置一个 `where...or...not in...` 子句。*
 
 这个方法和 [query.whereIn()](#query_whereIn) 是相似的，请查看上面的文档。
 
 ### query.whereNull()
 
-*为 SQL 语句设置一个 where...is null 子句。*
+*为 SQL 语句设置一个 `where...is null` 子句。*
 
-**参数：**
+**签名：**
 
-- `field` 一个当前实例所绑定的数据表中的字段名。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `whereNull(field: string): this`
 
 ```javascript
 var query = new Query("users");
@@ -282,20 +264,20 @@ query.whereNull("email"); // where `email` is null;
 
 ### query.orWhereNull()
 
-*为 SQL 语句设置一个 where...or...is null 子句。*
+*为 SQL 语句设置一个 `where...or...is null` 子句。*
 
 这个方法和 [query.whereNull()](#query_whereNull) 是相似的，请查看上面的文档。
 
 
 ### query.whereNotNull()
 
-*为 SQL 语句设置一个 where...is not null 子句。*
+*为 SQL 语句设置一个 `where...is not null` 子句。*
 
 这个方法和 [query.whereNull()](#query_whereNull) 是相似的，请查看上面的文档。
 
 ### query.orWhereNotNull()
 
-*为 SQL 语句设置一个 where...or...is not null 子句。*
+*为 SQL 语句设置一个 `where...or...is not null` 子句。*
 
 这个方法和 [query.whereNull()](#query_whereNull) 是相似的，请查看上面的文档。
 
@@ -303,14 +285,9 @@ query.whereNull("email"); // where `email` is null;
 
 *为 SQL 语句设置一个 where exists... 子句。*
 
-**参数：**
+**签名：**
 
-- `callback` 传递一个回调函数用来产生 SQL 子查询语句，唯一一个传递到回调函数中的
-    参数是一个新的 Query 实例，从而你可以使用它的特性来产生 SQL 语句。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `whereExists(nested: (query: Query) => void): this`
 
 ```javascript
 var query = new Query("users");
@@ -323,86 +300,73 @@ query.whereExists(_query=>{
 
 ### query.orWhereExists()
 
-*为 SQL 语句设置一个 where...or exists... 子句。*
+*为 SQL 语句设置一个 `where...or exists...` 子句。*
 
 这个方法和 [query.whereExists()](#query_whereExists) 是相似的，请查看上面的文档。
 
 
 ### query.whereNotExists()
 
-*为 SQL 语句设置一个 where not exists... 子句。*
+*为 SQL 语句设置一个 `where not exists...` 子句。*
 
 这个方法和 [query.whereExists()](#query_whereExists) 是相似的，请查看上面的文档。
 
 ### query.orWhereNotExists()
 
-*为 SQL 语句设置一个 where...or not exists... 子句。*
+*为 SQL 语句设置一个 `where...or not exists...` 子句。*
 
 这个方法和 [query.whereExists()](#query_whereExists) 是相似的，请查看上面的文档。
 
 
 ### query.join()
 
-*为 SQL 语句设置一个 inner join... 子句。*
+*为 SQL 语句设置一个 `inner join...` 子句。*
 
-**参数：**
+**签名：**
 
-- `table` 一个需要被联结的数据表名。
-- `field1` 一个当前实例所绑定的数据表中的字段名。
-- `operator` 条件运算符，如果 `field2` 没有被传入，那么这个参数将会替换掉它，而运算
-    符将变成一个 `=`。
-- `[field2]` 一个在 `table` 中的字段，用于和 `field1` 进行比较。如果这个参数没有被
-    传入，那么 `operator` 将替换它，而运算符则将变成一个 `=`。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `join(table: string, field1: string, field2: string): this`
+- `join(table: string, field1: string, operator: string, field2: string): this`
 
 ```javascript
 var query = new Query("users");
 
 query.join("roles", "user.id", "=", "role.user_id");
-// 或者传入一个对象：
+
 query.join("roles", {"user.id": "role.user_id"});
 // select * from `users` inner join `roles` on `user`.`id` = `role`.`user_id`;
 ```
 
 ### query.leftJoin()
 
-*为 SQL 语句设置一个 left join... 子句。*
+*为 SQL 语句设置一个 `left join...` 子句。*
 
 这个方法和 [query.join()](#query_join) 是相似的，请查看上面的文档。
 
 ### query.rightJoin()
 
-*为 SQL 语句设置一个 right join... 子句。*
+*为 SQL 语句设置一个 `right join...` 子句。*
 
 这个方法和 [query.join()](#query_join) 是相似的，请查看上面的文档。
 
 ### query.fullJoin()
 
-*为 SQL 语句设置一个 full join... 子句。*
+*为 SQL 语句设置一个 `full join...` 子句。*
 
 这个方法和 [query.join()](#query_join) 是相似的，请查看上面的文档。
 
 ### query.crossJoin()
 
-*为 SQL 语句设置一个 cross join... 子句。*
+*为 SQL 语句设置一个 `cross join...` 子句。*
 
 这个方法和 [query.join()](#query_join) 是相似的，请查看上面的文档。
 
 ### query.orderBy()
 
-*为 SQL 语句设置一个 order by... 子句。*
+*为 SQL 语句设置一个 `order by...` 子句。*
 
-**参数：**
+**签名：**
 
-- `field` 一个当前实例所绑定的数据表中的字段名。
-- `[sequence]` 数据库记录组织的方式，可以是 `asc` 或 `desc`。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `orderBy(field: string, sequence?: "asc" | "desc"): this`
 
 ```javascript
 var query = new Query("users");
@@ -417,30 +381,26 @@ query.orderBy("name"); //sequence is optional.
 
 *设置数据库记录以随机的方式排序。*
 
-**返回值：**
+**签名：**
 
-放回当前实例以便实现方法的链式调用。
+- `random(): this`
 
 ```javascript
 var query = new Query("users");
 
 query.random();
 // MySQL 中: order by rand();
-// PostgreSQL 和 SQLite 中: order by random();
+// PostgreSQL 中: order by random();
 ```
 
 ### query.groupBy()
 
-*为 SQL 语句设置一个 by... clause 子句。*
+*为 SQL 语句设置一个 `group by...` 子句。*
 
-**参数：**
+**签名：**
 
-- `field` 一个由目标字段组成的列表，每一个字段传递为一个参数，或者传递第一个参数为
-    一个数组，并包含所有的字段名称。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `groupBy(...fields: string[]): this`
+- `groupBy(fields: string[]): this`
 
 ```javascript
 var query = new Query("users");
@@ -452,15 +412,11 @@ query.groupBy(["name", "email"]); // 传递一个数组。
 
 ### query.having()
 
-*为 SQL 语句设置一个 having... 子句。*
+*为 SQL 语句设置一个 `having...` 子句。*
 
-**参数：**
+**签名：**
 
-- `raw` 一个用来设置比较条件的 SQL 子句。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `having(raw: string): this`
 
 ```javascript
 var query = new Query("users");
@@ -477,14 +433,9 @@ query.select("name", "sum(money)")
 
 *为 SQL 语句设置一个 limit... 子句。*
 
-**参数：**
+**签名：**
 
-- `length` 当前查询将会取到的记录数量的上限。
-- `[offset]` 设置起点偏移值，从 `0` 开始计算。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `limit(length: number, offset?: number): this`
 
 ```javascript
 var query = new Query("users");
@@ -494,13 +445,14 @@ query.limit(10); // select * from `users` limit 10;
 query.limit(10, 5); // select * from `users` limit 5, 10;
 ```
 
+虽然一些数据库如 `mssql`、`oracledb`、`db2` 不支持 `limit` 字句，你依然可以使用
+这个方法，适配器会将其转换为合适的查询语句。
+
 ### query.distinct()
 
-*在一个 Select 语句中设置一个唯一性条件来插叙不重复的记录。*
+**签名：**
 
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `distinct(): this`
 
 ```javascript
 var query = new Query("users");
@@ -512,14 +464,10 @@ query.select("name").distinct(); // select distinct `name` from `users`;
 
 *合并两个 SQL 语句为一个。*
 
-**参数：**
+**签名：**
 
-- `query` 可以是一个 SQL 语句，或者是一个 Query 实例。
-- `[all]` 使用 `union all` 来合并结构，默认是 `false`。
-
-**返回值：**
-
-放回当前实例以便实现方法的链式调用。
+- `union(query: string | Query, all?: boolean): this`
+    - `all` Use `union all` to concatenate results.
 
 ```javascript
 var query = new Query("users");
@@ -538,13 +486,9 @@ query.union(query2, true);
 
 *插入一个新纪录到数据库中。*
 
-**参数：**
+**签名：**
 
-- `data` 一个包含字段和值的键值对，或者传递一个携带者满足所有字段的值的数组。
-
-**返回值：**
-
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `insert(data: { [field: string]: any }): Promise<this>`
 
 ```javascript
 var query = new Query("users");
@@ -575,13 +519,9 @@ query.insert([
 
 *更新一个已存在的记录。*
 
-**参数：**
+**签名：**
 
-- `data` 一个携带着键值对的对象。
-
-**返回值：**
-
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `update(data: { [field: string]: any }): Promise<this>`
 
 ```javascript
 var query = new Query("users");
@@ -598,18 +538,12 @@ query.where("id", 1).update({
 
 ### query.increase()
 
-<small>(自 1.0.5 版本起)</small>
 *使用特定的数值来增长一个字段的值。*
 
-**参数：**
+**签名：**
 
-- `field` 设置需要增长值的记录所在的字段，也可以传递这个参数为一个对象来同时增长多个
-    字段的值。
-- `[number]` 需要增长的数值，默认是 `1`。
-
-**返回值：**
-
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `increase(field: string, step?: number): Promise<this>`
+- `increase(fields: { [field: string]: number }): Promise<this>`
 
 ```javascript
 var query = new Query("users");
@@ -625,18 +559,12 @@ query.increase({score: 10, coin: 1}).then(query=>{
 
 ### query.decrease()
 
-<small>(自 1.0.5 版本起)</small>
 *使用特定的数值来减小一个字段的值。*
 
-**参数：**
+**签名：**
 
-- `field` 设置需要减小值的记录所在的字段，也可以传递这个参数为一个对象来同时减小多个
-    字段的值。
-- `[number]` 需要增长的数值，默认是 `1`。
-
-**返回值：**
-
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `decrease(field: string, step?: number): Promise<this>`
+- `decrease(fields: { [field: string]: number }): Promise<this>`
 
 ```javascript
 var query = new Query("users");
@@ -654,9 +582,9 @@ query.decrease({score: 10, coin: 1}).then(query=>{
 
 *删除一个已存在的记录。*
 
-**返回值：**
+**签名：**
 
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `delete(): Promise<this>`
 
 ```javascript
 var query = new Query("users");
@@ -672,9 +600,9 @@ query.where("id", 1).delete().then(query=>{
 
 *从数据库中获取一条记录。*
 
-**返回值：**
+**签名：**
 
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `get(): Promise<{ [field: string]: any }>`
 
 ```javascript
 var query = new Query("users");
@@ -690,9 +618,9 @@ query.where("id", 1).get().then(data=>{
 
 *从数据库中获取所有记录。*
 
-**返回值：**
+**签名：**
 
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `all(): Promise<any[]>`
 
 ```javascript
 var query = new Query("users");
@@ -708,13 +636,9 @@ query.all().then(data=>{
 
 *获取所有记录的数量或者特定字段的值的数量。*
 
-**参数：**
+**签名：**
 
-- `[field]` 计算一个特定的字段。
-
-**返回值：**
-
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `count(field?: string): Promise<number>`
 
 ```javascript
 var query = new Query("users");
@@ -738,13 +662,9 @@ query.count("name").then(count=>{
 
 *获取数据表中一个特定字段的值的最大值。*
 
-**参数：**
+**签名：**
 
-- `field` 特定的字段。
-
-**返回值：**
-
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `max(field: string): Promise<number>`
 
 ```javascript
 var query = new Query("users");
@@ -761,13 +681,9 @@ query.max("id").then(max=>{
 
 *获取数据表中一个特定字段的值的最小值。*
 
-**参数：**
+**签名：**
 
-- `field` 特定的字段。
-
-**返回值：**
-
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `min(field: string): Promise<number>`
 
 ```javascript
 var query = new Query("users");
@@ -784,13 +700,9 @@ query.max("id").then(min=>{
 
 *获取数据表中一个特定字段的平均值。*
 
-**参数：**
+**签名：**
 
-- `field` 特定的字段。
-
-**返回值：**
-
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `avg(field: string): Promise<number>`
 
 ```javascript
 var query = new Query("users");
@@ -807,13 +719,9 @@ query.avg("id").then(num=>{
 
 *获取数据表中一个特定字段的值的总和。*
 
-**参数：**
+**签名：**
 
-- `field` 特定的字段。
-
-**返回值：**
-
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `sum(field: string): Promise<number>`
 
 ```javascript
 var query = new Query("users");
@@ -830,15 +738,9 @@ query.sum("id").then(num=>{
 
 *使用一个特定的长度来处理分段的数据。*
 
-**参数：**
+**签名：**
 
-- `langth` 设置每一个片段将会携带的记录数量的上限。
-- `callback` 一个用来处理所有分段数据的函数，唯一一个传递到函数中的参数是当前片段所
-    携带的记录。如果这个函数返回一个 `false`，那么分段处理将终止。
-
-**返回值：**
-
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是当前实例。
+- `chunk(length: number, cb: (data: any[]) => false | void): Promise<any[]>`
 
 这个方法会遍历所有符合 SQL 查询语句的记录，如果你想要手动停止它，只需要在回调函数中
 返回 `false` 即可。
@@ -860,22 +762,19 @@ query.chunk(10, data=>{
 
 *获取所有符合给出条件的数据库记录的分页信息。*
 
-**参数：**
+**签名：**
 
-- `[page]` 设置当前页，默认是 `1`。
-- `[length]` 每一页获取数量的上限，默认是 `10`。当然你也可以在调用该函数之前调用
-    `query.limit()` 来设置一个特定的长度。
+- `paginate(page: number, length?: number): Promise<PaginatedRecords>`
+    - `length` 每一页获取数量的上限，默认是 `10`。当然你也可以在调用该函数之前调用
+        `query.limit()` 来设置一个特定的长度。
 
-**返回值：**
+`PaginatedRecords` 接口包含：
 
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是一个对象，并包含这些
-信息：
-
-* `page` 当前页；
-* `limit` 每一页获取数量的上限；
-* `pages` 所有的页码数量。
-* `total` 所有的记录数量。
-* `data` 一个携带所有数据的数组。
+- `page: number` 当前页；
+- `limit: number` 每一页获取数量的上限；
+- `pages: number` 所有的页码数量。
+- `total: number` 所有的记录数量。
+- `data: any[]` 一个携带所有数据的数组。
 
 ```javascript
 var query = Query("users");
@@ -904,9 +803,9 @@ query.limit(15).paginate(1).then(info=>{
 
 *产生一个 Select 查询语句。*
 
-**返回值：**
+**签名：**
 
-返回查询语句。
+- `getSelectSQL(): string`
 
 ```javascript
 var query = new Query("users");
@@ -914,16 +813,3 @@ var sql = query.select("*").where("id", 1).getSelectSQL();
 console.log(sql);
 // select * `users` where `id` = 1
 ```
-
-### 预定义事件
-
-在 Query 层面上，有这一些事件你可以设置事件处理器到它们上面：
-
-- `query` 这个事件将会在一条 SQL 语句即将被执行时时触发。
-- `insert` 这个事件将会在一条新记录即将被插入数据库时触发。
-- `inserted` 这个事件将会在一条新记录被成功插入数据库后触发。
-- `update` 这个事件将会在一条记录即将被更新时触发。
-- `updated` 这个事件将会在一条记录被成功更新后触发。
-- `delete` 这个事件将会在一条记录即将被删除时触发。
-- `deleted` 这个事件将会在一条记录被成功删除时触发。
-- `get` 这个事件将会在一条记录被从数据库中成功取回时触发。

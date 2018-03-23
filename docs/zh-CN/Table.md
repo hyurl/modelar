@@ -14,6 +14,7 @@
     * [table.foreignKey()](#table_foreignKey)
     * [table.save()](#table_save)
     * [table.getDDL()](#table_getDDL)
+    * [table.drop()](#table_drop)
     * [Table.drop()](#Table_drop)
 
 ## Table 类
@@ -27,27 +28,72 @@
 
 *使用一个特定的表名来创建数据表实例。*
 
-**parameters:**
+**签名：**
 
-- `table` The table name.
+- `new Table(name: string, schema?: { [field: string]: FieldConfig; })`
+- `new Table(model: Model)`
 
 ```javascript
 const { Table } = require("modelar");
 
-// 使用一个给定的表名创建实例
 var table = new Table("users");
+
+// 携带 schema:
+var table = new Table("users", {
+    id: {
+        name: "id",
+        type: "int",
+        length: 10
+        // ...
+    }
+    // ...
+});
+```
+如果你正在使用 TypeScript 编程，并且使用装饰器来定义模型类，那么你可以将一个模型实例
+传递给构造器。
+
+```typescript
+import { Table, User } from "modelar"; // User 类是使用 TypeScript 编写的。
+
+var table = new Table(new User);
+// 或者
+var table = new Table("users", User.prototype.schema);
+// 使用装饰器定义的字段保存在 `Model.prototype.shcema` 中。
 ```
 
 ## table.addColumn()
 
 *向表中添加一个新列。*
 
-**参数：**
+**签名：**
 
-- `name` 字段名。
-- `[type]` 字段类型，如果这是一个主键字段，那么这个参数是可以忽略的。
-- `[length]` 这个字段可以存储的数据长度的上限，同时你也可以设置为一个数组，并包含
-    两个元素，分别设置最短和最长限制。
+- `addColumn(name: string): this`
+- `addColumn(name: string, type: string): this`
+- `addColumn(name: string, type: string, length: number | [number, number]): this`
+- `addColumn(field: FieldConfig): this`
+
+`FieldConfig` 包含：
+
+- `name: string`
+- `type?: string`
+- `length?: number | [number, number]`
+- `primary?: boolean`
+- `autoIncrement?: boolean | [number, number]`
+- `unique?: boolean`
+- `default?: any`
+- `unsigned?: boolean`
+- `comment?: string`
+- `notNull?: boolean`
+- `foreignKey?: ForeignKeyConfig`
+
+`ForeignKeyConfig` 包含：
+
+- `table: string` 外键所指向的表。
+- `field: string`
+- `onDelete?: "no action" | "set null" | "cascade" | "restrict"` 当记录被删除时
+    执行的操作，默认为 `set null`.
+- `onUpdate?: "no action" | "set null" | "cascade" | "restrict"` 当记录被更新时
+    执行的操作，默认为 `no action`.
 
 **返回值：**
 
@@ -78,9 +124,9 @@ table.save();
 
 *设置当前字段为表的主键字段。*
 
-**返回值：**
+**签名：**
 
-返回当前对象以便实现方法的链式调用。
+- `primary(): this`
 
 ```javascript
 var table = new Table("users");
@@ -93,14 +139,12 @@ table.addColum("id").primary();
 
 *设置当前字段为自增字段。*
 
-**参数：**
+**签名：**
 
-- `[start]` 起始值，默认为 `1`。
-- `[step]` 自动增量的步长，默认为 `1`。（并非所有数据库都支持设置步长。）
+- `autoIncrement(): this`
+- `autoIncrement(start: number, step?: number): this`
 
-**返回值：**
-
-返回当前对象以便实现方法的链式调用。
+**注意: 并非所有的数据库都支持 `step`。**
 
 ```javascript
 var table = new Table("users");
@@ -112,9 +156,9 @@ table.addColumn("id").primary().autoIncrement();
 
 *设置当前字段的值是唯一的。*
 
-**返回值：**
+**签名：**
 
-返回当前对象以便实现方法的链式调用。
+- `unique(): this`
 
 ```javascript
 var table = new Table("users");
@@ -126,13 +170,11 @@ table.addColumn("name", "varchar", [3, 15]).unique();
 
 *为当前字段设置一个默认值。*
 
-**参数：**
+**签名：**
 
-- `value` 默认值。
+- `default(value: string | number | boolean | void | Date): this`
 
-**返回值：**
-
-返回当前对象以便实现方法的链式调用。
+`void` 在这里表示 `null`。
 
 ```javascript
 var table = new Table("users");
@@ -145,9 +187,9 @@ table.addColumn("name", "varchar", 25).default("");
 
 *设置当前字段不能为空（null）。*
 
-**返回值：**
+**签名：**
 
-返回当前对象以便实现方法的链式调用。
+- `notNull(): this`
 
 ```javascript
 var table = new Table("users");
@@ -159,9 +201,9 @@ table.addColumn("name", "varchar", 25).default("").notNull();
 
 *设置当前字段为无符号数字。*
 
-**返回值：**
+**签名：**
 
-返回当前对象以便实现方法的链式调用。
+- `unsigned(): this`
 
 ```javascript
 var table = new Table("users");
@@ -173,13 +215,9 @@ table.addColumn("level", "integer").unsigned();
 
 *添加一个注释到当前字段上。*
 
-**参数：**
+**签名：**
 
-- `text` 注释文本。
-
-**返回值：**
-
-返回当前对象以便实现方法的链式调用。
+- `comment(text: string): this`
 
 ```javascript
 var table = new Table("users");
@@ -191,24 +229,10 @@ table.addColumn("id", "integer").primary().comment("The primary key.");
 
 *为当前字段设置外键约束。*
 
-**参数：**
+**签名：**
 
-- `table` 外键所在的数据表，也可以设置为一个对象来同时设置所有的约束信息。
-- `[field]` 外键所在表上的一个和当前字段对应的字段。
-- `[onDelete]` 当记录被删除时触发的操作，可选值为：
-    - `no action`
-    - `set null` (默认)
-    - `cascade`
-    - `restrict`
-- `[onUpdate]` 当记录被更新时触发的操作(并非所有数据库都支持)，可选值为：
-    - `no action`
-    - `set null`
-    - `cascade`
-    - `restrict`
-
-**返回值：**
-
-返回当前对象以便实现方法的链式调用。
+- `foreignKey(config: ForeignKeyConfig): this`
+- `foreignKey(table: string, field: string, onDelete?: "no action" | "set null" | "cascade" | "restrict", onUpdate?: "no action" | "set null" | "cascade" | "restrict"): this`
 
 ```javascript
 var table = new Table("users");
@@ -230,13 +254,13 @@ table.addColumn("level_id", "integer")
 
 *保存数据表，这个方法实际上在数据库中创建一个新的数据表。*
 
+**签名：**
+
+- `save(): Promise<this>`
+
 **别名：**
 
 - `table.create()`
-
-**返回值：**
-
-返回一个 Promise，传递到 `then()` 的回调函数的中的唯一参数是当前实例。
 
 ```javascript
 var table = new Table("users");
@@ -255,23 +279,27 @@ table.save().then(table=>{
 
 *根据数据表的定义来获取 DDL。*
 
-**返回值：**
+**签名：**
 
-返回 DDL 语句。
+- `getDDL(): string`
 
 这个方法用来获取用于创建数据表的 DDL 语句，而不创建数据表。如果你调用了 
 [table.save()](#table_save)，那么 DDL 会自动保存在 `table.sql` 属性中。
+
+### table.drop()
+
+*从数据库中删除数据表。*
+
+**签名：**
+
+- `drop(): Promise<this>`
 
 ### Table.drop()
 
 *从数据库中删除数据表。*
 
-**参数：**
+**签名：**
 
-- `table` 你将要删除的数据表名称。
-
-**返回值：**
-
-返回一个 Promise，传递到 `then()` 的回调函数的中的唯一参数是一个新的数据表实例。
+- `drop(table: string): Promise<Table>`
 
 这个方法等价于 `new Table("table").drop()`。

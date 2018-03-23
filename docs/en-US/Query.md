@@ -2,9 +2,10 @@
 #### Table of Contents
 
 * [The Query Class](#The-Query-Class)
+    * [Events](#Events)
     * [query.constructor()](#query_constructor)
     * [query.select()](#query_select)
-    * [query.table()](#query_table)
+    * [query.from()](#query_table)
     * [query.where()](#query_where)
     * [query.orWhere()](#query_orWhere)
     * [query.whereBetween()](#query_whereBetween)
@@ -50,22 +51,34 @@
     * [query.chunk()](#query_chunk)
     * [query.paginate()](#query_paginate)
     * [query.getSelectSQL()](#query_getSelectSQL)
-    * [Pre-defined Events](#Pre-defined-Events)
 
 ## The Query class
 
 *Query Builder and beyond.*
 
 This class provides a bunch of methods with Object-Oriented features to 
-generate SQL statements and handle data in a more easier and efficient way
+generate SQL statements and handle data in a more easier and efficient way.
+
+### Events
+
+- `insert` Fired when a new record is about to be inserted into the database.
+- `inserted` Fired when a new record is successfully inserted into the database.
+- `update` Fired when a record is about to be updated.
+- `updated` Fired when a record is successfully updated.
+- `delete` Fired when a record is about to be deleted.
+- `deleted` Fired when a record is successfully deleted.
+- `get` Fired when a record is successfully fetched from the database.
+
+All the listeners bound to these events accept a parameter, which is the 
+current Query instance.
 
 ### query.constructor()
 
-*Creates a new instance with a specified table name binding to it.*
+*Creates a new Query instance with a specified table name.*
 
-**parameters:**
+**signatures:**
 
-- `[table]` The table name binds to the instance.
+- `new Query(table?: string)`
 
 ```javascript
 const { Query } = require("modelar");
@@ -78,71 +91,44 @@ var query = new Query("users");
 
 *Sets what fields that need to be fetched.*
 
-**parameters:**
+**signatures:**
 
-- `fields`  A list of all target fields, each one passed as an argument, or 
-    just pass the first argument as an array that carries all the field names.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `select(...fields: string[]): this`
+- `select(fields: string[]): this`
 
 ```javascript
 var query = new Query("users");
 
 query.select("id", "name", "email");
-// Or just pass an array as its first argument.
 query.select(["id", "name", "email"]);
 ```
 
-### query.table()
+### query.from()
 
 *Sets the table name that the current instance binds to.*
 
-**parameters:**
+**signatures:**
 
-- `table` The table name.
-
-**return:**
-
-Returns the current instance for function chaining.
-
-**alias:**
-
-- `from()`
+- `from(table: string): this`
 
 ```javascript
-var query = new Query(); // If you don't pass a table name here,
+var query = new Query();
 
-// you can bind it here.
-query.table("users").select("id", "name", "email");
-
-// You can use its alias, which is more readable in select statements.
 query.select("id", "name", "email").from("users");
 ```
 
 ### query.where()
 
-*Sets a where... clause for the SQL statement.*
+*Sets a `where...` clause for the SQL statement.*
 
-**parameters:**
+**signatures:**
 
-- `field` This could be a field name, or an object that sets multiple `=` 
-    (equal) conditions for the clause. Or pass a callback function to generate
-    nested conditions, the only argument passed to the callback is a new Query
-    instance with its features.
-- `[operator]` Condition operator, if the `value` isn't passed, then this 
-    argument will replace it, and the operator will become an `=`. It is also 
-    possible to pass this argument a callback function to generate a child-SQL 
-    statement, the only argument passed to the callback is a new Query 
-    instance, so that you can use its features to generate a SQL statement.
-- `[value]` A value that needs to be compared with `field`. If this argument 
-    is missing, then `operator` will replace it, and the operator will become 
-    an `=`.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `where(field: string, value: string | number | boolean | Date): this`
+- `where(field: string, operator: string, value: string | number | boolean | Date): this`
+- `where(fields: { [field: string]: string | number | boolean | Date }): this`
+- `where(nested: (query: Query) => void): this`
+- `where(field: string, nested: (query: Query) => void): this`
+- `where(field: string, operator: string, nested: (query: Query) => void): this`
 
 ```javascript
 var query = new Query("users");
@@ -174,24 +160,18 @@ query.where("id", _query=>{
 
 ### query.orWhere()
 
-*Sets an where...or... clause for the SQL statement.*
+*Sets an `where...or...` clause for the SQL statement.*
 
 This method is similar to [query.where()](#query_where), please check the 
 documentation above.
 
 ### query.whereBetween()
 
-*Sets a where...between... clause for the SQL statement.*
+*Sets a `where...between...` clause for the SQL statement.*
 
-**parameters:**
+**signatures:**
 
-- `field` A field name in the table that currently binds to.
-- `range` An array that carries only two elements which represent the start 
-    point and the end point.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `whereBetween(field: string, [min, max]: [number, number]): this`
 
 ```javascript
 var query = new Query("users");
@@ -201,40 +181,33 @@ query.whereBetween("id", [1, 10]); // where `id` between 1 and 10;
 
 ### query.orWhereBetween()
 
-*Sets an where...or...between... clause for the SQL statement.*
+*Sets an `where...or...between...` clause for the SQL statement.*
 
 This method is similar to [query.whereBetween()](#query_whereBetween), please 
 check the documentation above.
 
 ### query.whereNotBetween()
 
-*Sets an where...not between... clause for the SQL statement.*
+*Sets an `where...not between...` clause for the SQL statement.*
 
 This method is similar to [query.whereBetween()](#query_whereBetween), please 
 check the documentation above.
 
 ### query.orWhereNotBetween()
 
-*Sets an where...or...not between... clause for the SQL statement.*
+*Sets an `where...or...not between...` clause for the SQL statement.*
 
 This method is similar to [query.whereBetween()](#query_whereBetween), please 
 check the documentation above.
 
 ### query.whereIn()
 
-*Sets a where...in... clause for the SQL statement.*
+*Sets a `where...in...` clause for the SQL statement.*
 
-**parameters:**
+**signatures:**
 
-- `field` A field name in the table that currently binds to.
-- `values` An array that carries all possible values. Or pass a callback 
-    function to generate child-SQL statement, the only argument passed to the 
-    callback is a new Query instance, so that you can use its features to 
-    generate a SQL statement.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `whereIn(field: string, values: string[] | number[]): this`
+- `whereIn(field: string, nested: (query: Query) => void): this`
 
 ```javascript
 var query = new Query("users");
@@ -251,36 +224,32 @@ query.whereIn("id", _query => {
 
 ### query.orWhereIn()
 
-*Sets an where...or...in... clause for the SQL statement.*
+*Sets an `where...or...in...` clause for the SQL statement.*
 
 This method is similar to [query.whereIn()](#query_whereIn), please check the 
 documentation above.
 
 ### query.whereNotIn()
 
-*Sets an where...not in... clause for the SQL statement.*
+*Sets an `where...not in...` clause for the SQL statement.*
 
 This method is similar to [query.whereIn()](#query_whereIn), please check the 
 documentation above.
 
 ### query.orWhereNotIn()
 
-*Sets an where...or...not in... clause for the SQL statement.*
+*Sets an `where...or...not in...` clause for the SQL statement.*
 
 This method is similar to [query.whereIn()](#query_whereIn), please check the 
 documentation above.
 
 ### query.whereNull()
 
-*Sets a where...is null clause for the SQL statement.*
+*Sets a `where...is null` clause for the SQL statement.*
 
-**parameters:**
+**signatures:**
 
-- `field` A field name in the table that currently binds to.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `whereNull(field: string): this`
 
 ```javascript
 var query = new Query("users");
@@ -290,38 +259,32 @@ query.whereNull("email"); // where `email` is null;
 
 ### query.orWhereNull()
 
-*Sets a where...or...is null clause for the SQL statement.*
+*Sets a `where...or...is null` clause for the SQL statement.*
 
 This method is similar to [query.whereNull()](#query_whereNull), please check 
 the documentation above.
 
 ### query.whereNotNull()
 
-*Sets a where...is not null clause for the SQL statement.*
+*Sets a `where...is not null` clause for the SQL statement.*
 
 This method is similar to [query.whereNull()](#query_whereNull), please check 
 the documentation above.
 
 ### query.orWhereNotNull()
 
-*Sets a where...or...is not null clause for the SQL statement.*
+*Sets a `where...or...is not null` clause for the SQL statement.*
 
 This method is similar to [query.whereNull()](#query_whereNull), please check 
 the documentation above.
 
 ### query.whereExists()
 
-*Sets a where exists... clause for the SQL statement.*
+*Sets a `where exists...` clause for the SQL statement.*
 
-**parameters:**
+**signatures:**
 
-- `callback` Pass a callback function to generate child-SQL statement, the 
-    only argument passed to the callback is a new Query instance, so that you 
-    can use its features to generate a SQL statement.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `whereExists(nested: (query: Query) => void): this`
 
 ```javascript
 var query = new Query("users");
@@ -334,100 +297,87 @@ query.whereExists(_query=>{
 
 ### query.orWhereExists()
 
-*Sets an where...or exists... clause for the SQL statement.*
+*Sets an `where...or exists...` clause for the SQL statement.*
 
 This method is similar to [query.whereExists()](#query_whereExists), please 
 check the documentation above.
 
 ### query.whereNotExists()
 
-*Sets an where not exists... clause for the SQL statement.*
+*Sets an `where not exists...` clause for the SQL statement.*
 
 This method is similar to [query.whereExists()](#query_whereExists), please 
 check the documentation above.
 
 ### query.orWhereNotExists()
 
-*Sets an where...or not exists... clause for the SQL statement.*
+*Sets an `where...or not exists...` clause for the SQL statement.*
 
 This method is similar to [query.whereExists()](#query_whereExists), please 
 check the documentation above.
 
 ### query.join()
 
-*Sets a inner join... clause for the SQL statement.*
+*Sets a `inner join...` clause for the SQL statement.*
 
-**parameters:**
+**signatures:**
 
-- `table` A table name that needs to be joined with.
-- `field1` A field name in the table that currently binds to.
-- `operator` Condition operator, if the `field2` isn't passed, then this 
-    argument will replace it, and the operator will become an `=`.
-- `[field2]` A field in `table` that needs to be compared with `field1`. If 
-    this argument is missing, then `operator` will replace it, and the 
-    operator will become an `=`.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `join(table: string, field1: string, field2: string): this`
+- `join(table: string, field1: string, operator: string, field2: string): this`
 
 ```javascript
 var query = new Query("users");
 
+query.join("roles", "user.id", "role.user_id");
+
 query.join("roles", "user.id", "=", "role.user_id");
-// Or pass a object:
+
 query.join("roles", {"user.id": "role.user_id"});
 // select * from `users` inner join `roles` on `user`.`id` = `role`.`user_id`;
 ```
 
 ### query.leftJoin()
 
-*Sets a left join... clause for the SQL statement.*
+*Sets a `left join...` clause for the SQL statement.*
 
 This method is similar to [query.join()](#query_join), please check the 
 documentation above.
 
 ### query.rightJoin()
 
-*Sets a right join... clause for the SQL statement.*
+*Sets a `right join...` clause for the SQL statement.*
 
 This method is similar to [query.join()](#query_join), please check the 
 documentation above.
 
 ### query.fullJoin()
 
-*Sets a full join... clause for the SQL statement.*
+*Sets a `full join...` clause for the SQL statement.*
 
 This method is similar to [query.join()](#query_join), please check the 
 documentation above.
 
 ### query.crossJoin()
 
-*Sets a cross join... clause for the SQL statement.*
+*Sets a `cross join...` clause for the SQL statement.*
 
 This method is similar to [query.join()](#query_join), please check the 
 documentation above.
 
 ### query.orderBy()
 
-*Sets an order by... clause for the SQL statement.*
+*Sets an `order by...` clause for the SQL statement.*
 
-**parameters:**
+**signatures:**
 
-- `field` A field name in the table that currently binds to.
-- `[sequence]` The way of how records ordered, it could be either `asc` or 
-    `desc`.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `orderBy(field: string, sequence?: "asc" | "desc"): this`
 
 ```javascript
 var query = new Query("users");
 
 query.orderBy("id", "desc");
 // You can set multiple order-bys as well.
-query.orderBy("name"); // sequence is optional.
+query.orderBy("name");
 // This will be: select * from `users` order by `id` desc, `name`;
 ```
 
@@ -435,30 +385,26 @@ query.orderBy("name"); // sequence is optional.
 
 *Sets that the records will be ordered in random sequence.*
 
-**return:**
+**signatures:**
 
-Returns the current instance for function chaining.
+- `random(): this`
 
 ```javascript
 var query = new Query("users");
 
 query.random();
 // In MySQL: order by rand();
-// In PostgreSQL and SQLite: order by random();
+// In PostgreSQL: order by random();
 ```
 
 ### query.groupBy()
 
-*Sets a group by... clause for the SQL statement.*
+*Sets a `group by...` clause for the SQL statement.*
 
-**parameters:**
+**signatures:**
 
-- `field` A list of all target fields, each one passed as an argument. Or just
-    pass the first argument as an array that carries all the field names.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `groupBy(...fields: string[]): this`
+- `groupBy(fields: string[]): this`
 
 ```javascript
 var query = new Query("users");
@@ -470,15 +416,11 @@ query.groupBy(["name", "email"]); // Pass an array.
 
 ### query.having()
 
-*Sets a having... clause for the SQL statement.*
+*Sets a `having...` clause for the SQL statement.*
 
-**parameters:**
+**signatures:**
 
-- `raw` A SQL clause for defining comparing conditions.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `having(raw: string): this`
 
 ```javascript
 var query = new Query("users");
@@ -493,16 +435,11 @@ query.select("name", "sum(money)")
 
 ### query.limit()
 
-*Sets a limit... clause for the SQL statement.*
+*Sets a `limit...` clause for the SQL statement.*
 
-**parameters:**
+**signatures:**
 
-- `length` The top limit of how many counts that this query will fetch.
-- `[offset]` The start point, count from `0`.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `limit(length: number, offset?: number): this`
 
 ```javascript
 var query = new Query("users");
@@ -512,13 +449,17 @@ query.limit(10); // select * from `users` limit 10;
 query.limit(10, 5); // select * from `users` limit 5, 10;
 ```
 
+Although some database like `mssql`, `oracledb`, `db2` doesn't support `limit` 
+clause, you can still use this method, the adapters will transfer it to a 
+properly statement.
+
 ### query.distinct()
 
-*Sets a distinct condition to get unique results in a select statement.*
+*Sets a `distinct` condition to get unique results in a select statement.*
 
-**return:**
+**signatures:**
 
-Returns the current instance for function chaining.
+- `distinct(): this`
 
 ```javascript
 var query = new Query("users");
@@ -530,14 +471,10 @@ query.select("name").distinct(); //select distinct `name` from `users`;
 
 *Unites two SQL statements into one.*
 
-**parameters:**
+**signatures:**
 
-- `query` Could be a SQL statement, or a Query instance.
-- `[all]` Use `union all` to concatenate results, default is `false`.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `union(query: string | Query, all?: boolean): this`
+    - `all` Use `union all` to concatenate results.
 
 ```javascript
 var query = new Query("users");
@@ -556,15 +493,9 @@ query.union(query2, true);
 
 *Inserts a new record into the database.*
 
-**parameters:**
+**signatures:**
 
-- `data` An object that carries fields and their values, or pass all values in
-    an array that fulfil all the fields.
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the current instance.
+- `insert(data: { [field: string]: any }): Promise<this>`
 
 ```javascript
 var query = new Query("users");
@@ -578,7 +509,7 @@ query.insert({
     console.log(err);
 });
 
-// Also possible to pass an array, but you have to pass the values for all the 
+// Also possible to pass an array, but you have to pass all values for all 
 // fields.
 query.insert([
     1, // id
@@ -596,14 +527,9 @@ query.insert([
 
 *Updates an existing record.*
 
-**parameters:**
+**signatures:**
 
-- `data` An object that carries fields and their values.
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the current instance.
+- `update(data: { [field: string]: any }): Promise<this>`
 
 ```javascript
 var query = new Query("users");
@@ -620,19 +546,12 @@ query.where("id", 1).update({
 
 ### query.increase()
 
-<small>(Since 1.0.5)</small>
 *Increases a specified field with a specified number.*
 
-**parameters:**
+**signatures:**
 
-- `field` The field name of which record needs to be increased. It is also 
-    possible to pass this argument an object to increase multiple fields.
-- `[number]` A number that needs to be raised, default is `1`.
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the current instance.
+- `increase(field: string, step?: number): Promise<this>`
+- `increase(fields: { [field: string]: number }): Promise<this>`
 
 ```javascript
 var query = new Query("users");
@@ -648,19 +567,12 @@ query.increase({score: 10, coin: 1}).then(query=>{
 
 ### query.decrease()
 
-<small>(Since 1.0.5)</small>
 *Decreases a specified field with a specified number.*
 
-**parameters:**
+**signatures:**
 
-- `field` The field name of which record needs to be decreased. It is also 
-    possible to pass this argument an object to decrease multiple fields.
-- `[number]` A number that needs to be reduced, default is `1`.
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the current instance.
+- `decrease(field: string, step?: number): Promise<this>`
+- `decrease(fields: { [field: string]: number }): Promise<this>`
 
 ```javascript
 var query = new Query("users");
@@ -678,10 +590,9 @@ query.decrease({score: 10, coin: 1}).then(query=>{
 
 *Deletes an existing record.*
 
-**return:**
+**signatures:**
 
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the current instance.
+- `delete(): Promise<this>`
 
 ```javascript
 var query = new Query("users");
@@ -697,16 +608,15 @@ query.where("id", 1).delete().then(query=>{
 
 *Gets a record from the database.*
 
-**return:**
+**signatures:**
 
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the fetched data.
+- `get(): Promise<{ [field: string]: any }>`
 
 ```javascript
 var query = new Query("users");
 
 query.where("id", 1).get().then(data=>{
-    console.log(data); // The data will be an object that carries the record.
+    console.log(data);
 }).catch(err=>{
     console.log(err);
 });
@@ -716,10 +626,9 @@ query.where("id", 1).get().then(data=>{
 
 *Gets all records from the database.*
 
-**return:**
+**signatures:**
 
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is all the fetched data carried in an array.
+- `all(): Promise<any[]>`
 
 ```javascript
 var query = new Query("users");
@@ -735,14 +644,9 @@ query.all().then(data=>{
 
 *Gets all counts of records or a specified filed.*
 
-**parameter:**
+**signatures:**
 
-- `[field]` Count a specified field.
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is a Number that counts records.
+- `count(field?: string): Promise<number>`
 
 ```javascript
 var query = new Query("users");
@@ -766,14 +670,9 @@ query.count("name").then(count=>{
 
 *Gets the maximum value of a specified field in the table.*
 
-**parameter:**
+**signatures:**
 
-- `field` The specified field.
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is a Number that counts records.
+- `max(field: string): Promise<number>`
 
 ```javascript
 var query = new Query("users");
@@ -790,14 +689,9 @@ query.max("id").then(max=>{
 
 *Gets the minimum value of a specified field in the table.*
 
-**parameter:**
+**signatures:**
 
-- `field` The specified field.
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is a Number that counts records.
+- `min(field: string): Promise<number>`
 
 ```javascript
 var query = new Query("users");
@@ -814,14 +708,9 @@ query.max("id").then(min=>{
 
 *Gets the average value of a specified field in the table.*
 
-**parameter:**
+**signatures:**
 
-- `field` The specified field.
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is a Number that counts records.
+- `avg(field: string): Promise<number>`
 
 ```javascript
 var query = new Query("users");
@@ -838,14 +727,9 @@ query.avg("id").then(num=>{
 
 *Gets the summarized value of a specified field in the table.*
 
-**parameter:**
+**signatures:**
 
-- `field` The specified field.
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is a Number that counts records.
+- `sum(field: string): Promise<number>`
 
 ```javascript
 var query = new Query("users");
@@ -862,17 +746,9 @@ query.sum("id").then(num=>{
 
 *Processes chunked data with a specified length.*
 
-**parameters:**
+**signatures:**
 
-- `langth` The top limit of how many records that each chunk will carry.
-- `callback` A function for processing every chunked data, the only argument 
-    passed to it is the data that current chunk carries. If the callback 
-    returns `false`, stop chunking.
-
-**return:**
-
-Returns a Promise, and the only argument passed to the callback of `then()` is 
-the last chunk of data.
+- `chunk(length: number, cb: (data: any[]) => false | void): Promise<any[]>`
 
 This method walks through all the records that suit the SQL statement. if you 
 want to stop it manually, just return `false` in the callback function.
@@ -894,22 +770,19 @@ query.chunk(10, data=>{
 
 *Gets paginated information of all records that suit given conditions.*
 
-**parameters:**
+**signatures:**
 
-- `[page]` The current page, default is `1`.
-- `[length]` The top limit of per page, default is `10`. Also you can call 
-    `query.limit()` to specify a length before calling this method.
+- `paginate(page: number, length?: number): Promise<PaginatedRecords>`
+    - `length` The top limit of per page, default is `10`. Also you can call 
+        `query.limit()` to specify a length before calling this method.
 
-**return:**
+Interface `PaginatedRecords` includes:
 
-Returns a Promise, the only argument passes to the callback of `then()` is an 
-object that carries the information, it includes:
-
-* `page` The current page.
-* `limit` The top limit of per page.
-* `pages` A number of all record pages.
-* `total` A number of all record counts.
-* `data` An array that carries all fetched data.
+- `page: number` The current page.
+- `limit: number` The top limit of per page.
+- `pages: number` A number of all record pages.
+- `total: number` A number of all record counts.
+- `data: any[]` An array that carries all fetched data.
 
 ```javascript
 var query = Query("users");
@@ -938,9 +811,9 @@ query.limit(15).paginate(1).then(info=>{
 
 *Generates a select statement.*
 
-**return:**
+**signatures:**
 
-The select statement.
+- `getSelectSQL(): string`
 
 ```javascript
 var query = new Query("users");
@@ -948,20 +821,3 @@ var sql = query.select("*").where("id", 1).getSelectSQL();
 console.log(sql);
 // select * `users` where `id` = 1
 ```
-
-### Pre-defined Events
-
-At Query level, there are some events you can set handlers to:
-
-- `query` This event will be fired when the SQL statement is about to be 
-    executed.
-- `insert` This event will be fired when a new record is about to be inserted 
-    into the database.
-- `inserted` This event will be fired when a new record is successfully 
-    inserted into the database.
-- `update` This event will be fired when a record is about to be updated.
-- `updated` This event will be fired when a record is successfully updated.
-- `delete` This event will be fired when a record is about to be deleted.
-- `deleted` This event will be fired when a record is successfully deleted.
-- `get` This event will be fired when a record is successfully fetched from 
-    the database.

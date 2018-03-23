@@ -2,7 +2,10 @@
 #### Table of Contents
 
 * [The User Class](#The-User-Class)
+    * [Events](#Events)
+    * [user.constructor()](#user_constructor)
     * [user.login()](#user_login)
+    * [User.login()](#User_login)
 
 ## The User Class
 
@@ -15,25 +18,50 @@ Also, the User class is a very good example of using Modelar, you can see
 its code, learn what it really does with Modelar and try to define you own 
 class.
 
+### Events
+
+- `login` Fired when a user logged in.
+
+### user.constructor()
+
+**signatures:**
+
+- `constructor()`
+- `constructor(data: { [field: string]: any })`
+- `constructor(data: { [field: string]: any }, config: ModelConfig)`
+
+```javascript
+var user1 = new User;
+var user2 = new User({
+    name: "luna",
+    email: "luna@hyurl.com"
+});
+
+class Member extends User {
+    constructor(data = {}) {
+        super(data, {
+            table: "members",
+            fields: ["id", "name", "email", "password", "gender", "age"],
+            searchable: ["name", "email"]
+        });
+    }
+}
+```
+
 ### user.login()
 
 *Tries to sign in a user.*
 
-If succeeded, an `login` event will be fired, if failed, throws an error 
-indicates the reason. This method won't save user information in session or 
-other storage materials, if you want it to, you have to do it yourself.
+**signatures:**
 
-**parameters:**
+- `login(options: { [field: string]: string, user?: string, password: string }): Promise<this>`
 
-- `args` This parameter can carry one or more `loginable` fields and values, 
-    and a `password` field must be passed at the same time. If no `loginable` 
-    fields are passed, a `user` must be passed, which means trying to match 
-    all possibilities automatically.
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the user instance which is logged in.
+By default, `name` and `email` can be used for logging, if none of them are 
+provided, a `user` property should be passed, it will try to test all 
+possibilities. You can modify the property `User.loginable` to change usable 
+fields. This property also honor the principle of hierarchical tree, that 
+means if you have a `class Member extrends User{}`, then `Member.loginable` 
+will be used first.
 
 ```javascript
 const express = require("express");
@@ -119,3 +147,7 @@ var server = app.listen(3000, () => {
     console.log("Server started, please visit http://%s:%s", host, port);
 });
 ```
+
+### User.login()
+
+A short-hand of `(new User).login()`.

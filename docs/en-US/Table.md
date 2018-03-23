@@ -14,6 +14,7 @@
     * [table.foreignKey()](#table_foreignKey)
     * [table.save()](#table_save)
     * [table.getDDL()](#table_getDDL)
+    * [table.drop()](#table_drop)
     * [Table.drop()](#Table_drop)
 
 ## The Table Class
@@ -28,33 +29,73 @@ effort.
 
 *Creates a new instance with a specified table name.*
 
-**parameters:**
+**signatures:**
 
-- `table` The table name.
+- `new Table(name: string, schema?: { [field: string]: FieldConfig; })`
+- `new Table(model: Model)`
 
 ```javascript
 const { Table } = require("modelar");
 
-// Initiate a table instace with a given name.
 var table = new Table("users");
+
+// With schema:
+var table = new Table("users", {
+    id: {
+        name: "id",
+        type: "int",
+        length: 10
+        // ...
+    }
+    // ...
+});
+```
+
+If you're using TypeScript, and defining model classes with decorators, you 
+can pass the constructor a model instance.
+
+```typescript
+import { Table, User } from "modelar"; // User class is written in TpeScript.
+
+var table = new Table(new User);
+// Or:
+var table = new Table("users", User.prototype.schema);
+// Fields defined with decrators are stored in `Model.prototype.shcema`.
 ```
 
 ## table.addColumn()
 
 *Adds a column to the table.*
 
-**parameters:**
+**signatures:**
 
-- `name` The name of the field.
-- `[type]` The type of the field, if the field is the primary key, then this 
-    argument can be omitted.
-- `[length]` The top limit of length that this field can store, also it could 
-    be an array carries only two numbers that represents a range between 
-    bottom and top.
+- `addColumn(name: string): this`
+- `addColumn(name: string, type: string): this`
+- `addColumn(name: string, type: string, length: number | [number, number]): this`
+- `addColumn(field: FieldConfig): this`
 
-**return:**
+`FieldConfig` includes:
 
-Returns the current instance for function chaining.
+- `name: string`
+- `type?: string`
+- `length?: number | [number, number]`
+- `primary?: boolean`
+- `autoIncrement?: boolean | [number, number]`
+- `unique?: boolean`
+- `default?: any`
+- `unsigned?: boolean`
+- `comment?: string`
+- `notNull?: boolean`
+- `foreignKey?: ForeignKeyConfig`
+
+`ForeignKeyConfig` includes:
+
+- `table: string` The name of the foreign table.
+- `field: string`
+- `onDelete?: "no action" | "set null" | "cascade" | "restrict"` An action 
+    will be triggered when the record is deleted, default is `set null`.
+- `onUpdate?: "no action" | "set null" | "cascade" | "restrict"` An action 
+    will be triggered when the record is update, default is `no action`.
 
 ```javascript
 var table = new Table("users");
@@ -82,9 +123,9 @@ must call other methods to do stuffs right after calling `addColumn()`.
 
 *Sets the current field to be the primary key of the table.*
 
-**return:**
+**signatures:**
 
-Returns the current instance for function chaining.
+- `primary(): this`
 
 ```javascript
 var table = new Table("users");
@@ -97,15 +138,12 @@ table.addColum("id", "integer").primary();
 
 *Sets the current field to be auto-increment.*
 
-**parameters:**
+**signatures:**
 
-- `[start]` The initial value, default is `1`.
-- `[step]` The step length, default is `1`. (Not every database supports the 
-    `step`.)
+- `autoIncrement(): this`
+- `autoIncrement(start: number, step?: number): this`
 
-**return:**
-
-Returns the current instance for function chaining.
+**Notice: not all databases support `step`.**
 
 ```javascript
 var table = new Table("users");
@@ -113,15 +151,15 @@ var table = new Table("users");
 table.addColumn("id").primary().autoIncrement();
 ```
 
-For consistency, only the primary key can be auto-increment within Modelar.
+For consistency, only the primary key should be auto-increment within Modelar.
 
 ### table.unique()
 
 *Sets the current field's value to be unique.*
 
-**return:**
+**signatures:**
 
-Returns the current instance for function chaining.
+- `unique(): this`
 
 ```javascript
 var table = new Table("users");
@@ -133,13 +171,11 @@ table.addColumn("name", "varchar", [3, 15]).unique();
 
 *Sets a default value for the current field.*
 
-**parameters:**
+**signatures:**
 
-- `value` The default value.
+- `default(value: string | number | boolean | void | Date): this`
 
-**return:**
-
-Returns the current instance for function chaining.
+`void` means `null` in this case.
 
 ```javascript
 var table = new Table("users");
@@ -152,9 +188,9 @@ table.addColumn("name", "varchar", 25).default("");
 
 *Sets the current filed to be not null.*
 
-**return:**
+**signatures:**
 
-Returns the current instance for function chaining.
+- `notNull(): this`
 
 ```javascript
 var table = new Table("users");
@@ -166,9 +202,9 @@ table.addColumn("name", "varchar", 25).default("").notNull();
 
 *Sets the current field to be unsigned.*
 
-**return:**
+**signatures:**
 
-Returns the current instance for function chaining.
+- `unsigned(): this`
 
 ```javascript
 var table = new Table("users");
@@ -180,13 +216,9 @@ table.addColumn("level", "integer").unsigned();
 
 *Adds a comment to the current field.*
 
-**parameters:**
+**signatures:**
 
-- `text` The comment text.
-
-**return:**
-
-Returns the current instance for function chaining.
+- `comment(text: string): this`
 
 ```javascript
 var table = new Table("users");
@@ -198,28 +230,10 @@ table.addColumn("id", "integer").primary().comment("The primary key.");
 
 *Sets a foreign key constraint for the current field.*
 
-**parameters:**
+**signatures:**
 
-- `table` A table where the the foreign key is in, it is also possible to pass
-    this argument an object that sets all the information of the constraint.
-- `[field]` A field in the foreign table that related to the current field.
-- `[onDelete]` An action triggered when the record is deleted. optional values
-    are:
-    - `no action`
-    - `set null` (by default)
-    - `cascade`
-    - `restrict`
-- `[onUpdate]` An action triggered when the record is updated (not supported 
-    by every database). optional values
-    are: 
-    - `no action` (by default)
-    - `set null`
-    - `cascade`
-    - `restrict`
-
-**return:**
-
-Returns the current instance for function chaining.
+- `foreignKey(config: ForeignKeyConfig): this`
+- `foreignKey(table: string, field: string, onDelete?: "no action" | "set null" | "cascade" | "restrict", onUpdate?: "no action" | "set null" | "cascade" | "restrict"): this`
 
 ```javascript
 var table = new Table("users");
@@ -241,14 +255,13 @@ table.addColumn("level_id", "integer")
 
 *Saves the table, this method actually creates a new table in the database.*
 
+**signatures:**
+
+- `save(): Promise<this>`
+
 **alias:**
 
 - `table.create()`
-
-**return:**
-
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is the current instance.
 
 ```javascript
 var table = new Table("users");
@@ -268,25 +281,28 @@ table.save().then(table=>{
 
 *Gets the DDL statement by the definitions.*
 
-**return:**
+**signatures:**
 
-Returns the DDL statement.
+- `getDDL(): string`
 
 This method is used to generate and get the DDL statement, but don't create 
 the table. If you called [table.save()](#table_save) to create the table, the 
 DDL will be automatically stored in the `table.sql` property.
 
-### Table.drop()
+### table.drop()
 
 *Drops the table from the database.*
 
-**parameters:**
+**signatures:**
 
-- `table` The table name you're going to drop.
+- `drop(): Promise<this>`
 
-**return:**
+### Table.drop()
 
-Returns a Promise, and the the only argument passed to the callback of 
-`then()` is a new table instance.
+*Drops a table from the database.*
+
+**signatures:**
+
+- `drop(table: string): Promise<Table>`
 
 This method is equivalent to `new Table("table").drop()`.

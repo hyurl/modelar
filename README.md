@@ -2,26 +2,15 @@
 
 **An expressive ORM with query builder and supports multiple databases.**
 
-See the [API documentation](http://modelar.hyurl.com) at *modelar.hyurl.com*.
-
-**WARNING**
-
-There is a design fault in Modelar 2.0, MUST update to **2.1** or above, and 
-update all adapters you manually include (if any).
+See [API documentation](https://hyurl.github.io/modelar).
 
 ## Install
 
-To install Modelar in you project, just type the following command in you 
+To install Modelar in you project, just type the following command in your 
 shell or CMD:
 
 ```sh
 npm install modelar --save
-```
-
-### Update
-
-```sh
-npm update modelar
 ```
 
 ## Supported Databases
@@ -41,21 +30,6 @@ if you're going to use them.
 
 Modelar is still growing, more databases might be supported in future 
 versions.
-
-## Why Modelar?
-
-There are a lot of ORM out there, why should you choose Modelar? Compare with 
-[TypeORM](https://github.com/typeorm/typeorm), Modelar is much more handy and 
-easier to use. It's written in pure JavaScript, so is usage, you don't have to
-learn TypeScript for using it. Compare with 
-[knex](https://github.com/tgriesser/knex), well, knex is not a ORM technically,
-despite the familiarity, Modelar is a full featured ORM and is much more 
-powerful than knex. Other ORM like 
-[Sequelize](https://github.com/sequelize/sequelize), 
-[Waterline](https://github.com/balderdashy/waterline), are a little bit 
-complicated and hard to use.
-
-So now install Modelar, and begin your journey with it.
 
 ## What can I do with this module?
 
@@ -141,25 +115,30 @@ class Article extends Model {
 
 Above gives a very simple example that shows the convenience and expressive 
 functionality that this module has, you can go into the real depth of it by 
-checking the [API documentation](http://modelar.hyurl.com).
+checking the [API documentation](https://hyurl.github.io/modelar).
 
 Although the example uses `async/await` to organize logics, this module only 
 uses `Promise` in its core, so it can run in every Node.js version that higher
 than 6.0.
 
-## SQL or NoSQL?
+## How to test?
 
-This is a very popular question in recent days, since some non-relational 
-databases like MangoDB has been very developed in these years, some people 
-would say that why we're still using SQL statements. The question is, what 
-benefits can we get from relational databases and are missing in 
-non-relational databases? Sure there are a lot. Say you want to join some 
-records in table A when fetching records from table B, this very simple in 
-relational databases, just use a `inner join` clause, and it is OK. But in 
-non-relational databases, judging by the name you will know that they don't 
-have such an ability to do so, because they are **not related**. It would take
-a long time and effort to achieve such goals by programing, which isn't 
-suitable for large projects and short-time developments. 
+This module provides an example that you can use to test in your environment,
+after you've installed the module, modify the file 
+`./node_modules/modelar/test/db.ts` to configure for your database connection,
+since the `tsconfig.json` sets that test files should be compiled to `es2017`,
+you may want to edit it as well, if your Node.js version is lower than 8.0. 
+After you have done these, you're ready to compile and run the example.
 
-Since **Modelar** is aimed to develop strong web applications, it just focus 
-on SQL.
+```sh
+npm i modelar
+cd ./node_modules/modelar/test
+vim db.ts
+vim tsconfig.json
+tsc
+cd ..
+npm test
+```
+
+You can use any of the adapters that Modelar supports to test the example, 
+they should act very much the same.

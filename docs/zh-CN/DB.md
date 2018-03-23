@@ -2,9 +2,9 @@
 #### 内容列表
 
 * [The DB Class](#The-DB-Class)
+    * [事件](#事件)
     * [db.constructor()](#db_constructor)
-    * [DB.init()](#DB_init)
-    * [DB.on()](#DB_on)
+    * [db.set()](#db_set)
     * [db.on()](#db_on)
     * [db.once()](#db_once)
     * [db.emit()](#db_emit)
@@ -18,8 +18,10 @@
     * [db.backquote()](#db_backquote)
     * [db.close()](#db_close)
     * [db.release()](#db_release)
+    * [DB.init()](#DB_init)
+    * [DB.setAdapter()](#DB_setAdapter)
+    * [DB.on()](#DB_on)
     * [DB.destroy()](#DB_destroy)
-    * [预定义事件](#预定义事件)
     * [在 Express 中包裹 DB](#在-Express-中包裹-DB)
 
 ## DB 类
@@ -27,16 +29,36 @@
 *数据库管理器*
 
 这个类提供了一个内部的连接池来管理数据库连接，当一个连接完成其工作之后，它可以被回收
-并等待下一次取回重复使用，这样可以节省资源并提供程序的运行速度。
+并等待下一次取回重复使用，这样可以节省资源并提高程序的运行速度。
+
+### 事件
+
+- `query` 当 [db.query()](#db_query) 被调用时触发。
+
+所有绑定到这个事件上的监听器函数都接受一个参数，即当前的 DB 实例。
+
+你可以使用 [DB.on()](#DB_on) 或者 [db.on()](#db_on) 来绑定事件监听函数到事件上，
+但是需要注意区分它们的不同表现。
 
 ### db.constructor()
 
-*通特定的配置来创建一个新的数据库实例。*
+**签名：**
 
-**参数：**
+- `new DB(database: string)` 使用一个数据库名称来创建一个新的数据库实例。
+- `new DB(config?: DBConfig)` 使用指定的数据库配置来创建数据库实例。
 
-- `[config]` 一个携带着配置信息的对象，它们仅对当前实例有效，或者设置一个字符串来
-    表示只设置数据库名。
+`DBConfig` 包括：
+
+- `type?: string` 设置数据库类型（默认：`mysql`）。
+- `database: string` 设置需要打开的数据库名称。
+- `host?: string` 设置数据库服务器的主机名称。
+- `port?: number` 设置服务器的端口。
+- `user?: string` 设置用于登录数据库的用户名。
+- `password?: string` 设置用户对应的密码。
+- `charset?: string` 设置数据库采用的字符集（默认：`utf8`）。
+- `timeout?: number` 同时设置连接的超时时长和查询的超时时长（默认：`5000` 毫秒）。
+- `ssl?: { rejectUnauthorized?: Boolean, ca?: String, key?: String, cert?: String }`。
+- `max?: number` 设置数据库连接池的最大连接数（默认：`50`）。
 
 ```javascript
 var db = new DB({
@@ -46,18 +68,6 @@ var db = new DB({
 // 另外，你也可以传递一个字符串到构造方法中，特将会被视为配置中的数据库名，就像这样：
 var db = new DB("modelar");
 ```
-所有支持的的配置选项包括：
-
-- `type` 设置数据库类型（默认：`mysql`）。
-- `database` 设置需要打开的数据库名称。
-- `host` 设置数据库服务器的主机名称。
-- `port` 设置服务器的端口。
-- `user` 设置用于登录数据库的用户名。
-- `password` 设置用户对应的密码。
-- `charset` 设置数据库采用的字符集（默认：`utf8`）。
-- `timeout` 同时设置连接的超时时长和查询的超时时长（默认：`5000` 毫秒）。
-- `ssl` SSL 选项支持包括：`{ rejectUnauthorized: Boolean, ca: String, key: String, cert: String }`。
-- `max` 设置数据库连接池的最大连接数（默认：`50`）。
 
 当一个实例被创建的时候，数据库连接并不会被建立。数据库连接将会在你调用 
 [db.connect()](#db_connect) 时被创建，或者调用 [db.query()](#db_query) 时被隐式地
@@ -69,120 +79,33 @@ var db = new DB("modelar");
 另外，DB 类保存连接是根据连接的描述符来区分的，因此你不需要担心它们在连接池中会造成
 混乱。
 
-### DB.init()
+### db.set()
 
-*为所有的数据库实例初始化配置。*
+*为当前实例设置数据库配置信息。*
 
-**参数：**
+**签名：**
 
-- `config` 一个携带配置信息的对象。
-
-**返回值：**
-
-返回类自身以便能够实现方法的链式调用。
+- `set(config: DBConfig): this`
+- `set(name: string, value: any): this`
 
 ```javascript
-const { DB } = require("modelar");
+var db = new DB;
 
-DB.init({
-    type: "mysql", // 默认支持 mysql、maria 和 postgres
-    host: "localhost",
-    port: 3306,
-    user: "user",
-    password: "",
-    database: "modelar",
-});
-```
-
-`db.constructor()` 与 `DB.init()` 的不同之处在于，`db.constructor()` 仅仅设置了
-当前实例的配置信息，而 `DB.init()` 则会为所有实例进行初始化。
-
-### DB.on()
-
-*将一个事件监听器函数绑定到所有数据库实例的指定事件上。*
-
-**参数：**
-
-- `event` 事件名称。
-- `callback` 一个将会在事件触发时被运行的回调函数。
-
-**返回值：**
-
-返回类自身以便能够实现方法的链式调用。
-
-```javascript
-const { DB } = require("modelar");
-
-DB.on("query", db => {
-    // 当 SQL 语句运行时输出日志。
-    // `db.sql` 即是被运行的 SQL 语句，而 `db.bindings` 则是绑定到它上面的参数，
-    // 为一个数组。
-    console.log(db.sql, db.bindings);
+db.set("host", "localhost");
+db.set({
+    host: "localhost"
 });
 ```
 
 ### db.on()
 
-*将一个事件监听器函数绑定到指定事件上。*
-
-**参数：**
-
-- `event` 事件名称。
-- `callback` 一个将会在事件触发时被运行的回调函数。
-
-**returns:**
-
-返回当前实例以便实现方法的链式调用。
-
 这个方法继承自 [EventEmitter](https://nodejs.org/dist/latest-v8.x/docs/api/events.html)。
-
-```javascript
-const { DB } = require("modelar");
-
-var db = new DB();
-db.on("query", db=>{
-    // 打印 SQL 语句及其绑定参数。
-    console.log(db.sql, db.bindings);
-});
-```
 
 ### db.once()
 
-*将一个只会运行一次的事件监听器函数绑定到指定事件上。*
-
-**参数：**
-
-- `event` 事件名称。
-- `callback` 一个将会在事件触发时被运行的回调函数。
-
-**returns:**
-
-返回当前实例以便实现方法的链式调用。
-
 这个方法继承自 [EventEmitter](https://nodejs.org/dist/latest-v8.x/docs/api/events.html)。
 
-```javascript
-const { DB } = require("modelar");
-
-var db = new DB();
-db.on("query", db=>{
-    // 打印 SQL 语句及其绑定参数。
-    console.log(db.sql, db.bindings);
-});
-```
-
 ### db.emit()
-
-*触发一个事件并执行其事件监听器函数。*
-
-**参数：**
-
-- `event` 事件名称。
-- `...args` 传递到事件监听器函数的参数。
-
-**返回值：**
-
-如果事件有监听器，返回 `true`，否则为 `false`。
 
 **别名：**
 
@@ -194,12 +117,12 @@ db.on("query", db=>{
 
 *获取一个数据库连接。*
 
-**返回值：**
+**签名：**
 
-返回一个 Promise，传递到 `then()` 的回调函数的中的唯一参数是当前实例。
+- `connect(): Promise<this>`
 
 ```javascript
-const DB = require("modelar/DB");
+const { DB } = require("modelar");
 
 var db = new DB("./modelar.db");
 db.connect().then(db=>{
@@ -216,13 +139,9 @@ db.connect().then(db=>{
 
 *使用一个数据库实例并共享它的数据库连接。*
 
-**参数**
+**签名：**
 
-- `db` 一个已经创建的数据库实例。
-
-**返回值：**
-
-返回当前实例以便实现方法的链式调用。
+- `use(db: DB): this`
 
 ```javascript
 const { DB } = reuiqre("modelar");
@@ -245,14 +164,10 @@ var db2 = (new DB).use(db);
 
 *执行一条 SQL 语句。*
 
-**参数：**
+**签名：**
 
-- `sql` 待执行的 SQL 语句。
-- `[...bindings]` 绑定到 SQL 语句上的参数。
-
-**返回值：**
-
-返回一个 Promise，传递到 `then()` 的回调函数的中的唯一参数是当前实例。
+- `query(sql: string, bindings?: any[]): Promise<this>`
+- `query(sql: string, ...bindings: any[]): Promise<this>`
 
 这个方法是一个通用的 API，用来执行 SQL 语句，并以兼容的方式来适配所有 Modelar 支持的
 数据库，因此当你调用这个方法的时候，务必始终使用 `?` 作为占位符，然后把值存放在
@@ -265,8 +180,8 @@ var db = new DB();
 
 // selects
 db.query("select * from users where id = ?", 1).then(db=>{
-    // db 拥有一个 _data 属性，用来保存 SQL 执行后从数据库获取到的所有数据。
-    console.log(db._data); // 打印所有数据
+    // db 拥有一个 data 属性，用来保存 SQL 执行后从数据库获取到的所有数据。
+    console.log(db.data); // 打印所有数据
 }).catch(err=>{
     console.log(err);
 });
@@ -315,15 +230,13 @@ db.query("delete from users where `id` = ?", 1).then(db=>{
 
 *开启一个事务并处理内部的操作。*
 
-**参数：**
+**签名：**
 
-- `[callback]` 如果传递了一个函数，那么它内部的代码将会被自动的处理，这意味着，如果
-    程序进展顺利，那么事务就会被自动提交，否则它将被自动地回滚。如果没有传递回调函数，
-    那么将只开启事务，这意味着你必须要手动地提交或者回滚事务。
-
-**返回值：**
-
-返回一个 Promise，传递到 `then()` 的回调函数的中的唯一参数是当前实例。
+- `transaction(): Promise<this>` 开启事务。
+- `transaction(cb: (db: this) => void): Promise<this>` 开启事务并自动处理回调
+    函数中的操作。
+    - `cb` 这个函数内部的操作将会被自动地处理，这意味着，如果程序进展顺利，那么事务
+        就会被自动提交，否则它将被自动地回滚。
 
 ```javascript
 var db = new DB();
@@ -353,31 +266,25 @@ db.transaction().then(db=>{
 
 ### db.commit()
 
-*提交事务。*
+*在程序进展顺利时提交事务。*
 
-**返回值：**
+**签名：**
 
-返回一个 Promise，传递到 `then()` 的回调函数的中的唯一参数是当前实例。
+- `commit(): Promise<this>`
 
 ### db.rollback()
 
-*回滚事务。*
+**签名：**
 
-**返回值：**
-
-返回一个 Promise，传递到 `then()` 的回调函数的中的唯一参数是当前实例。
+- `rollback(): Promise<this>`
 
 ### db.quote()
 
-*为一个特定的值添加引号。*
+*为一个指定的值添加引号。*
 
-**参数：**
+**签名：**
 
-- `value` 需要使用引号包裹的值。
-
-**返回值：**
-
-加了引号的值。
+- `quote(value: string): string`
 
 ```javascript
 const { DB } = require("modelar");
@@ -390,22 +297,18 @@ console.log(db.quote(value));
 
 ### db.backquote()
 
-*为一个特定的标识符添加反引号。*
+*为一个指定的标识符添加反引号。*
 
-**参数：**
+**签名：**
 
-- `identifier` 一个需要使用反引号包裹的标识符（表名或字段名）。
-
-**返回值：**
-
-加了反引号的值。
+- `backquote(identifier: string): string`
 
 ```javascript
 const { DB } = require("modelar");
 
 var db = new DB();
 var name = "table_name";
-console.log(db.quote(name));
+console.log(db.backquote(name));
 // 在 MySQL 中是 `table_name`，而在 PostgreSQL 中则是 "table_name"。
 ```
 
@@ -413,7 +316,10 @@ console.log(db.quote(name));
 
 *关闭当前实例的数据库连接。*
 
-该方法没有返回值。
+
+**签名：**
+
+- `close(): void`
 
 ```javascript
 var db = new DB();
@@ -428,20 +334,22 @@ db.query("select * from users where id is not null").then(db => {
 
 ### db.release()
 
-*回收当前实例的数据库连接。*
+*释放当前实例的数据库连接。*
+
+**签名：**
+
+- `release(): void`
 
 **别名：**
 
 - `db.recycle()`
-
-该方法没有返回值。
 
 ```javascript
 const { DB } = require("modelar");
 
 var db = new DB();
 db.query("select * from `users` where `id` = ?", 1).then(db=>{
-    console.log(db._data);
+    console.log(db.data);
     // 回收数据库连接，它将会被存放到内部的连接池中。记住，当一个连接被关闭或者回收
     // 之后，当前实例就不能再执行 SQL 语句了。
     db.recycle();
@@ -454,23 +362,81 @@ db.query("select * from `users` where `id` = ?", 1).then(db=>{
 });
 ```
 
+### DB.init()
+
+*为所有的实例初始化数据库配置。*
+
+**签名：**
+
+- `init(config: DBConfig): typeof DB`
+
+```javascript
+const { DB } = require("modelar");
+
+DB.init({
+    type: "mysql", // 默认支持 mysql、maria 和 postgres
+    host: "localhost",
+    port: 3306,
+    user: "user",
+    password: "",
+    database: "modelar",
+});
+```
+
+`db.constructor()` 以及 `db.set()` 与 `DB.init()` 的不同之处在于，前两者仅仅设置了
+当前实例的配置信息，而 `DB.init()` 则会为所有实例进行初始化。
+
+自 3.0 版本起，静态方法如 [DB.init()](#DB_init)、
+[DB.setAdapter()](#DB_setAdapter)、[DB.on()](#DB_on) 以及 
+[DB.destroy()](#DB_destroy) 只会影响到当前类或其子类的实例，这意味着如果你调用 
+`Model.init()`，只有模型才会被初始化配置，而 `DB` 和 `Query` 类的实例则不会。
+
+### DB.setAdapter()
+
+*为指定的数据库类型设置适配器。*
+
+**签名：**
+
+- `setAdapter(type: string, adapter: Adapter): typeof DB`
+
+```javascript
+const MssqlAdapter = require("modelar-mssql-adapter");
+
+DB.setAdapter("mssql", MssqlAdapter);
+```
+
+### DB.on()
+
+*将一个事件监听器函数绑定到所有实例的指定事件上。*
+
+**签名：**
+
+- `on(event: string | symbol, listener: (...args: any[]) => void): typeof DB`
+
+```javascript
+const { DB } = require("modelar");
+
+DB.on("query", db => {
+    // 当 SQL 语句运行时输出日志。
+    // `db.sql` 即是被运行的 SQL 语句，而 `db.bindings` 则是绑定到它上面的参数，
+    // 为一个数组。
+    console.log(db.sql, db.bindings);
+});
+```
+
 ### DB.destroy()
 
-*销毁所有连接池中的所有数据库连接。*
+*销毁所有连接池中的数据库连接。*
+
+**签名：**
+
+- `close(): void`
 
 **别名：**
 
 - `DB.close()`
 
 该方法没有返回值。
-
-### 预定义事件
-
-在 DB 层面上，只有一个事件 `query`，当每一次调用 [db.query()](#db_query) 来运行
-SQL 语句时，这个事件就会被触发并调用绑定到它上面的所有事件处理函数。
-
-你可以使用 [DB.on()](#DB_on) 或者 [db.on()](#db_on) 来绑定事件监听函数到这个事件
-上，但是请注意区分它们的不同表现。
 
 ### 在 Express 中包裹 DB
 

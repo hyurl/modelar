@@ -1,0 +1,31 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const modelar_1 = require("modelar");
+const Country_1 = require("./Country");
+const User_1 = require("./User");
+const Role_1 = require("./Role");
+const Tag_1 = require("./Tag");
+const Article_1 = require("./Article");
+const Comment_1 = require("./Comment");
+const db_1 = require("./db");
+console.log(db_1.db);
+exports.createTables = async () => {
+    await Country_1.Country.use(db_1.db).createTable();
+    await User_1.User.use(db_1.db).createTable();
+    await Role_1.Role.use(db_1.db).createTable();
+    await Tag_1.Tag.use(db_1.db).createTable();
+    await Article_1.Article.use(db_1.db).createTable();
+    await Comment_1.Comment.use(db_1.db).createTable();
+    var table;
+    table = new modelar_1.Table("userroles");
+    table.addColumn("user_id", "int").notNull();
+    table.addColumn("role_id", "int").notNull();
+    table.addColumn("activated", "int").notNull().default(0);
+    await table.use(db_1.db).save();
+    table = new modelar_1.Table("taggables");
+    table.addColumn("tag_id", "int").notNull();
+    table.addColumn("taggable_id", "int").notNull();
+    table.addColumn("taggable_type", "varchar", 255).default("");
+    await table.use(db_1.db).save();
+};
+//# sourceMappingURL=create-tables.js.map

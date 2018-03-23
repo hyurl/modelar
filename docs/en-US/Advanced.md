@@ -169,3 +169,38 @@ co(function*() {
     user.close();
 });
 ```
+
+### Modelar with TypeScript
+
+Since 3.x, Modelar now is written with TypeScript, although you can still use 
+it in JavaScript way, but it would be more convenient if you use it with 
+TypeScript, and more features you will get.
+
+In this lesion, I will give you a brief introduction of how to use Modelar 
+with TypeScript and **decorators**.
+
+```typescript
+import { Model, User, field, primary, searchable } from "modelar";
+
+export class Article extends Model {
+    table = "articles";
+
+    @field
+    @primary
+    id: string;
+
+    @field
+    @searchable
+    title: string;
+
+    @field
+    content: string;
+
+    @field
+    user_id: number;
+
+    get user() {
+        return <User>this.belongsTo(User, "user_id");
+    }
+}
+```

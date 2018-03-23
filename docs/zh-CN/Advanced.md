@@ -166,3 +166,38 @@ co(function*() {
     user.close();
 });
 ```
+
+### 在 TypeScript 中使用 Modelar
+
+自 3.x 版本起，Modelar 现在使用 TypeScript 来编写，虽然你依旧可以按照传统 
+JavaScript 的方式使用它，但如果你在 TypeScript 中使用它，将会更合适，并能够获得更多
+特性。
+
+在这个章节中，我将向你简要的介绍如何在 TypeScript 中使用 Modelar, 并演示使用
+**装饰器**。
+
+```typescript
+import { Model, User, field, primary, searchable } from "modelar";
+
+export class Article extends Model {
+    table = "articles";
+
+    @field
+    @primary
+    id: string;
+
+    @field
+    @searchable
+    title: string;
+
+    @field
+    content: string;
+
+    @field
+    user_id: number;
+
+    get user() {
+        return <User>this.belongsTo(User, "user_id");
+    }
+}
+```

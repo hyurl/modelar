@@ -2,7 +2,10 @@
 #### 内容列表
 
 * [The User Class](#The-User-Class)
+    * [Events](#Events)
+    * [user.constructor()](#user_constructor)
     * [user.login()](#user_login)
+    * [User.login()](#User_login)
 
 ## User 类
 
@@ -13,22 +16,46 @@
 同时，User 类也是一个非常好使用 Modelar 的示例，你可以查看它的源码，学习它到底做了
 什么事情，然后去尝试定义你自己的模型类。
 
+### 事件
+
+- `login` 当用户登录成功后触发。
+
+**signatures:**
+
+- `constructor()`
+- `constructor(data: { [field: string]: any })`
+- `constructor(data: { [field: string]: any }, config: ModelConfig)`
+
+```javascript
+var user1 = new User;
+var user2 = new User({
+    name: "luna",
+    email: "luna@hyurl.com"
+});
+
+class Member extends User {
+    constructor(data = {}) {
+        super(data, {
+            table: "members",
+            fields: ["id", "name", "email", "password", "gender", "age"],
+            searchable: ["name", "email"]
+        });
+    }
+}
+```
+
 ### user.login()
 
 *尝试登录一个用户。*
 
-如果成功，一个 `login` 事件将会被触发；如果失败，将抛出一个错误来表示失败原因。这个
-方法不会将用户信息保存到 session 或者其它的存储介质中，如果你想要它这么做，你必须自己来实现。
+**signatures:**
 
-**参数：**
+- `login(options: { [field: string]: string, user?: string, password: string }): Promise<this>`
 
-- `args` 这个参数可以携带一个或者更多的可用于登录的 (`loginable`) 字段和值，并且
-    必须同时传递一个 `password` 字段。如果没有可用于登录的字段被传入，那么则需要传入
-    一个 `user` 键值对，意味着将要自动尝试所有的可能性。
-
-**返回值：**
-
-返回一个 Promise，唯一一个传递到 `then()` 中的回调函数的参数是登录成功的用户实例。
+默认地，`name` 和 `email` 可以用来进行登录，如果它们都没有被提供，那么则应该传入一个
+`user` 属性，它将会尝试所有可能性。你可以修改属性 `User.loginable` 来改变可用的登录
+字段。这个属性也同样遵循类分层树的规则，因此如果你有一个 
+`class Member extrends User{}`，那么 `Member.loginable` 将会被首先使用。
 
 ```javascript
 const express = require("express");
@@ -114,3 +141,7 @@ var server = app.listen(3000, () => {
     console.log("Server started, please visit http://%s:%s", host, port);
 });
 ```
+
+### User.login()
+
+`(new User).login()` 的一个简写方式。
