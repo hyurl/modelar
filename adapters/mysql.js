@@ -1,5 +1,5 @@
 const mysql = require("mysql");
-const { Adapter } = require("../Adapter");
+const Adapter = require("../Adapter");
 const Pools = {};
 
 class MysqlAdapter extends Adapter {

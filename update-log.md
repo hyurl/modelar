@@ -1,5 +1,12 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 2.2.0
+
+(2018-3-23 14:00 UTC+0800)
+
+1. Fix some bugs.
+2. Adapters `mysql` and `postgres` are moved into this module.
+
 ## 2.1.2
 
 (2018-01-18 0:00 UTC+0800)

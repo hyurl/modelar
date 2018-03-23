@@ -1,5 +1,5 @@
 const EventEmitter = require("events");
-const { Adapter } = require("./Adapter");
+const Adapter = require("./Adapter");
 const MysqlAdapter = require("./adapters/mysql");
 const PostgresAdapter = require("./adapters/postgres");
 const realAdapter = Symbol("realAdapter");
