@@ -287,7 +287,7 @@ class Query extends DB {
 
     /** Handles nested where...(or...) clauses. */
     _handleNestedWhere(callback) {
-        var query = new Query(); // Create a new instance for nested scope.
+        var query = new Query().use(this); // Create a new instance for nested scope.
         callback.call(query, query);
         if (query._where) {
             this._where += "(" + query._where + ")";
@@ -306,7 +306,7 @@ class Query extends DB {
 
     /** Gets a query by a callback function. */
     _getQueryBy(callback) {
-        var query = new Query(); // Create a new instance for nested scope.
+        var query = new Query().use(this); // Create a new instance for nested scope.
         callback.call(query, query);
         query.sql = query.getSelectSQL();
         return query; // Generate SQL statement.
@@ -998,7 +998,7 @@ class Query extends DB {
         if (!length)
             length = parseInt(this._limit) || 10;
         var offset = (page - 1) * length,
-            query = new Query(this.table);
+            query = new Query(this.table).use(this);
 
         query._where = this._where;
         query._join = this._join;

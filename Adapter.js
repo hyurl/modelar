@@ -1,4 +1,4 @@
-module.exports = class Adapter {
+class Adapter {
     constructor() {
         this.connection = null;
         this.quote = "'";
@@ -107,3 +107,5 @@ module.exports = class Adapter {
         throw new Error("Must be implemented first!");
     }
 }
+
+exports.Adapter = Adapter;

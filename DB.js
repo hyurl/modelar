@@ -1,7 +1,8 @@
 const EventEmitter = require("events");
-const Adapter = require("./Adapter");
-const MysqlAdapter = require("modelar-mysql-adapter");
-const PostgresAdapter = require("modelar-postgres-adapter");
+const { Adapter } = require("./Adapter");
+const MysqlAdapter = require("./adapters/mysql");
+const PostgresAdapter = require("./adapters/postgres");
+const realAdapter = Symbol("realAdapter");
 
 /**
  * *Database Manager.*
@@ -52,7 +53,20 @@ class DB extends EventEmitter {
         this._events = Object.assign({}, this.constructor._events);
         this._eventsCount = Object.keys(this._events).length;
 
-        this._adapter = new this.constructor._adapters[this._config.type];
+        // this._adapter = new this.constructor._adapters[this._config.type];
+    }
+
+    get _adapter() {
+        let Class = this.constructor;
+        if (!this[realAdapter]) {
+                let Adapter = Class._adapters[this.config.type];
+            this[realAdapter] = new Adapter;
+        }
+        return this[realAdapter];
+    }
+
+    set _adapter(v) {
+        this[realAdapter] = v;
     }
 
     /** Gets the data source name by the given configuration. */
@@ -207,7 +221,7 @@ class DB extends EventEmitter {
      * @return {typeof DB} Returns the class itself for function chaining.
      */
     static setAdapter(type, adapter) {
-        adapter = adapter instanceof Adapter ? adapter.constructor : adapter;
+        adapter = (adapter instanceof Adapter) ? adapter.constructor : adapter;
         this._adapters[type] = adapter;
         return this;
     }

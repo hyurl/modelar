@@ -515,7 +515,7 @@ class Model extends Query {
      */
     whereState(field, operator = null, value = undefined) {
         var query = new Query();
-        query.where(field, operator, value);
+        query.use(this).where(field, operator, value);
         this._whereState.where = query._where;
         this._whereState.bindings = query._bindings;
         return this;
@@ -1164,7 +1164,7 @@ class Model extends Query {
      *  its features to handle data.
      */
     hasThrough(Model, MiddleModel, foreignKey1, foreignKey2) {
-        var model = new MiddleModel;
+        var model = new MiddleModel().use(this);
         return Model.use(this).whereIn(foreignKey1, query => {
             query.select(model._primary).from(model._table)
                 .where(foreignKey2, this._data[this._primary]);
@@ -1188,9 +1188,9 @@ class Model extends Query {
      *  its features to handle data.
      */
     belongsToThrough(Model, MiddleModel, foreignKey1, foreignKey2) {
-        var model = new Model,
-            _model = new MiddleModel;
-        return model.use(this).where(model._primary, query => {
+        var model = new Model().use(this),
+            _model = new MiddleModel().use(this);
+        return model.where(model._primary, query => {
             query.select(foreignKey2).from(_model._table)
                 .where(_model._primary, this._data[foreignKey1]);
         });
@@ -1217,7 +1217,7 @@ class Model extends Query {
      *  its features to handle data.
      */
     hasVia(Model, pivotTable, foreignKey1, foreignKey2, typeKey = "") {
-        var model = new Model;
+        var model = new Model().use(this);
         model._caller = this;
         model._pivot = [
             pivotTable,
@@ -1226,7 +1226,7 @@ class Model extends Query {
             typeKey,
             this.constructor.name
         ];
-        return model.use(this).whereIn(model._primary, query => {
+        return model.whereIn(model._primary, query => {
             query.select(model._pivot[1]).from(model._pivot[0])
                 .where(model._pivot[2], this._data[this._primary]);
             if (model._pivot[3]) {
@@ -1256,7 +1256,7 @@ class Model extends Query {
      *  its features to handle data.
      */
     belongsToVia(Model, pivotTable, foreignKey1, foreignKey2, typeKey = "") {
-        var model = new Model;
+        var model = new Model().use(this);
         model._caller = this;
         model._pivot = [
             pivotTable,
@@ -1265,7 +1265,7 @@ class Model extends Query {
             typeKey,
             Model.name
         ];
-        return model.use(this).whereIn(model._primary, query => {
+        return model.whereIn(model._primary, query => {
             query.select(model._pivot[1]).from(model._pivot[0])
                 .where(model._pivot[2], this._data[this._primary]);
             if (model._pivot[3]) {
@@ -1379,8 +1379,8 @@ class Model extends Query {
             }
         }
 
-        var query = new Query(this._pivot[0]);
-        query.use(this).where(this._pivot[2], id1);
+        var query = new Query(this._pivot[0]).use(this);
+        query.where(this._pivot[2], id1);
         if (this._pivot[3])
             query.where(this._pivot[3], this._pivot[4]);
         return query.all().then(data => {
@@ -1415,7 +1415,7 @@ class Model extends Query {
                 }
             }
 
-            let _query = (new Query(this._pivot[0])).use(this),
+            let _query = new Query(this._pivot[0]).use(this),
                 // Insert association records within a recursive loop.
                 doInsert = (query) => {
                     let id = inserts.shift(),
@@ -1505,8 +1505,8 @@ class Model extends Query {
 
         var target = this._caller,
             id1 = target._data[target._primary],
-            query = new Query(this._pivot[0]);
-        query.use(this).where(this._pivot[2], id1);
+            query = new Query(this._pivot[0]).use(this);
+        query.where(this._pivot[2], id1);
         if (this._pivot[3])
             query.where(this._pivot[3], this._pivot[4]);
         if (models.length > 0) {

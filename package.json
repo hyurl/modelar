@@ -1,6 +1,6 @@
 {
     "name": "modelar",
-    "version": "2.1.2",
+    "version": "2.2.0",
     "description": "An expressive ORM with query builder and supports multiple databases.",
     "main": "index.js",
     "types": "declarations/index.d.ts",
@@ -9,8 +9,8 @@
     },
     "dependencies": {
         "bcrypt-nodejs": "0.0.3",
-        "modelar-mysql-adapter": "^0.2.0",
-        "modelar-postgres-adapter": "^0.2.0"
+        "mysql": "^2.15.0",
+        "pg": "^7.4.1"
     },
     "keywords": [
         "model",
