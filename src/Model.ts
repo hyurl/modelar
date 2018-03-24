@@ -86,6 +86,7 @@ export class Model extends Query {
         this.searchable = config.searchable || this.searchable || [];
         this.schema = this.schema || {};
         this._initiated = this._initiated || false;
+        this["_isModel"] = true;
 
         // Define pseudo-properties.
         if (this.fields.length && !this._initiated)

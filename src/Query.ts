@@ -24,6 +24,7 @@ export class Query extends DB {
     private _limit: string | number | [number, number] = "";
     private _union: string = "";
     private _bindings: any[] = [];
+    private _isModel: boolean = false;
 
     /** Creates a new Query instance with a specified table name. */
     constructor(table = "") {
@@ -690,7 +691,7 @@ export class Query extends DB {
 
         // Fire event and call its listeners only if the current instance is 
         // the Query instance, not its subclasses' instances.
-        if (this.constructor === Query)
+        if (!this._isModel)
             this.emit("get", this);
 
         return promise;
@@ -702,7 +703,7 @@ export class Query extends DB {
 
         // Fire event and call its listeners only if the current instance is 
         // the Query instance, not its subclasses' instances.
-        if (this.constructor === Query)
+        if (!this._isModel)
             this.emit("get", this);
 
         return promise.then(data => {

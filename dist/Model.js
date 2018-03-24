@@ -17,6 +17,7 @@ class Model extends Query_1.Query {
         this.searchable = config.searchable || this.searchable || [];
         this.schema = this.schema || {};
         this._initiated = this._initiated || false;
+        this["_isModel"] = true;
         if (this.fields.length && !this._initiated)
             this._defineProperties(this.fields);
         if (data) {

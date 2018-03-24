@@ -17,6 +17,7 @@ class Query extends DB_1.DB {
         this._limit = "";
         this._union = "";
         this._bindings = [];
+        this._isModel = false;
         this.table = table;
     }
     select(...args) {
@@ -351,13 +352,13 @@ class Query extends DB_1.DB {
     }
     get() {
         let promise = this.limit(1)._handleSelect().then(data => data[0]);
-        if (this.constructor === Query)
+        if (!this._isModel)
             this.emit("get", this);
         return promise;
     }
     all() {
         let promise = this._handleSelect();
-        if (this.constructor === Query)
+        if (!this._isModel)
             this.emit("get", this);
         return promise.then(data => {
             return data instanceof Array ? data : [data];
