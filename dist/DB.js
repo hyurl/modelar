@@ -37,6 +37,8 @@ let DB = DB_1 = class DB extends events_1.EventEmitter {
         this._adapter = v;
     }
     _getDSN() {
+        if (this.config.connectionString)
+            return this.config.connectionString;
         let config = this.config, dsn = config.type + ":";
         if (config.user || config.host)
             dsn += "//";

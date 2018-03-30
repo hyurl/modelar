@@ -1,5 +1,6 @@
+import { DB } from "modelar";
 import { Role } from "./Role";
-import { db } from "./db";
+const db: DB = require("modelar/test/db");
 
 export var createRoles = async () => {
     await new Role({

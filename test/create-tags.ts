@@ -1,5 +1,6 @@
+import { DB } from "modelar";
 import { Tag } from "./Tag";
-import { db } from "./db";
+const db: DB = require("modelar/test/db");
 
 export var createTags = async () => {
     await new Tag({

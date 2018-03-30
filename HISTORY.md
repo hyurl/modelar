@@ -1,5 +1,13 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 3.0.2
+
+(2018-3-30 14:14 UTC+0800)
+
+1. `DBConfig` now allows extra properties for adapters.
+2. `DBConfig.connectionString` is supported now, when set, `db.dsn` will 
+    return it instead.
+
 ## 3.0.0 (**Important**)
 
 1. Rewrite using TypeScript.
@@ -16,8 +24,6 @@
     6. `user._loginable` tp `User.loginable`.
     
     Old instance properties still can be used, but it's highly deprecated.
-
-(2017-1-10 12:00 UTC+0800)
 
 ## 2.0.1
 

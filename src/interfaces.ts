@@ -1,13 +1,19 @@
 import { Model } from "./Model";
 
 export interface DBConfig {
+    [x: string]: any
     type?: string;
     database: string;
+    /** socket, TCP, TCPIP (default), pipe, UNIX (UNIX socket), memory, etc. */
+    protocol?: string;
     host?: string;
     port?: number;
+    /** The path to a unix domain socket (if supported), when `host` and `port` are missing. */
+    socketPath?: string;
     user?: string;
     password?: string;
-    ssl?: {
+    ssl?: string | boolean | {
+        [x: string]: any;
         rejectUnauthorized?: boolean,
         ca?: string,
         key?: string,
@@ -16,12 +22,18 @@ export interface DBConfig {
     timeout?: number;
     charset?: string;
     /** Maximum connection count of the pool. */
-    max?: number
+    max?: number;
+    /**
+     * Customize connection string when necessary, be aware different adapters
+     * support different string formats.
+     */
+    connectionString?: string;
 }
 
 export const DBConfig: DBConfig = {
     type: "mysql",
     database: "",
+    protocol: "TCPIP",
     host: "",
     port: 0,
     user: "",
@@ -30,6 +42,7 @@ export const DBConfig: DBConfig = {
     timeout: 5000,
     charset: "utf8",
     max: 50,
+    connectionString: "",
 };
 
 export interface ForeignKeyConfig {

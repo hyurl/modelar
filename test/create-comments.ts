@@ -1,5 +1,6 @@
+import { DB } from "modelar";
 import { Comment } from "./Comment";
-import { db } from "./db";
+const db: DB = require("modelar/test/db");
 
 export var createComments = async () => {
     await new Comment({

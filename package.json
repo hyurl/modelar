@@ -1,6 +1,6 @@
 {
     "name": "modelar",
-    "version": "3.0.1",
+    "version": "3.0.2",
     "description": "An expressive ORM with query builder and supports multiple databases.",
     "main": "dist/index.js",
     "types": "src/index.ts",
@@ -11,7 +11,7 @@
         "bcrypt-nodejs": "^0.0.3",
         "hide-protected-properties": "^0.1.0",
         "modelar-mysql-adapter": "^3.0.2",
-        "modelar-postgres-adapter": "^3.0.2",
+        "modelar-postgres-adapter": "^3.0.3",
         "source-map-support": "^0.5.4",
         "tslib": "^1.9.0"
     },

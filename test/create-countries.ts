@@ -1,5 +1,6 @@
+import { DB } from "modelar";
 import { Country } from "./Country";
-import { db } from "./db";
+const db: DB = require("modelar/test/db");
 
 export var createCounties = async () => {
     await new Country({

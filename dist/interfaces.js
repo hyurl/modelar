@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DBConfig = {
     type: "mysql",
     database: "",
+    protocol: "TCPIP",
     host: "",
     port: 0,
     user: "",
@@ -11,6 +12,7 @@ exports.DBConfig = {
     timeout: 5000,
     charset: "utf8",
     max: 50,
+    connectionString: "",
 };
 exports.ForeignKeyConfig = {
     table: "",

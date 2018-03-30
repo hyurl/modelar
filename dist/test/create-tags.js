@@ -1,19 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const Tag_1 = require("./Tag");
-const db_1 = require("./db");
-exports.createTags = async () => {
-    await new Tag_1.Tag({
+const db = require("modelar/test/db");
+exports.createTags = () => tslib_1.__awaiter(this, void 0, void 0, function* () {
+    yield new Tag_1.Tag({
         name: "best"
-    }).use(db_1.db).save();
-    await new Tag_1.Tag({
+    }).use(db).save();
+    yield new Tag_1.Tag({
         name: "good"
-    }).use(db_1.db).save();
-    await new Tag_1.Tag({
+    }).use(db).save();
+    yield new Tag_1.Tag({
         name: "bad"
-    }).use(db_1.db).save();
-    await new Tag_1.Tag({
+    }).use(db).save();
+    yield new Tag_1.Tag({
         name: "worst"
-    }).use(db_1.db).save();
-};
+    }).use(db).save();
+});
 //# sourceMappingURL=create-tags.js.map

@@ -1,6 +1,6 @@
+import { DB } from "modelar";
 import { Article } from "./Article";
 import { Comment } from "./Comment";
-import { db } from "./db";
 import { createTables } from "./create-tables";
 import { createUser } from "./create-user";
 import { createArticles } from "./create-articles";
@@ -13,6 +13,7 @@ import { Role } from "./Role";
 import { Tag } from "./Tag";
 import { Country } from "./Country";
 import { User } from "./User";
+const db: DB = require("modelar/test/db");
 
 (async () => {
     try {
@@ -111,6 +112,8 @@ import { User } from "./User";
         await comments[1].article.dissociate();
         await tags[0].articles.detach();
         await article.tags.detach();
+
+        console.log("All procedures are run properly.");
     } catch (e) {
         console.log(e);
     }

@@ -88,6 +88,9 @@ export class DB extends EventEmitter {
     }
 
     private _getDSN(): string {
+        if (this.config.connectionString)
+            return this.config.connectionString;
+
         let config = this.config,
             dsn = config.type + ":";
         if (config.user || config.host)

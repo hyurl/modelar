@@ -126,16 +126,12 @@ than 6.0.
 This module provides an example that you can use to test in your environment,
 after you've installed the module, modify the file 
 `./node_modules/modelar/test/db.ts` to configure for your database connection,
-since the `tsconfig.json` sets that test files should be compiled to `es2017`,
-you may want to edit it as well, if your Node.js version is lower than 8.0. 
-After you have done these, you're ready to compile and run the example.
+then go to the parent directory and run the example.
 
 ```sh
 npm i modelar
 cd ./node_modules/modelar/test
-vim db.ts
-vim tsconfig.json
-tsc
+vim db.js
 cd ..
 npm test
 ```

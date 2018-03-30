@@ -1,5 +1,6 @@
+import { DB } from "modelar";
 import { User } from "./User";
-import { db } from "./db";
+const db: DB = require("modelar/test/db");
 
 export var loginUser = async () => {
     return await (<User>User.use(db)).login({

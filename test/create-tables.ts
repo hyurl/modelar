@@ -1,13 +1,11 @@
-import { Table } from "modelar";
+import { Table, DB } from "modelar";
 import { Country } from "./Country";
 import { User } from "./User";
 import { Role } from "./Role";
 import { Tag } from "./Tag";
 import { Article } from "./Article";
 import { Comment } from "./Comment";
-import { db } from "./db";
-
-console.log(db);
+const db: DB = require("modelar/test/db");
 
 export var createTables = async () => {
     await Country.use(db).createTable();
