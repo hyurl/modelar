@@ -138,7 +138,7 @@ let DB = DB_1 = class DB extends events_1.EventEmitter {
         return this;
     }
     query(sql, ...bindings) {
-        if (this.adapter.connection === null) {
+        if (!this.adapter.connection) {
             return this.connect().then(() => {
                 return this.query(sql, ...bindings);
             });
@@ -147,6 +147,8 @@ let DB = DB_1 = class DB extends events_1.EventEmitter {
             bindings = bindings[0];
         this.sql = sql.trim();
         this.bindings = Object.assign([], bindings);
+        if (this.sql[this.sql.length - 1] == ";")
+            this.sql = this.sql.slice(0, -1);
         let i = this.sql.indexOf(" "), command = this.sql.substring(0, i).toLowerCase();
         this.command = command;
         this.emit("query", this);

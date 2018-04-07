@@ -173,6 +173,7 @@ export class DB extends EventEmitter {
 
         let parts = identifier.split("."),
             quote: string[];
+
         if (this.adapter.backquote !== undefined) {
             if (this.adapter.backquote instanceof Array) {
                 quote = this.adapter.backquote;
@@ -189,12 +190,14 @@ export class DB extends EventEmitter {
         } else {
             quote = ["`", "`"];
         }
+
         if (parts.length === 1 && !IdentifierException.test(identifier)) {
             identifier = quote[0] + identifier + quote[1];
         } else if (parts.length === 2) {
             identifier = this.backquote(parts[0]) + "." +
                 this.backquote(parts[1]);
         }
+
         return identifier;
     }
 
@@ -241,7 +244,7 @@ export class DB extends EventEmitter {
     query(sql: string, ...bindings: any[]): Promise<this>;
 
     query(sql: string, ...bindings: any[]) {
-        if (this.adapter.connection === null) {
+        if (!this.adapter.connection) {
             return this.connect().then(() => {
                 return this.query(sql, ...bindings);
             });
@@ -252,6 +255,10 @@ export class DB extends EventEmitter {
 
         this.sql = sql.trim();
         this.bindings = Object.assign([], bindings);
+
+        // remove the trailing ';' in the sql.
+        if (this.sql[this.sql.length - 1] == ";")
+            this.sql = this.sql.slice(0, -1);
 
         let i = this.sql.indexOf(" "),
             command = this.sql.substring(0, i).toLowerCase();

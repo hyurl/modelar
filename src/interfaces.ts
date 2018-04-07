@@ -8,11 +8,11 @@ export interface DBConfig {
     protocol?: string;
     host?: string;
     port?: number;
-    /** The path to a unix domain socket (if supported), when `host` and `port` are missing. */
+    /** The path to a UNIX domain socket (if supported), when `host` and `port` are missing. */
     socketPath?: string;
     user?: string;
     password?: string;
-    ssl?: string | boolean | {
+    ssl?: string | {
         [x: string]: any;
         rejectUnauthorized?: boolean,
         ca?: string,
