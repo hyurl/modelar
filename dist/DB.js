@@ -137,31 +137,42 @@ let DB = DB_1 = class DB extends events_1.EventEmitter {
         this.adapter = db.adapter;
         return this;
     }
-    query(sql, ...bindings) {
+    ensureConnect() {
         if (!this.adapter.connection) {
-            return this.connect().then(() => {
-                return this.query(sql, ...bindings);
-            });
+            return this.connect();
         }
-        if (bindings[0] instanceof Array)
-            bindings = bindings[0];
-        this.sql = sql.trim();
-        this.bindings = Object.assign([], bindings);
-        if (this.sql[this.sql.length - 1] == ";")
-            this.sql = this.sql.slice(0, -1);
-        let i = this.sql.indexOf(" "), command = this.sql.substring(0, i).toLowerCase();
-        this.command = command;
-        this.emit("query", this);
-        return this.adapter.query(this, sql, bindings);
+        else {
+            return Promise.resolve(this);
+        }
+    }
+    query(sql, ...bindings) {
+        return this.ensureConnect().then(() => {
+            if (bindings[0] instanceof Array)
+                bindings = bindings[0];
+            this.sql = sql.trim();
+            this.bindings = Object.assign([], bindings);
+            if (this.sql[this.sql.length - 1] == ";")
+                this.sql = this.sql.slice(0, -1);
+            let i = this.sql.indexOf(" "), command = this.sql.substring(0, i).toLowerCase();
+            this.command = command;
+            this.emit("query", this);
+            return this.adapter.query(this, sql, bindings);
+        });
     }
     transaction(cb) {
-        return this.adapter.transaction(this, cb);
+        return this.ensureConnect().then(() => {
+            return this.adapter.transaction(this, cb);
+        });
     }
     commit() {
-        return this.adapter.commit(this);
+        return this.ensureConnect().then(() => {
+            return this.adapter.commit(this);
+        });
     }
     rollback() {
-        return this.adapter.rollback(this);
+        return this.ensureConnect().then(() => {
+            return this.adapter.rollback(this);
+        });
     }
     release() {
         return this.adapter.release();

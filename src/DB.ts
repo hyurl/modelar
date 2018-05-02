@@ -201,7 +201,7 @@ export class DB extends EventEmitter {
         return identifier;
     }
 
-    /** An alias of `db.emit()`. */
+    /** (**deprecated**) An alias of `db.emit()`. */
     trigger(event: string | symbol, ...args: any[]): boolean {
         return this.emit(event, ...args);
     }
@@ -228,6 +228,15 @@ export class DB extends EventEmitter {
         return this;
     }
 
+    /** Opens connection if it's not opened. */
+    private ensureConnect(): Promise<this> {
+        if (!this.adapter.connection) {
+            return this.connect();
+        } else {
+            return Promise.resolve(this);
+        }
+    }
+
     /**
      * Executes a SQL statement.
      * 
@@ -244,29 +253,25 @@ export class DB extends EventEmitter {
     query(sql: string, ...bindings: any[]): Promise<this>;
 
     query(sql: string, ...bindings: any[]) {
-        if (!this.adapter.connection) {
-            return this.connect().then(() => {
-                return this.query(sql, ...bindings);
-            });
-        }
+        return this.ensureConnect().then(() => {
+            if (bindings[0] instanceof Array)
+                bindings = bindings[0];
 
-        if (bindings[0] instanceof Array)
-            bindings = bindings[0];
+            this.sql = sql.trim();
+            this.bindings = Object.assign([], bindings);
 
-        this.sql = sql.trim();
-        this.bindings = Object.assign([], bindings);
+            // remove the trailing ';' in the sql.
+            if (this.sql[this.sql.length - 1] == ";")
+                this.sql = this.sql.slice(0, -1);
 
-        // remove the trailing ';' in the sql.
-        if (this.sql[this.sql.length - 1] == ";")
-            this.sql = this.sql.slice(0, -1);
+            let i = this.sql.indexOf(" "),
+                command = this.sql.substring(0, i).toLowerCase();
 
-        let i = this.sql.indexOf(" "),
-            command = this.sql.substring(0, i).toLowerCase();
+            this.command = command;
+            this.emit("query", this);
 
-        this.command = command;
-        this.emit("query", this);
-
-        return this.adapter.query(this, sql, bindings) as Promise<this>;
+            return this.adapter.query(this, sql, bindings);
+        });
     }
 
     /** Begins transaction. */
@@ -283,17 +288,23 @@ export class DB extends EventEmitter {
     transaction(cb: (db: this) => Promise<any>): Promise<this>;
 
     transaction(cb?: (db: this) => Promise<any>) {
-        return this.adapter.transaction(this, cb) as Promise<this>;
+        return this.ensureConnect().then(() => {
+            return this.adapter.transaction(this, cb);
+        });
     }
 
     /** Commits the transaction when things going well. */
     commit(): Promise<this> {
-        return this.adapter.commit(this) as Promise<this>;
+        return this.ensureConnect().then(() => {
+            return this.adapter.commit(this) as Promise<this>;
+        });
     }
 
     /** Rolls the transaction back when things going wrong. */
     rollback(): Promise<this> {
-        return this.adapter.rollback(this) as Promise<this>;
+        return this.ensureConnect().then(() => {
+            return this.adapter.rollback(this) as Promise<this>;
+        });
     }
 
     /** Releases the connection. */
@@ -335,6 +346,7 @@ export class DB extends EventEmitter {
         } else {
             this._events[event] = listener;
         }
+        
         return this;
     }
 

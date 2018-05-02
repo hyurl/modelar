@@ -5,7 +5,7 @@
     "main": "dist/index.js",
     "types": "src/index.ts",
     "scripts": {
-        "test": "node dist/test"
+        "test": "mocha"
     },
     "dependencies": {
         "bcrypt-nodejs": "^0.0.3",
@@ -35,5 +35,8 @@
         "type": "git",
         "url": "git+https://github.com/hyurl/modelar.git"
     },
-    "license": "MIT"
+    "license": "MIT",
+    "devDependencies": {
+        "mocha": "^5.1.1"
+    }
 }
