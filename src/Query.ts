@@ -29,19 +29,19 @@ export class Query extends DB {
     /** Creates a new Query instance with a specified table name. */
     constructor(table = "") {
         super();
-        this.table = table;
+        this.from(table);
     }
 
     /**
-     * Sets what fields that need to be fetched.
-     * @param fields A list of all target fields.
+     * Treats the given name as a field and keep its form in where or join 
+     * clause.
      */
-    select(fields: string[]): this;
+    field(name: string): Query.Field {
+        return new Query.Field(name);
+    }
 
-    /**
-     * Sets what fields that need to be fetched.
-     * @param fields A list of all target fields.
-     */
+    /** Sets what fields that need to be fetched. */
+    select(fields: string[]): this;
     select(...fields: string[]): this;
 
     select(...args) {
@@ -52,150 +52,183 @@ export class Query extends DB {
     }
 
     /** Sets the table name that the current instance binds to. */
-    from(table: string): this {
-        this.table = table;
+    from(table: string): this;
+
+    /** Sets multiple table names that the current instance binds to. */
+    from(tables: string[]): this;
+    from(...tables: string[]): this;
+
+    from(...tables): this {
+        if (tables.length > 1) {
+            this.table = tables.join(", ");
+        } else if (Array.isArray(tables[0])) {
+            this.table = tables[0].join(", ");
+        } else {
+            this.table = tables[0];
+        }
+
         return this;
     }
 
     /**
-     * Sets a `inner join...` clause for the SQL statement.
-     * @param table A table name that needs to be joined with.
-     * @param field1 A field name in the table that currently binds to.
-     * @param field2 A field in `table` that needs to be compared with 
-     *  `field1`.
+     * Sets a `inner join...` clause for the SQL statement via a nested query,
+     * in the nested query, use `where()` to set conditions for keyword `on`.
      */
+    join(table: string, nested: (query: Query) => void): this;
+
+    /**
+     * Sets a `inner join...` clause for the SQL statement with multiple 
+     * fields.
+     */
+    join(table: string, fields: { [field: string]: any }): this;
+
+    /** Sets a `inner join...` clause for the SQL statement. */
     join(table: string, field1: string, field2: string): this;
 
-    /**
-     * Sets a `inner join...` clause for the SQL statement.
-     * @param table A table name that needs to be joined with.
-     * @param field1 A field name in the table that currently binds to.
-     * @param operator Condition operator.
-     * @param field2 A field in `table` that needs to be compared with 
-     *  `field1`.
-     */
+    /** Sets a `inner join...` clause for the SQL statement. */
     join(table: string, field1: string, operator: string, field2: string): this;
 
-    join(table, field1, operator, field2 = "") {
-        return this._handleJoin(table, field1, operator, field2);
+    join(table, ...args) {
+        return this._handleJoin(table, "inner", ...args);
     }
 
     /**
-     * Sets a `left join...` clause for the SQL statement.
-     * @param table A table name that needs to be joined with.
-     * @param field1 A field name in the table that currently binds to.
-     * @param field2 A field in `table` that needs to be compared with 
-     *  `field1`.
+     * Sets a `left join...` clause for the SQL statement via a nested query,
+     * in the nested query, use `where()` to set conditions for keyword `on`.
      */
+    leftJoin(table: string, nested: (query: Query) => void): this;
+
+    /**
+     * Sets a `left join...` clause for the SQL statement with multiple 
+     * fields.
+     */
+    leftJoin(table: string, fields: { [field: string]: any }): this;
+
+    /** Sets a `left join...` clause for the SQL statement. */
     leftJoin(table: string, field1: string, field2: string): this;
 
-    /**
-     * Sets a `left join...` clause for the SQL statement.
-     * @param table A table name that needs to be joined with.
-     * @param field1 A field name in the table that currently binds to.
-     * @param operator Condition operator.
-     * @param field2 A field in `table` that needs to be compared with 
-     *  `field1`.
-     */
+    /** Sets a `left join...` clause for the SQL statement. */
     leftJoin(table: string, field1: string, operator: string, field2: string): this;
 
-    leftJoin(table, field1, operator, field2 = "") {
-        return this._handleJoin(table, field1, operator, field2, "left");
+    leftJoin(table, ...args) {
+        return this._handleJoin(table, "left", ...args);
     }
 
     /**
-     * Sets a `right join...` clause for the SQL statement.
-     * @param table A table name that needs to be joined with.
-     * @param field1 A field name in the table that currently binds to.
-     * @param field2 A field in `table` that needs to be compared with 
-     *  `field1`.
+     * Sets a `right join...` clause for the SQL statement via a nested query,
+     * in the nested query, use `where()` to set conditions for keyword `on`.
      */
+    rightJoin(table: string, nested: (query: Query) => void): this;
+
+    /**
+     * Sets a `right join...` clause for the SQL statement with multiple 
+     * fields.
+     */
+    rightJoin(table: string, fields: { [field: string]: any }): this;
+
+    /** Sets a `right join...` clause for the SQL statement. */
     rightJoin(table: string, field1: string, field2: string): this;
 
-    /**
-     * Sets a `right join...` clause for the SQL statement.
-     * @param table A table name that needs to be joined with.
-     * @param field1 A field name in the table that currently binds to.
-     * @param operator Condition operator.
-     * @param field2 A field in `table` that needs to be compared with 
-     *  `field1`.
-     */
+    /** Sets a `right join...` clause for the SQL statement. */
     rightJoin(table: string, field1: string, operator: string, field2: string): this;
 
-    rightJoin(table, field1, operator, field2 = "") {
-        return this._handleJoin(table, field1, operator, field2, "right");
+    rightJoin(table, ...args) {
+        return this._handleJoin(table, "right", ...args);
     }
 
     /**
-     * Sets a `full join...` clause for the SQL statement.
-     * @param table A table name that needs to be joined with.
-     * @param field1 A field name in the table that currently binds to.
-     * @param field2 A field in `table` that needs to be compared with 
-     *  `field1`.
+     * Sets a `full join...` clause for the SQL statement via a nested query,
+     * in the nested query, use `where()` to set conditions for keyword `on`.
      */
+    fullJoin(table: string, nested: (query: Query) => void): this;
+
+    /**
+     * Sets a `full join...` clause for the SQL statement with multiple 
+     * fields.
+     */
+    fullJoin(table: string, fields: { [field: string]: any }): this;
+
+    /** Sets a `full join...` clause for the SQL statement. */
     fullJoin(table: string, field1: string, field2: string): this;
 
-    /**
-     * Sets a `full join...` clause for the SQL statement.
-     * @param table A table name that needs to be joined with.
-     * @param field1 A field name in the table that currently binds to.
-     * @param operator Condition operator.
-     * @param field2 A field in `table` that needs to be compared with 
-     *  `field1`.
-     */
+    /** Sets a `full join...` clause for the SQL statement. */
     fullJoin(table: string, field1: string, operator: string, field2: string): this;
 
-    fullJoin(table, field1, operator, field2 = "") {
-        return this._handleJoin(table, field1, operator, field2, "full");
+    fullJoin(table, ...args) {
+        return this._handleJoin(table, "full", ...args);
     }
 
     /**
-     * Sets a `cross join...` clause for the SQL statement.
-     * @param table A table name that needs to be joined with.
-     * @param field1 A field name in the table that currently binds to.
-     * @param field2 A field in `table` that needs to be compared with 
-     *  `field1`.
+     * Sets a `cross join...` clause for the SQL statement via a nested query,
+     * in the nested query, use `where()` to set conditions for keyword `on`.
      */
+    crossJoin(table: string, nested: (query: Query) => void): this;
+
+    /**
+     * Sets a `cross join...` clause for the SQL statement with multiple 
+     * fields.
+     */
+    crossJoin(table: string, fields: { [field: string]: any }): this;
+
+    /** Sets a `cross join...` clause for the SQL statement. */
     crossJoin(table: string, field1: string, field2: string): this;
 
-    /**
-     * Sets a `cross join...` clause for the SQL statement.
-     * @param table A table name that needs to be joined with.
-     * @param field1 A field name in the table that currently binds to.
-     * @param operator Condition operator.
-     * @param field2 A field in `table` that needs to be compared with 
-     *  `field1`.
-     */
+    /** Sets a `cross join...` clause for the SQL statement. */
     crossJoin(table: string, field1: string, operator: string, field2: string): this;
 
-    crossJoin(table, field1, operator, field2 = "") {
-        return this._handleJoin(table, field1, operator, field2, "cross");
+    crossJoin(table, ...args) {
+        return this._handleJoin(table, "cross", ...args);
     }
 
-    private _handleJoin(table: string, field1: string, operator: string, field2: string, type = "inner"): this {
-        if (!field2) {
-            field2 = operator;
-            operator = "=";
-        }
+    private _handleJoin(table: string, type: string, ...args): this {
         if (!this._join) { // One join.
             this._join = this.backquote(this.table);
         } else { // Multiple joins.
             this._join = "(" + this._join + ")";
         }
-        this._join += " " + type + " join " + this.backquote(table) +
-            " on " + this.backquote(field1) + " " + operator + " " +
-            this.backquote(field2);
+
+        this._join += ` ${type} join ${this.backquote(table)} on `;
+
+        if (args.length == 1) {
+            if (typeof args[0] == "object") { // multiple fields.
+                let joins: string[] = [];
+
+                for (let field in args[0]) {
+                    let value = args[0][field],
+                        statement = this.backquote(field) + " = ";
+
+                    if (value instanceof Query.Field) {
+                        statement += this.backquote(value.name);
+                    } else {
+                        statement += "?";
+                        this._bindings.push(value);
+                    }
+
+                    joins.push(statement);
+                }
+
+                this._join += joins.join(" and ");
+            } else if (typeof args[0] == "function") { // nested query.
+                let cb: Function = args[0],
+                    query = new Query().use(this); // new instance for nested scope.
+
+                cb.call(query, query);
+
+                if (query._where) {
+                    this._join += query._where;
+                    this._bindings = this._bindings.concat(query._bindings);
+                }
+            }
+        } else if (args.length == 2) { // field1 = field2
+            this._join += this.backquote(args[0]) + " = " + this.backquote(args[1]);
+        } else if (args.length == 3) { // field1 <operator> field2
+            this._join += this.backquote(args[0])
+                + " " + this.backquote(args[1]) + " "
+                + this.backquote(args[2]);
+        }
+
         return this;
     }
-
-    /** Sets a `where...` clause for the SQL statement. */
-    where(field: string, value: string | number | boolean | Date): this;
-
-    /** Sets a `where...` clause for the SQL statement with an operator. */
-    where(field: string, operator: string, value: string | number | boolean | Date): this;
-
-    /** Sets a `where...` clause for the SQL statement with multiple fields. */
-    where(fields: { [field: string]: string | number | boolean | Date }): this;
 
     /** Sets a `where...` clause for the SQL statement with a nested query. */
     where(nested: (query: Query) => void): this;
@@ -205,6 +238,15 @@ export class Query extends DB {
 
     /** Sets a `where...` clause for the SQL statement with a nested query. */
     where(field: string, operator: string, nested: (query: Query) => void): this;
+
+    /** Sets a `where...` clause for the SQL statement with multiple fields. */
+    where(fields: { [field: string]: any }): this;
+
+    /** Sets a `where...` clause for the SQL statement. */
+    where(field: string, value: any): this;
+
+    /** Sets a `where...` clause for the SQL statement with an operator. */
+    where(field: string, operator: string, value: any): this;
 
     where(field, operator = null, value = undefined) {
         if (typeof field === "object") {
@@ -226,17 +268,6 @@ export class Query extends DB {
         return this;
     }
 
-    /** Sets a `where...or...` clause for the SQL statement. */
-    orWhere(field: string, value: string | number | boolean | Date): this;
-
-    /** Sets a `where...or...` clause for the SQL statement with an operator. */
-    orWhere(field: string, operator: string, value: string | number | boolean | Date): this;
-
-    /**
-     * Sets a `where...or...` clause for the SQL statement with multiple fields.
-     */
-    orWhere(fields: { [field: string]: string | number | boolean | Date }): this;
-
     /**
      * Sets a `where...or...` clause for the SQL statement with a nested 
      * query.
@@ -254,6 +285,17 @@ export class Query extends DB {
      * query.
      */
     orWhere(field: string, operator: string, nested: (query: Query) => void): this;
+
+    /** Sets a `where...or...` clause for the SQL statement. */
+    orWhere(field: string, value: any): this;
+
+    /** Sets a `where...or...` clause for the SQL statement with an operator. */
+    orWhere(field: string, operator: string, value: any): this;
+
+    /**
+     * Sets a `where...or...` clause for the SQL statement with multiple fields.
+     */
+    orWhere(fields: { [field: string]: any }): this;
 
     orWhere(field, operator = null, value = undefined) {
         if (typeof field === "object") {
@@ -275,13 +317,20 @@ export class Query extends DB {
         return this;
     }
 
-    private _handleWhere(field: string, operator: string, value?: string | number | boolean | Date): this {
+    private _handleWhere(field: string, operator: string, value?: any): this {
         if (value === undefined) {
             value = operator;
             operator = "=";
         }
-        this._where += this.backquote(field) + " " + operator + " ?";
-        this._bindings.push(value);
+
+        this._where += this.backquote(field) + " " + operator;
+
+        if (value instanceof Query.Field) {
+            this._where += " " + this.backquote(value.name);
+        } else {
+            this._where += " ?";
+            this._bindings.push(value);
+        }
         return this;
     }
 
@@ -341,7 +390,7 @@ export class Query extends DB {
      * Sets a `where...in...` clause for the SQL statement.
      * @param values An array carries all possible values.
      */
-    whereIn(field: string, values: string[] | number[]): this;
+    whereIn(field: string, values: any[]): this;
 
     /**
      * Sets a `where...in...` clause for the SQL statement with a nested 
@@ -357,7 +406,7 @@ export class Query extends DB {
      * Sets a `where...not in...` clause for the SQL statement.
      * @param values An array carries all possible values.
      */
-    whereNotIn(field: string, values: string[] | number[]): this;
+    whereNotIn(field: string, values: any[]): this;
 
     /**
      * Sets a `where...not in...` clause for the SQL statement with a nested 
@@ -373,7 +422,7 @@ export class Query extends DB {
      * Sets a `where...or...in...` clause for the SQL statement.
      * @param values An array carries all possible values.
      */
-    orWhereIn(field: string, values: string[] | number[]): this;
+    orWhereIn(field: string, values: any[]): this;
 
     /**
      * Sets a `where...or...in...` clause for the SQL statement with a nested 
@@ -389,7 +438,7 @@ export class Query extends DB {
      * Sets a `where...or...not in...` clause for the SQL statement.
      * @param values An array carries all possible values.
      */
-    orWhereNotIn(field: string, values: string[] | number[]): this;
+    orWhereNotIn(field: string, values: any[]): this;
 
     /**
      * Sets a `where...or...not in...` clause for the SQL statement with a 
@@ -401,7 +450,7 @@ export class Query extends DB {
         return this._handleIn(field, values, false, "or");
     }
 
-    private _handleIn(field: string, values: string[] | number[] | ((query: Query) => void), isIn = true, conj = "and"): this {
+    private _handleIn(field: string, values: any[] | ((query: Query) => void), isIn = true, conj = "and"): this {
         if (this._where) this._where += ` ${conj} `;
         if (values instanceof Function) {
             return this._handleInChild(field, values, isIn);
@@ -540,11 +589,14 @@ export class Query extends DB {
      * @param all Use `union all` to concatenate results.
      */
     union(query: string | Query, all = false): this {
+        if (this._union) this._union += " union ";
+
         if (query instanceof Query) {
             query.sql = query.getSelectSQL();
-            this._union += " union " + (all ? "all " : "") + query.sql;
-        } else if (typeof query == "string") {
-            this._union += " union " + (all ? "all " : "") + query;
+            this._union += (all ? "all " : "") + query.sql;
+            this._bindings = this._bindings.concat(query._bindings);
+        } else {
+            this._union += (all ? "all " : "") + query;
         }
         return this;
     }
@@ -553,7 +605,7 @@ export class Query extends DB {
     insert(data: { [field: string]: any } | any[]): Promise<this> {
         let bindings = [],
             fields: string[] | string = [],
-            values: any[] | string = [],
+            values: string[] | string = [],
             isObj = !Array.isArray(data);
 
         if (!Object.keys(data).length) {
@@ -561,10 +613,11 @@ export class Query extends DB {
         }
 
         for (let field in data) {
+            values.push("?");
             bindings.push(data[field]);
+
             if (isObj)
                 fields.push(this.backquote(field));
-            values.push("?");
         }
 
         if (isObj)
@@ -593,28 +646,30 @@ export class Query extends DB {
     update(data: { [field: string]: any }): Promise<this> {
         let parts: string[] = [],
             bindings = [];
+
         for (let field in data) {
             parts.push(this.backquote(field) + " = ?");
             bindings.push(data[field]);
         }
+
         return this._handleUpdate(parts, bindings);
     }
 
-    /** Increases a specified field with an optional step. */
-    increase(field: string, step?: number): Promise<this>;
-
     /** Increases multiple fields at one time. */
     increase(fields: { [field: string]: number }): Promise<this>;
+
+    /** Increases a specified field with an optional step. */
+    increase(field: string, step?: number): Promise<this>;
 
     increase(field: string | object, step = 1) {
         return this._handleCrease(field, step, "+");
     }
 
-    /** Decreases a specified field with an optional step. */
-    decrease(field: string, step?: number): Promise<this>;
-
     /** Decreases multiple fields at one time. */
     decrease(fields: { [field: string]: number }): Promise<this>;
+
+    /** Decreases a specified field with an optional step. */
+    decrease(field: string, step?: number): Promise<this>;
 
     decrease(field: string | object, step = 1) {
         return this._handleCrease(field, step, "-");
@@ -830,5 +885,15 @@ export class Query extends DB {
     /** Gets the select statement from the current instance. */
     getSelectSQL(): string {
         return this.adapter.getSelectSQL(this);
+    }
+}
+
+export namespace Query {
+    export class Field {
+        name: string;
+
+        constructor(name: string) {
+            this.name = name;
+        }
     }
 }

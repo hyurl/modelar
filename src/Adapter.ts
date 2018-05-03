@@ -94,7 +94,7 @@ export abstract class Adapter {
             (where ? " where " + where : "") +
             (orderBy ? " order by " + orderBy : "") +
             (groupBy ? " group by " + groupBy : "") +
-            (having ? "having " + having : "") +
+            (having ? " having " + having : "") +
             (limit ? " limit " + limit : "") +
             (union ? " union " + union : "");
     }

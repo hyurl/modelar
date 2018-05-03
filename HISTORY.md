@@ -1,5 +1,17 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 3.0.4
+
+1. Fix bug in `db.transation()`, now it can automatically open the connection.
+2. Fix bug in `query.union()`, it now concatenates the binding parameters when
+    passing a Query instance.
+3. Fix a bug in `query.getSelectSQL()` with having clause.
+4. `new Query()` and `query.from()` now can bind several tables.
+5. `query.join()`, `query.leftJoin()` etc. now support additional styles when
+    calling.
+6. Add `query.field()` to keep a value as a field used in where and join 
+    contexts.
+
 ## 3.0.2
 
 (2018-3-30 14:14 UTC+0800)

@@ -18,7 +18,10 @@ class Query extends DB_1.DB {
         this._union = "";
         this._bindings = [];
         this._isModel = false;
-        this.table = table;
+        this.from(table);
+    }
+    field(name) {
+        return new Query.Field(name);
     }
     select(...args) {
         let fields = args[0] instanceof Array ? args[0] : args;
@@ -26,39 +29,74 @@ class Query extends DB_1.DB {
         this._selects = fields.join(", ");
         return this;
     }
-    from(table) {
-        this.table = table;
+    from(...tables) {
+        if (tables.length > 1) {
+            this.table = tables.join(", ");
+        }
+        else if (Array.isArray(tables[0])) {
+            this.table = tables[0].join(", ");
+        }
+        else {
+            this.table = tables[0];
+        }
         return this;
     }
-    join(table, field1, operator, field2 = "") {
-        return this._handleJoin(table, field1, operator, field2);
+    join(table, ...args) {
+        return this._handleJoin(table, "inner", ...args);
     }
-    leftJoin(table, field1, operator, field2 = "") {
-        return this._handleJoin(table, field1, operator, field2, "left");
+    leftJoin(table, ...args) {
+        return this._handleJoin(table, "left", ...args);
     }
-    rightJoin(table, field1, operator, field2 = "") {
-        return this._handleJoin(table, field1, operator, field2, "right");
+    rightJoin(table, ...args) {
+        return this._handleJoin(table, "right", ...args);
     }
-    fullJoin(table, field1, operator, field2 = "") {
-        return this._handleJoin(table, field1, operator, field2, "full");
+    fullJoin(table, ...args) {
+        return this._handleJoin(table, "full", ...args);
     }
-    crossJoin(table, field1, operator, field2 = "") {
-        return this._handleJoin(table, field1, operator, field2, "cross");
+    crossJoin(table, ...args) {
+        return this._handleJoin(table, "cross", ...args);
     }
-    _handleJoin(table, field1, operator, field2, type = "inner") {
-        if (!field2) {
-            field2 = operator;
-            operator = "=";
-        }
+    _handleJoin(table, type, ...args) {
         if (!this._join) {
             this._join = this.backquote(this.table);
         }
         else {
             this._join = "(" + this._join + ")";
         }
-        this._join += " " + type + " join " + this.backquote(table) +
-            " on " + this.backquote(field1) + " " + operator + " " +
-            this.backquote(field2);
+        this._join += ` ${type} join ${this.backquote(table)} on `;
+        if (args.length == 1) {
+            if (typeof args[0] == "object") {
+                let joins = [];
+                for (let field in args[0]) {
+                    let value = args[0][field], statement = this.backquote(field) + " = ";
+                    if (value instanceof Query.Field) {
+                        statement += this.backquote(value.name);
+                    }
+                    else {
+                        statement += "?";
+                        this._bindings.push(value);
+                    }
+                    joins.push(statement);
+                }
+                this._join += joins.join(" and ");
+            }
+            else if (typeof args[0] == "function") {
+                let cb = args[0], query = new Query().use(this);
+                cb.call(query, query);
+                if (query._where) {
+                    this._join += query._where;
+                    this._bindings = this._bindings.concat(query._bindings);
+                }
+            }
+        }
+        else if (args.length == 2) {
+            this._join += this.backquote(args[0]) + " = " + this.backquote(args[1]);
+        }
+        else if (args.length == 3) {
+            this._join += this.backquote(args[0])
+                + " " + this.backquote(args[1]) + " "
+                + this.backquote(args[2]);
+        }
         return this;
     }
     where(field, operator = null, value = undefined) {
@@ -114,8 +152,14 @@ class Query extends DB_1.DB {
             value = operator;
             operator = "=";
         }
-        this._where += this.backquote(field) + " " + operator + " ?";
-        this._bindings.push(value);
+        this._where += this.backquote(field) + " " + operator;
+        if (value instanceof Query.Field) {
+            this._where += " " + this.backquote(value.name);
+        }
+        else {
+            this._where += " ?";
+            this._bindings.push(value);
+        }
         return this;
     }
     _handleNestedWhere(cb) {
@@ -260,12 +304,15 @@ class Query extends DB_1.DB {
         return this;
     }
     union(query, all = false) {
+        if (this._union)
+            this._union += " union ";
         if (query instanceof Query) {
             query.sql = query.getSelectSQL();
-            this._union += " union " + (all ? "all " : "") + query.sql;
+            this._union += (all ? "all " : "") + query.sql;
+            this._bindings = this._bindings.concat(query._bindings);
         }
-        else if (typeof query == "string") {
-            this._union += " union " + (all ? "all " : "") + query;
+        else {
+            this._union += (all ? "all " : "") + query;
         }
         return this;
     }
@@ -450,4 +497,12 @@ class Query extends DB_1.DB {
     }
 }
 exports.Query = Query;
+(function (Query) {
+    class Field {
+        constructor(name) {
+            this.name = name;
+        }
+    }
+    Query.Field = Field;
+})(Query = exports.Query || (exports.Query = {}));
 //# sourceMappingURL=Query.js.map

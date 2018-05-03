@@ -171,7 +171,8 @@ export class DB extends EventEmitter {
         if (typeof identifier !== "string")
             return identifier;
 
-        let parts = identifier.split("."),
+        let sep = identifier.indexOf(",") > 0 ? "," : ".",
+            parts = identifier.split(sep).map(part => part.trim()),
             quote: string[];
 
         if (this.adapter.backquote !== undefined) {
@@ -193,12 +194,17 @@ export class DB extends EventEmitter {
 
         if (parts.length === 1 && !IdentifierException.test(identifier)) {
             identifier = quote[0] + identifier + quote[1];
-        } else if (parts.length === 2) {
-            identifier = this.backquote(parts[0]) + "." +
-                this.backquote(parts[1]);
+        } else if (parts.length >= 2) {
+            parts = parts.map(part => this.backquote(part));
+            identifier = parts.join(sep == "," ? ", " : ".");
         }
 
         return identifier;
+    }
+
+    /** An alias of `db.backquote()`. */
+    identifier(name: string): string {
+        return this.backquote(name);
     }
 
     /** (**deprecated**) An alias of `db.emit()`. */
@@ -346,7 +352,7 @@ export class DB extends EventEmitter {
         } else {
             this._events[event] = listener;
         }
-        
+
         return this;
     }
 

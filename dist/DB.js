@@ -93,7 +93,7 @@ let DB = DB_1 = class DB extends events_1.EventEmitter {
     backquote(identifier) {
         if (typeof identifier !== "string")
             return identifier;
-        let parts = identifier.split("."), quote;
+        let sep = identifier.indexOf(",") > 0 ? "," : ".", parts = identifier.split(sep).map(part => part.trim()), quote;
         if (this.adapter.backquote !== undefined) {
             if (this.adapter.backquote instanceof Array) {
                 quote = this.adapter.backquote;
@@ -116,11 +116,14 @@ let DB = DB_1 = class DB extends events_1.EventEmitter {
         if (parts.length === 1 && !IdentifierException.test(identifier)) {
             identifier = quote[0] + identifier + quote[1];
         }
-        else if (parts.length === 2) {
-            identifier = this.backquote(parts[0]) + "." +
-                this.backquote(parts[1]);
+        else if (parts.length >= 2) {
+            parts = parts.map(part => this.backquote(part));
+            identifier = parts.join(sep == "," ? ", " : ".");
         }
         return identifier;
+    }
+    identifier(name) {
+        return this.backquote(name);
     }
     trigger(event, ...args) {
         return this.emit(event, ...args);

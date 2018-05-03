@@ -30,26 +30,26 @@ describe("Query.prototype.getSelectSQL()", () => {
     });
 
     it("should generate an SQL with where clause, limit and offset clause", () => {
-        query.limit(10, 5);
+        query.limit(10, 6);
 
-        assert.equal(query.getSelectSQL(), "select `name`, `email` from `users` where `id` = ? limit 5,10");
+        assert.equal(query.getSelectSQL(), "select `name`, `email` from `users` where `id` = ? limit 6,10");
     });
 
     it("should generate an SQL with where clause, limit and offset clause, and order by clause", () => {
         query.orderBy("name");
 
-        assert.equal(query.getSelectSQL(), "select `name`, `email` from `users` where `id` = ? order by `name` limit 5,10");
+        assert.equal(query.getSelectSQL(), "select `name`, `email` from `users` where `id` = ? order by `name` limit 6,10");
     });
 
     it("should generate an SQL with where clause, limit and offset clause, and order by asc clause", () => {
         query.orderBy("id", "asc");
 
-        assert.equal(query.getSelectSQL(), "select `name`, `email` from `users` where `id` = ? order by `name`, `id` asc limit 5,10");
+        assert.equal(query.getSelectSQL(), "select `name`, `email` from `users` where `id` = ? order by `name`, `id` asc limit 6,10");
     });
 
     it("should generate an SQL with where clause, limit and offset clause, and order by rand() clause", () => {
         query.random();
 
-        assert.equal(query.getSelectSQL(), "select `name`, `email` from `users` where `id` = ? order by rand() limit 5,10");
+        assert.equal(query.getSelectSQL(), "select `name`, `email` from `users` where `id` = ? order by rand() limit 6,10");
     });
 });
