@@ -125,21 +125,3 @@ This package is written in TypeScript and compiled to ES5 standard (since
 3.0.4) with some ES2015 features, so it can run it in any version of NodeJS 
 that higher than 4.0.0. BUT this feature may not work if the adapter you're 
 using doesn't support lower version of NodeJS.
-
-## How to test?
-
-This module provides an example that you can use to test in your environment,
-after you've installed the module, modify the file 
-`./node_modules/modelar/test/db.ts` to configure for your database connection,
-then go to the parent directory and run the example.
-
-```sh
-npm i modelar
-cd ./node_modules/modelar/test
-vim db.js
-cd ..
-npm test
-```
-
-You can use any of the adapters that Modelar supports to test the example, 
-they should act very much the same.
