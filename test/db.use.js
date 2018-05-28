@@ -16,7 +16,7 @@ describe("DB.prototype.use()", function () {
             timeout: 5000
         }));
 
-        assert.equal(db2.dsn, "mysql://root:161301@localhost:3306/modelar");
+        assert.equal(db2.dsn, "mysql://root@localhost:3306/modelar");
 
         assert.equal(db2.adapter, db.adapter);
     });

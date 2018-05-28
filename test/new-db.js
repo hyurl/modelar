@@ -15,7 +15,7 @@ describe("new DB()", function () {
             timeout: 5000
         }));
 
-        assert.equal(db.dsn, "mysql://root:161301@localhost:3306/modelar");
+        assert.equal(db.dsn, "mysql://root@localhost:3306/modelar");
         assert.equal(db.sql, "");
         assert.deepEqual(db.bindings, []);
         assert.equal(db.insertId, 0);

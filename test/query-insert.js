@@ -46,7 +46,6 @@ describe("Query.prototype.insert()", function () {
             ]).then(function () {
                 assert.equal(query.sql, "insert into `users` values (?, ?, ?, ?)");
                 assert.deepEqual(query.bindings, [1, "Ayon Lee", "i@hyurl.com", "123456"]);
-            }).then(function () {
                 db.close();
                 done();
             }).catch(function (_err) {
@@ -57,7 +56,6 @@ describe("Query.prototype.insert()", function () {
                 } else {
                     try {
                         assert.equal(query.sql, "insert into `users` values (?, ?, ?, ?)");
-                        assert.deepEqual(query.bindings, [1, "Ayon Lee", "i@hyurl.com", "123456"]);
                     } catch (_err) {
                         err = _err;
                     }

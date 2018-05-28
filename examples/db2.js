@@ -13,5 +13,5 @@ module.exports = new DB({
     host: "localhost",
     // port: 50000,
     user: "db2admin",
-    password: "161301"
+    password: ""
 });

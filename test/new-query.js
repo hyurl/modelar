@@ -17,7 +17,7 @@ describe("new Query()", function () {
             timeout: 5000
         }));
 
-        assert.equal(query.dsn, "mysql://root:161301@localhost:3306/modelar");
+        assert.equal(query.dsn, "mysql://root@localhost:3306/modelar");
         assert.equal(query.sql, "");
         assert.deepEqual(query.bindings, []);
         assert.equal(query.insertId, 0);
