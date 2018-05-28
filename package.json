@@ -16,9 +16,9 @@
         "bcrypt-nodejs": "^0.0.3",
         "hide-protected-properties": "^0.1.1",
         "lodash": "^4.17.10",
-        "modelar-mysql-adapter": "^3.0.2",
-        "source-map-support": "^0.5.4",
-        "tslib": "^1.9.0"
+        "modelar-mysql-adapter": "^3.0.4",
+        "source-map-support": "^0.5.6",
+        "tslib": "^1.9.1"
     },
     "keywords": [
         "model",
