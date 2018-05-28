@@ -1,6 +1,7 @@
 import { FieldConfig, ForeignKeyConfig } from "./interfaces";
 import { DB } from "./DB";
 import { Model } from "./Model";
+import assign = require("lodash/assign");
 
 /**
  * *Table Creator.*
@@ -43,7 +44,7 @@ export class Table extends DB {
             this._current = field.name;
             _field = field;
         }
-        this.schema[this._current] = Object.assign({}, FieldConfig, _field);
+        this.schema[this._current] = assign({}, FieldConfig, _field);
         return this;
     }
 
@@ -123,7 +124,7 @@ export class Table extends DB {
         } else {
             foreignKey = <ForeignKeyConfig>{ table: input, field, onDelete, onUpdate };
         }
-        this.schema[this._current].foreignKey = Object.assign(
+        this.schema[this._current].foreignKey = assign(
             this.schema[this._current].foreignKey,
             foreignKey
         );

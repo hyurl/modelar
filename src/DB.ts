@@ -1,9 +1,10 @@
 import { EventEmitter } from "events";
 import { MysqlAdapter } from "modelar-mysql-adapter";
-import { PostgresAdapter } from "modelar-postgres-adapter";
+// import { PostgresAdapter } from "modelar-postgres-adapter";
 import { DBConfig } from "./interfaces";
 import { Adapter } from "./Adapter";
 import HideProtectedProperties = require("hide-protected-properties");
+import assign = require("lodash/assign");
 
 const IdentifierException = /[~`!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:"'<>,\?\/\s]/;
 
@@ -52,7 +53,7 @@ export class DB extends EventEmitter {
     static adapters: { [type: string]: typeof Adapter | any } = {
         mysql: MysqlAdapter,
         maria: MysqlAdapter,
-        postgres: PostgresAdapter,
+        // postgres: PostgresAdapter,
     };
 
     /** Creates a new DB instance with a specified database name. */
@@ -68,9 +69,9 @@ export class DB extends EventEmitter {
 
         let Class = <typeof DB>this.constructor;
 
-        this.set(Object.assign({}, Class.config, config));
+        this.set(assign({}, Class.config, config));
         this.dsn = this._getDSN();
-        this._events = Object.assign({}, Class._events);
+        this._events = assign({}, Class._events);
         this._eventsCount = Object.keys(this._events).length;
     }
 
@@ -130,7 +131,7 @@ export class DB extends EventEmitter {
         } else {
             config = args[0];
         }
-        this.config = Object.assign({}, Class.config, config);
+        this.config = assign({}, Class.config, config);
         return this;
     }
 
@@ -264,7 +265,7 @@ export class DB extends EventEmitter {
                 bindings = bindings[0];
 
             this.sql = sql.trim();
-            this.bindings = Object.assign([], bindings);
+            this.bindings = assign([], bindings);
 
             // remove the trailing ';' in the sql.
             if (this.sql[this.sql.length - 1] == ";")
@@ -330,7 +331,7 @@ export class DB extends EventEmitter {
 
     /** Initiates database configurations for all instances. */
     static init(config: DBConfig): typeof DB {
-        this.config = Object.assign({}, this.config, config);
+        this.config = assign({}, this.config, config);
         return this;
     }
 
@@ -342,7 +343,7 @@ export class DB extends EventEmitter {
      */
     static on(event: string | symbol, listener: (...args: any[]) => void): typeof DB {
         if (!this.hasOwnProperty("_events")) {
-            this._events = Object.assign({}, this._events);
+            this._events = assign({}, this._events);
         }
 
         if (this._events[event] instanceof Function) {
@@ -364,7 +365,7 @@ export class DB extends EventEmitter {
      */
     static setAdapter(type: string, AdapterClass: typeof Adapter): typeof DB {
         if (!this.hasOwnProperty("adapters")) {
-            this.adapters = Object.assign({}, this.adapters);
+            this.adapters = assign({}, this.adapters);
         }
 
         this.adapters[type] = AdapterClass;

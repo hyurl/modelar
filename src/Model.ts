@@ -7,9 +7,10 @@ import {
     ModelGetManyOptions,
     FieldConfig
 } from "./interfaces";
-import { field, primary, searchable } from "./decorators";
 import { Table } from "./Table";
 import { UpdateError, DeletionError, NotFoundError } from "./Errors";
+import assign = require("lodash/assign");
+const inspect: string | symbol = require("util").inspect.custom || "inspect";
 
 /**
  * *Model Wrapper and beyond.*
@@ -151,7 +152,7 @@ export class Model extends Query {
         }
         let proto: this = Object.getPrototypeOf(this);
         for (let key in data) {
-            if (this.fields.includes(key)) {
+            if (this.fields.indexOf(key) >= 0) {
                 // Only accept those fields that `fields` sets.
                 if (useSetter) {
                     let desc = Object.getOwnPropertyDescriptor(proto, key);
@@ -214,7 +215,7 @@ export class Model extends Query {
             this.assign(data, true);
         }
 
-        data = Object.assign({}, this._modified);
+        data = assign({}, this._modified);
 
         if (Object.keys(data).length === 0) {
             // If no data modified, resolve the current model immediately.
@@ -225,7 +226,7 @@ export class Model extends Query {
             return super.update(data).then(model => {
                 if (model.affectedRows == 0) {
                     // If no model is affected, throw an error.
-                    throw new UpdateError("No " + this.constructor.name
+                    throw new UpdateError("No " + this.constructor["name"]
                         + " was updated by the given condition.");
                 } else {
                     model._resetWhere(true);
@@ -282,7 +283,7 @@ export class Model extends Query {
         delete data[this.primary];
 
         for (let field in data) {
-            if (this.fields.includes(field) && data[field] > 0) {
+            if (this.fields.indexOf(field) >= 0 && data[field] > 0) {
                 bindings.push(data[field]);
                 field = this.backquote(field);
                 parts.push(`${field} = ${field} ${type} ?`);
@@ -292,7 +293,7 @@ export class Model extends Query {
         return this["_handleUpdate"](parts, bindings).then(model => {
             if (model.affectedRows == 0) {
                 // If no model is affected, throw an error.
-                throw new UpdateError("No " + this.constructor.name
+                throw new UpdateError("No " + this.constructor["name"]
                     + " was updated by the given condition.");
             } else {
                 model._resetWhere(true);
@@ -336,7 +337,7 @@ export class Model extends Query {
         return super.delete().then(model => {
             if (model.affectedRows == 0) {
                 // If no model is affected, throw an error.
-                throw new DeletionError("No " + this.constructor.name
+                throw new DeletionError("No " + this.constructor["name"]
                     + " was deleted by the given condition.");
             } else {
                 return model;
@@ -357,7 +358,7 @@ export class Model extends Query {
         return super.get().then(data => {
             if (!data || Object.keys(data).length === 0) {
                 // If no model is retrieved, throw an error.
-                throw new NotFoundError("No " + this.constructor.name
+                throw new NotFoundError("No " + this.constructor["name"]
                     + " was found by the given condition.");
             } else {
                 // Remove temporary property.
@@ -381,7 +382,7 @@ export class Model extends Query {
         return super.all().then(data => {
             if (data.length === 0) {
                 // If no models are retrieved, throw an error.
-                throw new NotFoundError("No " + this.constructor.name
+                throw new NotFoundError("No " + this.constructor["name"]
                     + " was found by the given condition.");
             } else {
                 let models: Model[] = [],
@@ -419,11 +420,11 @@ export class Model extends Query {
 
     /** Gets multiple models that suit the given condition. */
     getMany(options?: ModelGetManyOptions): Promise<PaginatedModels> {
-        let defaults = Object.assign(ModelGetManyOptions, {
+        let defaults = assign(ModelGetManyOptions, {
             orderBy: this.primary
         });
 
-        options = Object.assign(defaults, options);
+        options = assign(defaults, options);
 
         // Set basic query conditions.
         let offset = (options.page - 1) * options.limit;
@@ -522,7 +523,7 @@ export class Model extends Query {
     valueOf(): { [field: string]: any } {
         let data = {},
             proto = Object.getPrototypeOf(this);
-            
+
         for (let key of this.fields) {
             let desc = Object.getOwnPropertyDescriptor(proto, key);
             if (desc && desc.get instanceof Function) {
@@ -552,7 +553,7 @@ export class Model extends Query {
         return this.valueOf();
     }
 
-    [Symbol.iterator](): { next: () => { value: { key: string, value: any }, done: boolean } } {
+    [Symbol.iterator](): IterableIterator<{ key: string, value: any }> {
         let data = this.valueOf();
         let Class = <typeof Model>this.constructor;
 
@@ -560,13 +561,14 @@ export class Model extends Query {
             console.warn("\nWarn: Using old style of iterator is deprecated.\n");
 
         return (function* () {
-            for (let i in data) {
-                yield Class.oldIterator ? <any>[i, data[i]] : { key: i, value: data[i] };
+            for (let key in data) {
+                let value = data[key];
+                yield Class.oldIterator ? <any>[key, value] : { key, value };
             }
         })();
     }
 
-    private inspect() {
+    private [inspect]() {
         let res = super["inspect"]();
         for (const field of this.fields) {
             res[field] = this[field];
@@ -782,7 +784,7 @@ export class Model extends Query {
         let model = ModelClass.use(this);
         model.where(foreignKey, this.data[this.primary]);
         if (type) {
-            model.where(type, this.constructor.name);
+            model.where(type, this.constructor["name"]);
         }
         return model;
     }
@@ -806,7 +808,7 @@ export class Model extends Query {
         model._caller = this;
         model._foreignKey = foreignKey;
         model._type = type;
-        if (type && ModelClass.name != this.data[type]) {
+        if (type && ModelClass["name"] != this.data[type]) {
             return model.where(model.primary, null);
         }
         return model.where(model.primary, this.data[foreignKey]);
@@ -875,7 +877,7 @@ export class Model extends Query {
             foreignKey1,
             foreignKey2,
             type,
-            this.constructor.name
+            this.constructor["name"]
         ];
         return model.whereIn(model.primary, query => {
             query.select(model._pivot[1]).from(model._pivot[0])
@@ -917,7 +919,7 @@ export class Model extends Query {
             foreignKey2,
             foreignKey1,
             type,
-            ModelClass.name
+            ModelClass["name"]
         ];
         return model.whereIn(model.primary, query => {
             query.select(model._pivot[1]).from(model._pivot[0])
@@ -997,8 +999,8 @@ export class Model extends Query {
         target._modified[this._foreignKey] = id;
 
         if (this._type) {
-            target.data[this._type] = this.constructor.name;
-            target._modified[this._type] = this.constructor.name;
+            target.data[this._type] = this.constructor["name"];
+            target._modified[this._type] = this.constructor["name"];
         }
 
         return target.save();
@@ -1114,14 +1116,14 @@ export class Model extends Query {
                 // Store records in an object.
                 _data[id] = single;
 
-                if (!ids.includes(id)) {
+                if (ids.indexOf(id) === -1) {
                     // Get IDs that needs to be deleted.
                     deletes.push(id);
                 }
             }
 
             for (let id of ids) {
-                if (!exists.includes(id)) {
+                if (exists.indexOf(id) === -1) {
                     // Get IDs that needs to be inserted.
                     inserts.push(id);
                 } else if (notArray) {

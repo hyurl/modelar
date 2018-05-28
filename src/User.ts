@@ -71,7 +71,7 @@ export class User extends Model {
 
         if (options.password === undefined) {
             return Promise.reject(
-                new TypeError(`The argument passed to ${Class.name}.login() `
+                new TypeError(`The argument passed to ${Class["name"]}.login() `
                     + `must contain a 'password' property.`)
             );
         }
@@ -80,14 +80,14 @@ export class User extends Model {
         if (options.user === undefined) {
             // Use a specified field for logging-in.
             for (let k in options) {
-                if (Class.loginable.includes(k)) {
+                if (Class.loginable.indexOf(k) >= 0) {
                     _options[k] = options[k];
                 }
             }
 
             if (Object.keys(_options).length === 0) {
                 return Promise.reject(
-                    new TypeError(`The argument passed to ${Class.name}.login() `
+                    new TypeError(`The argument passed to ${Class["name"]}.login() `
                         + `must contain at least one login-able field.`)
                 );
             }
@@ -119,7 +119,7 @@ export class User extends Model {
                             loop();
                         } else {
                             reject(new NotFoundError("The password you " +
-                                `provided didn't match any ${Class.name}.`));
+                                `provided didn't match any ${Class["name"]}.`));
                         }
                     });
                 };

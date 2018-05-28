@@ -1,43 +1,52 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Query_1 = require("./Query");
-const interfaces_1 = require("./interfaces");
-const Table_1 = require("./Table");
-const Errors_1 = require("./Errors");
-class Model extends Query_1.Query {
-    constructor(data, config) {
-        super(config && config.table || "");
-        this._whereState = { where: "", bindings: [] };
-        this.data = {};
-        this._modified = {};
-        this.extra = {};
+var tslib_1 = require("tslib");
+var Query_1 = require("./Query");
+var interfaces_1 = require("./interfaces");
+var Table_1 = require("./Table");
+var Errors_1 = require("./Errors");
+var assign = require("lodash/assign");
+var inspect = require("util").inspect.custom || "inspect";
+var Model = (function (_super) {
+    tslib_1.__extends(Model, _super);
+    function Model(data, config) {
+        var _this = _super.call(this, config && config.table || "") || this;
+        _this._whereState = { where: "", bindings: [] };
+        _this.data = {};
+        _this._modified = {};
+        _this.extra = {};
         config = config || interfaces_1.ModelConfig;
-        this.fields = config.fields || this.fields || [];
-        this.primary = config.primary || this.primary || "";
-        this.searchable = config.searchable || this.searchable || [];
-        this.schema = this.schema || {};
-        this._initiated = this._initiated || false;
-        this["_isModel"] = true;
-        if (this.fields.length && !this._initiated)
-            this._defineProperties(this.fields);
+        _this.fields = config.fields || _this.fields || [];
+        _this.primary = config.primary || _this.primary || "";
+        _this.searchable = config.searchable || _this.searchable || [];
+        _this.schema = _this.schema || {};
+        _this._initiated = _this._initiated || false;
+        _this["_isModel"] = true;
+        if (_this.fields.length && !_this._initiated)
+            _this._defineProperties(_this.fields);
         if (data) {
-            delete data[this.primary];
-            this.assign(data, true);
+            delete data[_this.primary];
+            _this.assign(data, true);
         }
+        return _this;
     }
-    get isNew() {
-        return this.data[this.primary] == undefined;
-    }
-    _defineProperties(fields) {
-        let proto = Object.getPrototypeOf(this);
-        let props = {};
-        for (let field of fields) {
-            if (!(field in this)) {
+    Object.defineProperty(Model.prototype, "isNew", {
+        get: function () {
+            return this.data[this.primary] == undefined;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Model.prototype._defineProperties = function (fields) {
+        var proto = Object.getPrototypeOf(this);
+        var props = {};
+        var _loop_1 = function (field) {
+            if (!(field in this_1)) {
                 props[field] = {
-                    get() {
+                    get: function () {
                         return this.data[field];
                     },
-                    set(v) {
+                    set: function (v) {
                         if (field != this.primary) {
                             this.data[field] = v;
                             if (!this.isNew)
@@ -47,30 +56,36 @@ class Model extends Query_1.Query {
                 };
             }
             else {
-                let desc = Object.getOwnPropertyDescriptor(proto, field);
+                var desc = Object.getOwnPropertyDescriptor(proto, field);
                 if (desc && desc.set) {
-                    let oringin = desc.set;
+                    var oringin_1 = desc.set;
                     desc.set = function set(v) {
-                        oringin.call(this, v);
+                        oringin_1.call(this, v);
                         if (!this.isNew)
                             this._modified[field] = this.data[field];
                     };
                     props[field] = desc;
                 }
             }
+        };
+        var this_1 = this;
+        for (var _i = 0, fields_1 = fields; _i < fields_1.length; _i++) {
+            var field = fields_1[_i];
+            _loop_1(field);
         }
         Object.defineProperties(proto, props);
         proto._initiated = true;
-    }
-    assign(data, useSetter = false) {
+    };
+    Model.prototype.assign = function (data, useSetter) {
+        if (useSetter === void 0) { useSetter = false; }
         if (this.data instanceof Array) {
             this.data = {};
         }
-        let proto = Object.getPrototypeOf(this);
-        for (let key in data) {
-            if (this.fields.includes(key)) {
+        var proto = Object.getPrototypeOf(this);
+        for (var key in data) {
+            if (this.fields.indexOf(key) >= 0) {
                 if (useSetter) {
-                    let desc = Object.getOwnPropertyDescriptor(proto, key);
+                    var desc = Object.getOwnPropertyDescriptor(proto, key);
                     if (desc && desc.set instanceof Function) {
                         desc.set.call(this, data[key]);
                     }
@@ -90,27 +105,29 @@ class Model extends Query_1.Query {
             }
         }
         return this;
-    }
-    save() {
+    };
+    Model.prototype.save = function () {
+        var _this = this;
         this.emit("save", this);
-        let exists = this.data[this.primary], promise = exists ? this.update() : this.insert();
-        return promise.then(model => {
-            this.emit("saved", model);
-            return this;
+        var exists = this.data[this.primary], promise = exists ? this.update() : this.insert();
+        return promise.then(function (model) {
+            _this.emit("saved", model);
+            return _this;
         });
-    }
-    insert(data) {
+    };
+    Model.prototype.insert = function (data) {
         if (data)
             this.assign(data, true);
-        return super.insert(this.data).then(model => {
+        return _super.prototype.insert.call(this, this.data).then(function (model) {
             model.where(model.primary, model.insertId);
             return model.get();
         });
-    }
-    update(data) {
+    };
+    Model.prototype.update = function (data) {
+        var _this = this;
         this._resetWhere();
         if (this._whereState.where) {
-            let state = this._whereState;
+            var state = this._whereState;
             this["_where"] += " and " + state.where;
             this["_bindings"] = this["_bindings"].concat(state.bindings);
         }
@@ -118,16 +135,16 @@ class Model extends Query_1.Query {
             delete data[this.primary];
             this.assign(data, true);
         }
-        data = Object.assign({}, this._modified);
+        data = assign({}, this._modified);
         if (Object.keys(data).length === 0) {
-            return new Promise(resolve => {
-                resolve(this);
+            return new Promise(function (resolve) {
+                resolve(_this);
             });
         }
         else {
-            return super.update(data).then(model => {
+            return _super.prototype.update.call(this, data).then(function (model) {
                 if (model.affectedRows == 0) {
-                    throw new Errors_1.UpdateError("No " + this.constructor.name
+                    throw new Errors_1.UpdateError("No " + _this.constructor["name"]
                         + " was updated by the given condition.");
                 }
                 else {
@@ -136,27 +153,30 @@ class Model extends Query_1.Query {
                 }
             });
         }
-    }
-    increase(field, step = 1) {
+    };
+    Model.prototype.increase = function (field, step) {
+        if (step === void 0) { step = 1; }
         this._resetWhere();
         if (this._whereState.where) {
-            let state = this._whereState;
+            var state = this._whereState;
             this["_where"] += " and " + state.where;
             this["_bindings"] = this["_bindings"].concat(state.bindings);
         }
         return this._handleCrease2(field, step, "+");
-    }
-    decrease(field, step = 1) {
+    };
+    Model.prototype.decrease = function (field, step) {
+        if (step === void 0) { step = 1; }
         this._resetWhere();
         if (this._whereState.where) {
-            let state = this._whereState;
+            var state = this._whereState;
             this["_where"] += " and " + state.where;
             this["_bindings"] = this["_bindings"].concat(state.bindings);
         }
         return this._handleCrease2(field, step, "-");
-    }
-    _handleCrease2(field, step, type) {
-        let data, parts = [], bindings = [];
+    };
+    Model.prototype._handleCrease2 = function (field, step, type) {
+        var _this = this;
+        var data, parts = [], bindings = [];
         if (typeof field == "object") {
             data = field;
         }
@@ -165,16 +185,16 @@ class Model extends Query_1.Query {
             data[field] = step;
         }
         delete data[this.primary];
-        for (let field in data) {
-            if (this.fields.includes(field) && data[field] > 0) {
-                bindings.push(data[field]);
-                field = this.backquote(field);
-                parts.push(`${field} = ${field} ${type} ?`);
+        for (var field_1 in data) {
+            if (this.fields.indexOf(field_1) >= 0 && data[field_1] > 0) {
+                bindings.push(data[field_1]);
+                field_1 = this.backquote(field_1);
+                parts.push(field_1 + " = " + field_1 + " " + type + " ?");
             }
         }
-        return this["_handleUpdate"](parts, bindings).then(model => {
+        return this["_handleUpdate"](parts, bindings).then(function (model) {
             if (model.affectedRows == 0) {
-                throw new Errors_1.UpdateError("No " + this.constructor.name
+                throw new Errors_1.UpdateError("No " + _this.constructor["name"]
                     + " was updated by the given condition.");
             }
             else {
@@ -182,8 +202,9 @@ class Model extends Query_1.Query {
                 return model.get();
             }
         });
-    }
-    _resetWhere(resetState = false) {
+    };
+    Model.prototype._resetWhere = function (resetState) {
+        if (resetState === void 0) { resetState = false; }
         this["_where"] = "";
         this["_limit"] = 0;
         this["_bindings"] = [];
@@ -194,10 +215,11 @@ class Model extends Query_1.Query {
         }
         this.where(this.primary, this.data[this.primary]);
         return this;
-    }
-    delete(id) {
+    };
+    Model.prototype.delete = function (id) {
+        var _this = this;
         if (id) {
-            return this.get(id).then(model => {
+            return this.get(id).then(function (model) {
                 return model.delete();
             });
         }
@@ -206,83 +228,87 @@ class Model extends Query_1.Query {
         }
         this._resetWhere();
         if (this._whereState.where) {
-            let state = this._whereState;
+            var state = this._whereState;
             this["_where"] += " and " + state.where;
             this["_bindings"] = this["_bindings"].concat(state.bindings);
         }
-        return super.delete().then(model => {
+        return _super.prototype.delete.call(this).then(function (model) {
             if (model.affectedRows == 0) {
-                throw new Errors_1.DeletionError("No " + this.constructor.name
+                throw new Errors_1.DeletionError("No " + _this.constructor["name"]
                     + " was deleted by the given condition.");
             }
             else {
                 return model;
             }
         });
-    }
-    get(id) {
+    };
+    Model.prototype.get = function (id) {
+        var _this = this;
         if (id) {
             return this.where(this.primary, id).get();
         }
         if (!this["_where"]) {
             throw new SyntaxError("No where condition is set to fetch models.");
         }
-        return super.get().then(data => {
+        return _super.prototype.get.call(this).then(function (data) {
             if (!data || Object.keys(data).length === 0) {
-                throw new Errors_1.NotFoundError("No " + this.constructor.name
+                throw new Errors_1.NotFoundError("No " + _this.constructor["name"]
                     + " was found by the given condition.");
             }
             else {
-                delete this._caller;
-                delete this._foreignKey;
-                delete this._type;
-                delete this._pivot;
-                this.assign(data);
-                this._modified = {};
-                this.emit("get", this);
-                return this;
+                delete _this._caller;
+                delete _this._foreignKey;
+                delete _this._type;
+                delete _this._pivot;
+                _this.assign(data);
+                _this._modified = {};
+                _this.emit("get", _this);
+                return _this;
             }
         });
-    }
-    all() {
-        return super.all().then(data => {
+    };
+    Model.prototype.all = function () {
+        var _this = this;
+        return _super.prototype.all.call(this).then(function (data) {
             if (data.length === 0) {
-                throw new Errors_1.NotFoundError("No " + this.constructor.name
+                throw new Errors_1.NotFoundError("No " + _this.constructor["name"]
                     + " was found by the given condition.");
             }
             else {
-                let models = [], ModelClass = this.constructor;
-                for (let i in data) {
-                    let model = new ModelClass;
-                    model.use(this).assign(data[i]).emit("get", model);
+                var models = [], ModelClass = _this.constructor;
+                for (var i in data) {
+                    var model = new ModelClass;
+                    model.use(_this).assign(data[i]).emit("get", model);
                     models.push(model);
                 }
                 return models;
             }
         });
-    }
-    chunk(length, cb) {
-        return super.chunk(length, cb);
-    }
-    paginate(page, length) {
-        return super.paginate(page, length);
-    }
-    getMany(options) {
-        let defaults = Object.assign(interfaces_1.ModelGetManyOptions, {
+    };
+    Model.prototype.chunk = function (length, cb) {
+        return _super.prototype.chunk.call(this, length, cb);
+    };
+    Model.prototype.paginate = function (page, length) {
+        return _super.prototype.paginate.call(this, page, length);
+    };
+    Model.prototype.getMany = function (options) {
+        var _this = this;
+        var defaults = assign(interfaces_1.ModelGetManyOptions, {
             orderBy: this.primary
         });
-        options = Object.assign(defaults, options);
-        let offset = (options.page - 1) * options.limit;
+        options = assign(defaults, options);
+        var offset = (options.page - 1) * options.limit;
         this.limit(options.limit, offset);
         if (options.sequence !== "asc" && options.sequence != "desc")
             this.random();
         else
             this.orderBy(options.orderBy, options.sequence);
-        for (let field of this.fields) {
+        for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
+            var field = _a[_i];
             if (options[field] && defaults[field] === undefined) {
-                let operator = "=", value = options[field];
+                var operator = "=", value = options[field];
                 if (typeof value === "string") {
-                    let match = value.match(/^(<>|!=|<=|>=|<|>|=)\w+/);
+                    var match = value.match(/^(<>|!=|<=|>=|<|>|=)\w+/);
                     if (match) {
                         operator = match[1];
                         value = value.substring(operator.length);
@@ -292,25 +318,30 @@ class Model extends Query_1.Query {
             }
         }
         if (options.keywords && this.searchable) {
-            let keywords = options.keywords, wildcard = this.config.type == "access" ? "*" : "%";
-            if (typeof keywords == "string")
-                keywords = [keywords];
-            for (let i in keywords) {
-                keywords[i] = keywords[i].replace("\\", "\\\\")
-                    .replace(wildcard, "\\" + wildcard);
+            var keywords_1 = options.keywords, wildcard_1 = this.config.type == "access" ? "*" : "%";
+            if (typeof keywords_1 == "string")
+                keywords_1 = [keywords_1];
+            for (var i in keywords_1) {
+                keywords_1[i] = keywords_1[i].replace("\\", "\\\\")
+                    .replace(wildcard_1, "\\" + wildcard_1);
             }
-            this.where((query) => {
-                for (let field of this.searchable) {
-                    query.orWhere((query) => {
-                        for (let keyword of keywords) {
-                            keyword = wildcard + keyword + wildcard;
+            this.where(function (query) {
+                var _loop_2 = function (field) {
+                    query.orWhere(function (query) {
+                        for (var _i = 0, keywords_2 = keywords_1; _i < keywords_2.length; _i++) {
+                            var keyword = keywords_2[_i];
+                            keyword = wildcard_1 + keyword + wildcard_1;
                             query.orWhere(field, "like", keyword);
                         }
                     });
+                };
+                for (var _i = 0, _a = _this.searchable; _i < _a.length; _i++) {
+                    var field = _a[_i];
+                    _loop_2(field);
                 }
             });
         }
-        return this.paginate(options.page, options.limit).then(info => {
+        return this.paginate(options.page, options.limit).then(function (info) {
             return {
                 page: options.page,
                 pages: info.page,
@@ -322,20 +353,23 @@ class Model extends Query_1.Query {
                 data: info.data
             };
         });
-    }
-    whereState(field, operator = null, value = undefined) {
-        let query = new Query_1.Query().use(this);
+    };
+    Model.prototype.whereState = function (field, operator, value) {
+        if (operator === void 0) { operator = null; }
+        if (value === void 0) { value = undefined; }
+        var query = new Query_1.Query().use(this);
         query.where(field, operator, value);
         this._whereState.where = query["_where"];
         this._whereState.bindings = query["_bindings"];
         return this;
-    }
-    valueOf() {
-        let data = {}, proto = Object.getPrototypeOf(this);
-        for (let key of this.fields) {
-            let desc = Object.getOwnPropertyDescriptor(proto, key);
+    };
+    Model.prototype.valueOf = function () {
+        var data = {}, proto = Object.getPrototypeOf(this);
+        for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
+            var key = _a[_i];
+            var desc = Object.getOwnPropertyDescriptor(proto, key);
             if (desc && desc.get instanceof Function) {
-                let value = desc.get.call(this, this.data[key]);
+                var value = desc.get.call(this, this.data[key]);
                 if (value !== undefined)
                     data[key] = value;
             }
@@ -344,237 +378,299 @@ class Model extends Query_1.Query {
             }
         }
         return data;
-    }
-    toString(formatted = false) {
+    };
+    Model.prototype.toString = function (formatted) {
+        if (formatted === void 0) { formatted = false; }
         if (formatted)
             return JSON.stringify(this, null, "  ");
         else
             return JSON.stringify(this);
-    }
-    toJSON() {
+    };
+    Model.prototype.toJSON = function () {
         return this.valueOf();
-    }
-    [Symbol.iterator]() {
-        let data = this.valueOf();
-        let Class = this.constructor;
+    };
+    Model.prototype[Symbol.iterator] = function () {
+        var data = this.valueOf();
+        var Class = this.constructor;
         if (Class.oldIterator)
             console.warn("\nWarn: Using old style of iterator is deprecated.\n");
-        return (function* () {
-            for (let i in data) {
-                yield Class.oldIterator ? [i, data[i]] : { key: i, value: data[i] };
-            }
+        return (function () {
+            var _a, _b, _i, key, value;
+            return tslib_1.__generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        _a = [];
+                        for (_b in data)
+                            _a.push(_b);
+                        _i = 0;
+                        _c.label = 1;
+                    case 1:
+                        if (!(_i < _a.length)) return [3, 4];
+                        key = _a[_i];
+                        value = data[key];
+                        return [4, Class.oldIterator ? [key, value] : { key: key, value: value }];
+                    case 2:
+                        _c.sent();
+                        _c.label = 3;
+                    case 3:
+                        _i++;
+                        return [3, 1];
+                    case 4: return [2];
+                }
+            });
         })();
-    }
-    inspect() {
-        let res = super["inspect"]();
-        for (const field of this.fields) {
+    };
+    Model.prototype[inspect] = function () {
+        var res = _super.prototype["inspect"].call(this);
+        for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
+            var field = _a[_i];
             res[field] = this[field];
         }
         return res;
-    }
-    createTable() {
-        return new Table_1.Table(this).save().then(() => this);
-    }
-    static set(...args) {
+    };
+    Model.prototype.createTable = function () {
+        var _this = this;
+        return new Table_1.Table(this).save().then(function () { return _this; });
+    };
+    Model.set = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
         if (typeof args[0] === "string")
             return (new this).set(args[0], args[1]);
         else
             return (new this).set(args[0]);
-    }
-    static use(db) {
+    };
+    Model.use = function (db) {
         return (new this).use(db);
-    }
-    static transaction(cb) {
+    };
+    Model.transaction = function (cb) {
         return (new this).transaction(cb);
-    }
-    static select(...args) {
-        return (new this).select(...args);
-    }
-    static join(table, field1, operator, field2 = "") {
+    };
+    Model.select = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        return (_a = (new this)).select.apply(_a, args);
+        var _a;
+    };
+    Model.join = function (table, field1, operator, field2) {
+        if (field2 === void 0) { field2 = ""; }
         return (new this).join(table, field1, operator, field2);
-    }
-    static leftJoin(table, field1, operator, field2 = "") {
+    };
+    Model.leftJoin = function (table, field1, operator, field2) {
+        if (field2 === void 0) { field2 = ""; }
         return (new this).leftJoin(table, field1, operator, field2);
-    }
-    static rightJoin(table, field1, operator, field2 = "") {
+    };
+    Model.rightJoin = function (table, field1, operator, field2) {
+        if (field2 === void 0) { field2 = ""; }
         return (new this).rightJoin(table, field1, operator, field2);
-    }
-    static fullJoin(table, field1, operator, field2 = "") {
+    };
+    Model.fullJoin = function (table, field1, operator, field2) {
+        if (field2 === void 0) { field2 = ""; }
         return (new this).fullJoin(table, field1, operator, field2);
-    }
-    static crossJoin(table, field1, operator, field2 = "") {
+    };
+    Model.crossJoin = function (table, field1, operator, field2) {
+        if (field2 === void 0) { field2 = ""; }
         return (new this).crossJoin(table, field1, operator, field2);
-    }
-    static where(field, operator = null, value = undefined) {
+    };
+    Model.where = function (field, operator, value) {
+        if (operator === void 0) { operator = null; }
+        if (value === void 0) { value = undefined; }
         return (new this).where(field, operator, value);
-    }
-    static whereBetween(field, [min, max]) {
+    };
+    Model.whereBetween = function (field, _a) {
+        var min = _a[0], max = _a[1];
         return (new this).whereBetween(field, [min, max]);
-    }
-    static whereNotBetween(field, [min, max]) {
+    };
+    Model.whereNotBetween = function (field, _a) {
+        var min = _a[0], max = _a[1];
         return (new this).whereNotBetween(field, [min, max]);
-    }
-    static whereIn(field, values) {
+    };
+    Model.whereIn = function (field, values) {
         return (new this).whereIn(field, values);
-    }
-    static whereNull(field) {
+    };
+    Model.whereNull = function (field) {
         return (new this).whereNull(field);
-    }
-    static whereNotNull(field) {
+    };
+    Model.whereNotNull = function (field) {
         return (new this).whereNotNull(field);
-    }
-    static whereExists(nested) {
+    };
+    Model.whereExists = function (nested) {
         return (new this).whereExists(nested);
-    }
-    static whereNotExists(nested) {
+    };
+    Model.whereNotExists = function (nested) {
         return (new this).whereNotExists(nested);
-    }
-    static orderBy(field, sequence) {
+    };
+    Model.orderBy = function (field, sequence) {
         return (new this).orderBy(field, sequence);
-    }
-    static random() {
+    };
+    Model.random = function () {
         return (new this).random();
-    }
-    static groupBy(...fields) {
-        return (new this).groupBy(...fields);
-    }
-    static having(raw) {
+    };
+    Model.groupBy = function () {
+        var fields = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            fields[_i] = arguments[_i];
+        }
+        return (_a = (new this)).groupBy.apply(_a, fields);
+        var _a;
+    };
+    Model.having = function (raw) {
         return (new this).having(raw);
-    }
-    static limit(length, offset) {
+    };
+    Model.limit = function (length, offset) {
         return (new this).limit(length, offset);
-    }
-    static distinct() {
+    };
+    Model.distinct = function () {
         return (new this).distinct();
-    }
-    static insert(data) {
+    };
+    Model.insert = function (data) {
         return (new this).insert(data);
-    }
-    static delete(id) {
+    };
+    Model.delete = function (id) {
         return (new this).delete(id);
-    }
-    static get(id) {
+    };
+    Model.get = function (id) {
         return (new this).get(id);
-    }
-    static all() {
+    };
+    Model.all = function () {
         return (new this).all();
-    }
-    static count(field = "*") {
+    };
+    Model.count = function (field) {
+        if (field === void 0) { field = "*"; }
         return (new this).count(field);
-    }
-    static max(field) {
+    };
+    Model.max = function (field) {
         return (new this).max(field);
-    }
-    static min(field) {
+    };
+    Model.min = function (field) {
         return (new this).min(field);
-    }
-    static avg(field) {
+    };
+    Model.avg = function (field) {
         return (new this).avg(field);
-    }
-    static sum(field) {
+    };
+    Model.sum = function (field) {
         return (new this).sum(field);
-    }
-    static chunk(length, cb) {
+    };
+    Model.chunk = function (length, cb) {
         return (new this).chunk(length, cb);
-    }
-    static paginate(page, length = 10) {
+    };
+    Model.paginate = function (page, length) {
+        if (length === void 0) { length = 10; }
         return (new this).paginate(page, length);
-    }
-    static getMany(options) {
+    };
+    Model.getMany = function (options) {
         return (new this).getMany(options);
-    }
-    static whereState(field, operator = null, value = undefined) {
+    };
+    Model.whereState = function (field, operator, value) {
+        if (operator === void 0) { operator = null; }
+        if (value === void 0) { value = undefined; }
         return (new this).whereState(field, operator, value);
-    }
-    static createTable() {
+    };
+    Model.createTable = function () {
         return (new this).createTable();
-    }
-    has(ModelClass, foreignKey, type = "") {
-        let model = ModelClass.use(this);
+    };
+    Model.prototype.has = function (ModelClass, foreignKey, type) {
+        if (type === void 0) { type = ""; }
+        var model = ModelClass.use(this);
         model.where(foreignKey, this.data[this.primary]);
         if (type) {
-            model.where(type, this.constructor.name);
+            model.where(type, this.constructor["name"]);
         }
         return model;
-    }
-    belongsTo(ModelClass, foreignKey, type = "") {
-        let model = ModelClass.use(this);
+    };
+    Model.prototype.belongsTo = function (ModelClass, foreignKey, type) {
+        if (type === void 0) { type = ""; }
+        var model = ModelClass.use(this);
         model._caller = this;
         model._foreignKey = foreignKey;
         model._type = type;
-        if (type && ModelClass.name != this.data[type]) {
+        if (type && ModelClass["name"] != this.data[type]) {
             return model.where(model.primary, null);
         }
         return model.where(model.primary, this.data[foreignKey]);
-    }
-    hasThrough(ModelClass, MiddleClass, foreignKey1, foreignKey2) {
-        let model = new MiddleClass().use(this);
-        return ModelClass.use(this).whereIn(foreignKey1, query => {
+    };
+    Model.prototype.hasThrough = function (ModelClass, MiddleClass, foreignKey1, foreignKey2) {
+        var _this = this;
+        var model = new MiddleClass().use(this);
+        return ModelClass.use(this).whereIn(foreignKey1, function (query) {
             query.select(model.primary).from(model.table)
-                .where(foreignKey2, this.data[this.primary]);
+                .where(foreignKey2, _this.data[_this.primary]);
         });
-    }
-    belongsToThrough(ModelClass, MiddleClass, foreignKey1, foreignKey2) {
-        let model = new ModelClass().use(this), _model = new MiddleClass().use(this);
-        return model.where(model.primary, query => {
+    };
+    Model.prototype.belongsToThrough = function (ModelClass, MiddleClass, foreignKey1, foreignKey2) {
+        var _this = this;
+        var model = new ModelClass().use(this), _model = new MiddleClass().use(this);
+        return model.where(model.primary, function (query) {
             query.select(foreignKey2).from(_model.table)
-                .where(_model.primary, this.data[foreignKey1]);
+                .where(_model.primary, _this.data[foreignKey1]);
         });
-    }
-    hasVia(ModelClass, pivotTable, foreignKey1, foreignKey2, type = "") {
-        let model = new ModelClass().use(this);
+    };
+    Model.prototype.hasVia = function (ModelClass, pivotTable, foreignKey1, foreignKey2, type) {
+        var _this = this;
+        if (type === void 0) { type = ""; }
+        var model = new ModelClass().use(this);
         model._caller = this;
         model._pivot = [
             pivotTable,
             foreignKey1,
             foreignKey2,
             type,
-            this.constructor.name
+            this.constructor["name"]
         ];
-        return model.whereIn(model.primary, query => {
+        return model.whereIn(model.primary, function (query) {
             query.select(model._pivot[1]).from(model._pivot[0])
-                .where(model._pivot[2], this.data[this.primary]);
+                .where(model._pivot[2], _this.data[_this.primary]);
             if (model._pivot[3]) {
                 query.where(model._pivot[3], model._pivot[4]);
             }
         });
-    }
-    belongsToVia(ModelClass, pivotTable, foreignKey1, foreignKey2, type = "") {
-        let model = new ModelClass().use(this);
+    };
+    Model.prototype.belongsToVia = function (ModelClass, pivotTable, foreignKey1, foreignKey2, type) {
+        var _this = this;
+        if (type === void 0) { type = ""; }
+        var model = new ModelClass().use(this);
         model._caller = this;
         model._pivot = [
             pivotTable,
             foreignKey2,
             foreignKey1,
             type,
-            ModelClass.name
+            ModelClass["name"]
         ];
-        return model.whereIn(model.primary, query => {
+        return model.whereIn(model.primary, function (query) {
             query.select(model._pivot[1]).from(model._pivot[0])
-                .where(model._pivot[2], this.data[this.primary]);
+                .where(model._pivot[2], _this.data[_this.primary]);
             if (model._pivot[3]) {
                 query.where(model._pivot[3], model._pivot[4]);
             }
         });
-    }
-    withPivot(...args) {
+    };
+    Model.prototype.withPivot = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
         if (!(this._caller instanceof Model)) {
             throw new SyntaxError("Model.withPivot() can only be called "
                 + "after calling Model.hasVia() or Model.belongsToVia().");
         }
-        let caller = this._caller, pivotTable = this._pivot[0], foreignKey1 = pivotTable + "." + this._pivot[1], foreignKey2 = pivotTable + "." + this._pivot[2], primary = this.table + "." + this.primary, fields = args[0] instanceof Array ? args[0] : args;
-        fields = fields.map(field => pivotTable + "." + field);
+        var caller = this._caller, pivotTable = this._pivot[0], foreignKey1 = pivotTable + "." + this._pivot[1], foreignKey2 = pivotTable + "." + this._pivot[2], primary = this.table + "." + this.primary, fields = args[0] instanceof Array ? args[0] : args;
+        fields = fields.map(function (field) { return pivotTable + "." + field; });
         fields.unshift(this.table + ".*");
         return this.select(fields)
             .join(pivotTable, foreignKey1, primary)
             .where(foreignKey2, caller.data[caller.primary]);
-    }
-    associate(input) {
+    };
+    Model.prototype.associate = function (input) {
         if (!(this._caller instanceof Model)) {
             throw new SyntaxError("Model.associate() can only be called "
                 + "after calling Model.belongsTo().");
         }
-        let target = this._caller, id = null;
+        var target = this._caller, id = null;
         if (typeof input === "number") {
             id = input;
         }
@@ -589,17 +685,17 @@ class Model extends Query_1.Query {
         target.data[this._foreignKey] = id;
         target._modified[this._foreignKey] = id;
         if (this._type) {
-            target.data[this._type] = this.constructor.name;
-            target._modified[this._type] = this.constructor.name;
+            target.data[this._type] = this.constructor["name"];
+            target._modified[this._type] = this.constructor["name"];
         }
         return target.save();
-    }
-    dissociate() {
+    };
+    Model.prototype.dissociate = function () {
         if (!(this._caller instanceof Model)) {
             throw new SyntaxError("Model.dissociate() can only be called "
                 + "after calling Model.belongsTo().");
         }
-        let target = this._caller;
+        var target = this._caller;
         target.data[this._foreignKey] = null;
         target._modified[this._foreignKey] = null;
         if (this._type) {
@@ -607,9 +703,10 @@ class Model extends Query_1.Query {
             target._modified[this._type] = null;
         }
         return target.save();
-    }
-    attach(models) {
-        let notArray = !(models instanceof Array);
+    };
+    Model.prototype.attach = function (models) {
+        var _this = this;
+        var notArray = !(models instanceof Array);
         if (notArray && typeof models !== "object") {
             throw new TypeError("The only argument passed to Model.attach()"
                 + " must be an array or an object.");
@@ -618,17 +715,18 @@ class Model extends Query_1.Query {
             throw new SyntaxError("Model.attach() can only be called after "
                 + "calling Model.hasVia() or Model.belongsToVia().");
         }
-        let target = this._caller, id1 = target.data[target.primary], ids = [];
+        var target = this._caller, id1 = target.data[target.primary], ids = [];
         if (notArray) {
-            for (let i in models) {
-                let id = parseInt(i);
+            for (var i in models) {
+                var id = parseInt(i);
                 if (models.hasOwnProperty(i) && !isNaN(id)) {
                     ids.push(id);
                 }
             }
         }
         else {
-            for (let model of models) {
+            for (var _i = 0, models_1 = models; _i < models_1.length; _i++) {
+                var model = models_1[_i];
                 if (typeof model === "number") {
                     ids.push(model);
                 }
@@ -637,26 +735,28 @@ class Model extends Query_1.Query {
                 }
             }
         }
-        let query = new Query_1.Query(this._pivot[0]).use(this);
+        var query = new Query_1.Query(this._pivot[0]).use(this);
         query.where(this._pivot[2], id1);
         if (this._pivot[3])
             query.where(this._pivot[3], this._pivot[4]);
-        return query.all().then(data => {
-            let exists = [], deletes = [], inserts = [], updates = [], _data = {};
-            for (let single of data) {
-                let id = single[this._pivot[1]];
+        return query.all().then(function (data) {
+            var exists = [], deletes = [], inserts = [], updates = [], _data = {};
+            for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
+                var single = data_1[_i];
+                var id = single[_this._pivot[1]];
                 exists.push(id);
                 _data[id] = single;
-                if (!ids.includes(id)) {
+                if (ids.indexOf(id) === -1) {
                     deletes.push(id);
                 }
             }
-            for (let id of ids) {
-                if (!exists.includes(id)) {
+            for (var _a = 0, ids_1 = ids; _a < ids_1.length; _a++) {
+                var id = ids_1[_a];
+                if (exists.indexOf(id) === -1) {
                     inserts.push(id);
                 }
                 else if (notArray) {
-                    for (let i in models[id]) {
+                    for (var i in models[id]) {
                         if (_data[id][i] !== undefined &&
                             _data[id][i] != models[id][i]) {
                             updates.push(id);
@@ -665,62 +765,63 @@ class Model extends Query_1.Query {
                     }
                 }
             }
-            let _query = new Query_1.Query(this._pivot[0]).use(this);
-            let doInsert = (query) => {
-                let id = inserts.shift(), data = notArray ? models[id] : {};
-                data[this._pivot[2]] = id1;
-                data[this._pivot[1]] = id;
-                if (this._pivot[3])
-                    data[this._pivot[3]] = this._pivot[4];
-                return query.insert(data).then(query => {
+            var _query = new Query_1.Query(_this._pivot[0]).use(_this);
+            var doInsert = function (query) {
+                var id = inserts.shift(), data = notArray ? models[id] : {};
+                data[_this._pivot[2]] = id1;
+                data[_this._pivot[1]] = id;
+                if (_this._pivot[3])
+                    data[_this._pivot[3]] = _this._pivot[4];
+                return query.insert(data).then(function (query) {
                     return inserts.length ? doInsert(query) : query;
                 });
             };
-            let doUpdate = (query) => {
-                let id = updates.shift(), data = notArray ? models[id] : {};
+            var doUpdate = function (query) {
+                var id = updates.shift(), data = notArray ? models[id] : {};
                 query["_where"] = "";
                 query["_bindings"] = [];
-                query.where(this._pivot[1], _data[id][this._pivot[1]])
-                    .where(this._pivot[2], id1);
-                delete data[this._pivot[2]];
-                delete data[this._pivot[1]];
-                if (this._pivot[3]) {
-                    query.where(this._pivot[3], this._pivot[4]);
-                    delete data[this._pivot[3]];
+                query.where(_this._pivot[1], _data[id][_this._pivot[1]])
+                    .where(_this._pivot[2], id1);
+                delete data[_this._pivot[2]];
+                delete data[_this._pivot[1]];
+                if (_this._pivot[3]) {
+                    query.where(_this._pivot[3], _this._pivot[4]);
+                    delete data[_this._pivot[3]];
                 }
-                return query.update(data).then(query => {
+                return query.update(data).then(function (query) {
                     return updates.length ? doUpdate(query) : query;
                 });
             };
             if (deletes.length || updates.length || inserts.length) {
-                return this.transaction(() => {
+                return _this.transaction(function () {
                     if (deletes.length) {
-                        _query.whereIn(this._pivot[1], deletes)
-                            .where(this._pivot[2], id1);
-                        if (this._pivot[3])
-                            _query.where(this._pivot[3], this._pivot[4]);
-                        return _query.delete().then(_query => {
+                        _query.whereIn(_this._pivot[1], deletes)
+                            .where(_this._pivot[2], id1);
+                        if (_this._pivot[3])
+                            _query.where(_this._pivot[3], _this._pivot[4]);
+                        return _query.delete().then(function (_query) {
                             return updates.length ? doUpdate(_query) : _query;
-                        }).then(_query => {
+                        }).then(function (_query) {
                             return inserts.length ? doInsert(_query) : _query;
                         });
                     }
                     else if (updates.length) {
-                        return doUpdate(_query).then(_query => {
+                        return doUpdate(_query).then(function (_query) {
                             return inserts.length ? doInsert(_query) : _query;
                         });
                     }
                     else if (inserts.length) {
                         return doInsert(_query);
                     }
-                }).then(() => target);
+                }).then(function () { return target; });
             }
             else {
                 return target;
             }
         });
-    }
-    detach(models = []) {
+    };
+    Model.prototype.detach = function (models) {
+        if (models === void 0) { models = []; }
         if (!(models instanceof Array)) {
             throw new TypeError("The only argument passed to Model.detach()"
                 + " must be an array.");
@@ -729,13 +830,14 @@ class Model extends Query_1.Query {
             throw new SyntaxError("Model.attach() can only be called after "
                 + "calling Model.hasVia() or Model.belongsToVia().");
         }
-        let target = this._caller, id1 = target.data[target.primary], query = new Query_1.Query(this._pivot[0]).use(this);
+        var target = this._caller, id1 = target.data[target.primary], query = new Query_1.Query(this._pivot[0]).use(this);
         query.where(this._pivot[2], id1);
         if (this._pivot[3])
             query.where(this._pivot[3], this._pivot[4]);
         if (models.length > 0) {
-            let ids = [];
-            for (let model of models) {
+            var ids = [];
+            for (var _i = 0, models_2 = models; _i < models_2.length; _i++) {
+                var model = models_2[_i];
                 if (typeof model === "number") {
                     ids.push(model);
                 }
@@ -746,17 +848,18 @@ class Model extends Query_1.Query {
             if (ids.length)
                 query.whereIn(this._pivot[1], ids);
         }
-        return query.delete().then(() => target);
-    }
-}
-Model.oldIterator = false;
+        return query.delete().then(function () { return target; });
+    };
+    Model.oldIterator = false;
+    return Model;
+}(Query_1.Query));
 exports.Model = Model;
 Object.defineProperties(Model.prototype, {
     _extra: {
-        get() {
+        get: function () {
             return this.extra;
         },
-        set(v) {
+        set: function (v) {
             this.extra = v;
         }
     }

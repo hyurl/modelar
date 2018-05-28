@@ -1,30 +1,31 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const tslib_1 = require("tslib");
-const HideProtectedProperties = require("hide-protected-properties");
-let Adapter = class Adapter {
-    constructor() {
+var tslib_1 = require("tslib");
+var HideProtectedProperties = require("hide-protected-properties");
+var Adapter = (function () {
+    function Adapter() {
         this.connection = null;
         this.quote = "'";
         this.backquote = "`";
     }
-    static close() {
+    Adapter.close = function () {
         throw new ReferenceError("Static method Adapter.close() is not implemented.");
-    }
-    transaction(db, cb) {
+    };
+    Adapter.prototype.transaction = function (db, cb) {
+        var _this = this;
         if (typeof cb == "function") {
-            return this.query(db, "begin").then(db => {
-                let res = cb.call(db, db);
+            return this.query(db, "begin").then(function (db) {
+                var res = cb.call(db, db);
                 if (res && res.then instanceof Function) {
-                    return res.then(() => db);
+                    return res.then(function () { return db; });
                 }
                 else {
                     return db;
                 }
-            }).then(db => {
-                return this.commit(db);
-            }).catch(err => {
-                return this.rollback(db).then(() => {
+            }).then(function (db) {
+                return _this.commit(db);
+            }).catch(function (err) {
+                return _this.rollback(db).then(function () {
                     throw err;
                 });
             });
@@ -32,31 +33,31 @@ let Adapter = class Adapter {
         else {
             return this.query(db, "begin");
         }
-    }
-    commit(db) {
+    };
+    Adapter.prototype.commit = function (db) {
         return this.query(db, "commit");
-    }
-    rollback(db) {
+    };
+    Adapter.prototype.rollback = function (db) {
         return this.query(db, "rollback");
-    }
-    create(table) {
+    };
+    Adapter.prototype.create = function (table) {
         return table.query(table.getDDL());
-    }
-    drop(table) {
-        let sql = `drop table ${table.backquote(table.name)}`;
+    };
+    Adapter.prototype.drop = function (table) {
+        var sql = "drop table " + table.backquote(table.name);
         return table.query(sql);
-    }
-    random(query) {
+    };
+    Adapter.prototype.random = function (query) {
         query["_orderBy"] = "random()";
         return query;
-    }
-    limit(query, length, offset) {
-        let limit = offset ? [offset, length] : length;
+    };
+    Adapter.prototype.limit = function (query, length, offset) {
+        var limit = offset ? [offset, length] : length;
         query["_limit"] = limit;
         return query;
-    }
-    getSelectSQL(query) {
-        let isCount = (/count\(distinct\s\S+\)/i).test(query["_selects"]), distinct = query["_distinct"], selects = query["_selects"], join = query["_join"], where = query["_where"], orderBy = query["_orderBy"], groupBy = query["_groupBy"], having = query["_having"], union = query["_union"], limit;
+    };
+    Adapter.prototype.getSelectSQL = function (query) {
+        var isCount = (/count\(distinct\s\S+\)/i).test(query["_selects"]), distinct = query["_distinct"], selects = query["_selects"], join = query["_join"], where = query["_where"], orderBy = query["_orderBy"], groupBy = query["_groupBy"], having = query["_having"], union = query["_union"], limit;
         if (typeof query["_limit"] === "string")
             limit = query["_limit"];
         else
@@ -72,10 +73,11 @@ let Adapter = class Adapter {
             (having ? " having " + having : "") +
             (limit ? " limit " + limit : "") +
             (union ? " union " + union : "");
-    }
-};
-Adapter = tslib_1.__decorate([
-    HideProtectedProperties
-], Adapter);
+    };
+    Adapter = tslib_1.__decorate([
+        HideProtectedProperties
+    ], Adapter);
+    return Adapter;
+}());
 exports.Adapter = Adapter;
 //# sourceMappingURL=Adapter.js.map

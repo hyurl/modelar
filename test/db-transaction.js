@@ -1,18 +1,10 @@
-const assert = require("assert");
-const { DB } = require("../");
+var assert = require("assert");
+var DB = require("../").DB;
+var config = require("./config/db");
 
-describe("DB.prototype.transaction()", () => {
-    it("should sequentially run the SQLs in a transaction as expected", (done) => {
-        let config = {
-            type: "mysql",
-            database: "modelar",
-            host: "localhost",
-            port: 3306,
-            user: "root",
-            password: "161301"
-        };
-
-        let db = new DB(config),
+describe("DB.prototype.transaction()", function () {
+    it("should sequentially run the SQLs in a transaction as expected", function (done) {
+        var db = new DB(config),
             insertId = 0,
             insertion = {
                 sql: "insert into `users` (`name`, `email`, `password`) values (?, ?, ?)",
@@ -26,17 +18,17 @@ describe("DB.prototype.transaction()", () => {
                 sql: "update `users` set `name` = ?, `email` = ? where id = ?",
                 bindings: ["Ayonium", "ayon@hyurl.com", 0],
             },
-            replaceQuestionMark = (sql, bindings) => {
-                for (let data of bindings) {
+            replaceQuestionMark = function (sql, bindings) {
+                for (var data of bindings) {
                     sql = sql.replace("?", typeof data == "string" ? `'${data}'` : data);
                 }
 
                 return sql;
             };
 
-        db.transaction((db) => {
+        db.transaction(function (db) {
             // this query will be committed.
-            return db.query(insertion.sql, insertion.bindings).then(db => {
+            return db.query(insertion.sql, insertion.bindings).then(function (db) {
                 assert(typeof db.insertId == "number" && db.insertId > 0);
                 assert.equal(replaceQuestionMark(db.sql, db.bindings), replaceQuestionMark(insertion.sql, insertion.bindings));
 
@@ -44,8 +36,8 @@ describe("DB.prototype.transaction()", () => {
 
                 return db;
             });
-        }).then(db => {
-            return db.query(selection.sql, selection.bindings).then(() => {
+        }).then(function (db) {
+            return db.query(selection.sql, selection.bindings).then(function () {
                 assert(Array.isArray(db.data) && db.data.length == 1);
                 assert.equal(typeof db.data[0].id, "number");
                 assert.deepStrictEqual({
@@ -62,14 +54,14 @@ describe("DB.prototype.transaction()", () => {
 
                 return db;
             });
-        }).then(db => {
-            return db.transaction(() => {
+        }).then(function (db) {
+            return db.transaction(function () {
                 // this query will be rolled back since an error occurred.
-                return db.query(update.sql, update.bindings).then(() => {
+                return db.query(update.sql, update.bindings).then(function () {
                     throw new Error("This error prevent committing the query.");
                 });
-            }).catch((err) => {
-                return db.query(selection.sql, selection.bindings).then(() => {
+            }).catch(function (err) {
+                return db.query(selection.sql, selection.bindings).then(function () {
                     db.close();
 
                     assert(Array.isArray(db.data) && db.data.length == 1);
@@ -89,6 +81,12 @@ describe("DB.prototype.transaction()", () => {
                     return db;
                 });
             });
-        }).then(db => db.close()).then(done).catch(done);
+        }).then(function (db) {
+            db.close();
+            done();
+        }).catch(function (err) {
+            db.close();
+            done(err);
+        });
     });
 });

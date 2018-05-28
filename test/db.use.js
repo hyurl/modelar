@@ -1,19 +1,11 @@
-const assert = require("assert");
-const { DB } = require("../");
+var assert = require("assert");
+var DB = require("../").DB;
+var config = require("./config/db");
 
-describe("DB.prototype.use()", () => {
-    it("should use an existing DB instance and its connections as expected", () => {
-        let config = {
-            type: "mysql",
-            database: "modelar",
-            host: "localhost",
-            port: 3306,
-            user: "root",
-            password: "161301"
-        };
-
-        let db = new DB(config);
-        let db2 = new DB().use(db);
+describe("DB.prototype.use()", function () {
+    it("should use an existing DB instance and its connections as expected", function () {
+        var db = new DB(config);
+        var db2 = new DB().use(db);
 
         assert.deepEqual(db2.config, Object.assign({}, config, {
             charset: "utf8",

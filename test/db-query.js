@@ -1,18 +1,10 @@
-const assert = require("assert");
-const { DB } = require("../");
+var assert = require("assert");
+var DB = require("../").DB;
+var config = require("./config/db");
 
-describe("DB.prototype.query()", () => {
-    it("should sequentially run the SQLs as expected", (done) => {
-        let config = {
-            type: "mysql",
-            database: "modelar",
-            host: "localhost",
-            port: 3306,
-            user: "root",
-            password: "161301"
-        };
-
-        let db = new DB(config),
+describe("DB.prototype.query()", function () {
+    it("should sequentially run the SQLs as expected", function (done) {
+        var db = new DB(config),
             insertId = 0,
             insertion = {
                 sql: "insert into `users` (`name`, `email`, `password`) values (?, ?, ?)",
@@ -26,26 +18,26 @@ describe("DB.prototype.query()", () => {
                 sql: "update `users` set `name` = ?, `email` = ? where id = ?",
                 bindings: ["Ayonium", "ayon@hyurl.com", 0],
             },
-            deletion = {
-                sql: "delete from `users` where `id` = ?",
+            devarion = {
+                sql: "devare from `users` where `id` = ?",
                 bindings: [0],
             },
-            replaceQuestionMark = (sql, bindings) => {
-                for (let data of bindings) {
+            replaceQuestionMark = function (sql, bindings) {
+                for (var data of bindings) {
                     sql = sql.replace("?", typeof data == "string" ? `'${data}'` : data);
                 }
 
                 return sql;
             };
 
-        db.query(insertion.sql, insertion.bindings).then(db => {
+        db.query(insertion.sql, insertion.bindings).then(function (db) {
             assert(typeof db.insertId == "number" && db.insertId > 0);
             assert.equal(replaceQuestionMark(db.sql, db.bindings), replaceQuestionMark(insertion.sql, insertion.bindings));
 
-            insertId = selection.bindings[0] = update.bindings[2] = deletion.bindings[0] = db.insertId;
+            insertId = selection.bindings[0] = update.bindings[2] = devarion.bindings[0] = db.insertId;
 
             return db.query(selection.sql, selection.bindings);
-        }).then(db => {
+        }).then(function (db) {
             assert(Array.isArray(db.data) && db.data.length == 1);
             assert.equal(typeof db.data[0].id, "number");
             assert.deepStrictEqual({
@@ -61,14 +53,20 @@ describe("DB.prototype.query()", () => {
                 });
 
             return db.query(update.sql, update.bindings);
-        }).then(db => {
+        }).then(function (db) {
             assert.strictEqual(db.affectedRows, 1);
 
-            return db.query(deletion.sql, deletion.bindings);
-        }).then(db => {
+            return db.query(devarion.sql, devarion.bindings);
+        }).then(function (db) {
             assert.strictEqual(db.affectedRows, 1);
 
             return db;
-        }).then(db => db.close()).then(done);
+        }).then(function (db) {
+            db.close();
+            done();
+        }).catch(function (err) {
+            db.close();
+            done();
+        });
     });
 });

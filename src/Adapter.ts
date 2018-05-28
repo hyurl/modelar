@@ -1,7 +1,6 @@
 import { DB } from "./DB";
 import { Table } from "./Table";
 import { Query } from "./Query";
-import { PaginatedRecords } from "./interfaces";
 import HideProtectedProperties = require("hide-protected-properties");
 
 @HideProtectedProperties

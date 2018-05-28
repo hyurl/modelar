@@ -1,45 +1,52 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const tslib_1 = require("tslib");
-const events_1 = require("events");
-const modelar_mysql_adapter_1 = require("modelar-mysql-adapter");
-const modelar_postgres_adapter_1 = require("modelar-postgres-adapter");
-const interfaces_1 = require("./interfaces");
-const HideProtectedProperties = require("hide-protected-properties");
-const IdentifierException = /[~`!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:"'<>,\?\/\s]/;
-let DB = DB_1 = class DB extends events_1.EventEmitter {
-    constructor(config) {
-        super();
-        this.sql = "";
-        this.bindings = [];
-        this.insertId = 0;
-        this.affectedRows = 0;
-        this.dsn = "";
-        this.command = "";
-        this.data = [];
+var tslib_1 = require("tslib");
+var events_1 = require("events");
+var modelar_mysql_adapter_1 = require("modelar-mysql-adapter");
+var interfaces_1 = require("./interfaces");
+var HideProtectedProperties = require("hide-protected-properties");
+var assign = require("lodash/assign");
+var IdentifierException = /[~`!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:"'<>,\?\/\s]/;
+var DB = (function (_super) {
+    tslib_1.__extends(DB, _super);
+    function DB(config) {
+        var _this = _super.call(this) || this;
+        _this.sql = "";
+        _this.bindings = [];
+        _this.insertId = 0;
+        _this.affectedRows = 0;
+        _this.dsn = "";
+        _this.command = "";
+        _this.data = [];
         if (typeof config == "string")
             config = { database: config };
-        let Class = this.constructor;
-        this.set(Object.assign({}, Class.config, config));
-        this.dsn = this._getDSN();
-        this._events = Object.assign({}, Class._events);
-        this._eventsCount = Object.keys(this._events).length;
+        var Class = _this.constructor;
+        _this.set(assign({}, Class.config, config));
+        _this.dsn = _this._getDSN();
+        _this._events = assign({}, Class._events);
+        _this._eventsCount = Object.keys(_this._events).length;
+        return _this;
     }
-    get adapter() {
-        let Class = this.constructor;
-        if (!this._adapter) {
-            let Adapter = Class.adapters[this.config.type];
-            this._adapter = new Adapter;
-        }
-        return this._adapter;
-    }
-    set adapter(v) {
-        this._adapter = v;
-    }
-    _getDSN() {
+    DB_1 = DB;
+    Object.defineProperty(DB.prototype, "adapter", {
+        get: function () {
+            var Class = this.constructor;
+            if (!this._adapter) {
+                var Adapter_1 = Class.adapters[this.config.type];
+                this._adapter = new Adapter_1;
+            }
+            return this._adapter;
+        },
+        set: function (v) {
+            this._adapter = v;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    DB.prototype._getDSN = function () {
         if (this.config.connectionString)
             return this.config.connectionString;
-        let config = this.config, dsn = config.type + ":";
+        var config = this.config, dsn = config.type + ":";
         if (config.user || config.host)
             dsn += "//";
         if (config.user) {
@@ -59,9 +66,13 @@ let DB = DB_1 = class DB extends events_1.EventEmitter {
         if (!config.user && config.password)
             dsn += ":" + config.password;
         return dsn;
-    }
-    set(...args) {
-        let config, Class = this.constructor;
+    };
+    DB.prototype.set = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var config, Class = this.constructor;
         if (typeof args[0] === "string") {
             config = {};
             config[args[0]] = args[1];
@@ -69,11 +80,11 @@ let DB = DB_1 = class DB extends events_1.EventEmitter {
         else {
             config = args[0];
         }
-        this.config = Object.assign({}, Class.config, config);
+        this.config = assign({}, Class.config, config);
         return this;
-    }
-    quote(value) {
-        let quote = this.adapter.quote || "'", re = new RegExp(quote, "g");
+    };
+    DB.prototype.quote = function (value) {
+        var quote = this.adapter.quote || "'", re = new RegExp(quote, "g");
         switch (typeof value) {
             case "string":
                 value = value.replace(/\\/g, "\\\\").replace(re, "\\" + quote);
@@ -89,11 +100,12 @@ let DB = DB_1 = class DB extends events_1.EventEmitter {
                 break;
         }
         return value;
-    }
-    backquote(identifier) {
+    };
+    DB.prototype.backquote = function (identifier) {
+        var _this = this;
         if (typeof identifier !== "string")
             return identifier;
-        let sep = identifier.indexOf(",") > 0 ? "," : ".", parts = identifier.split(sep).map(part => part.trim()), quote;
+        var sep = identifier.indexOf(",") > 0 ? "," : ".", parts = identifier.split(sep).map(function (part) { return part.trim(); }), quote;
         if (this.adapter.backquote !== undefined) {
             if (this.adapter.backquote instanceof Array) {
                 quote = this.adapter.backquote;
@@ -117,82 +129,94 @@ let DB = DB_1 = class DB extends events_1.EventEmitter {
             identifier = quote[0] + identifier + quote[1];
         }
         else if (parts.length >= 2) {
-            parts = parts.map(part => this.backquote(part));
+            parts = parts.map(function (part) { return _this.backquote(part); });
             identifier = parts.join(sep == "," ? ", " : ".");
         }
         return identifier;
-    }
-    identifier(name) {
+    };
+    DB.prototype.identifier = function (name) {
         return this.backquote(name);
-    }
-    trigger(event, ...args) {
-        return this.emit(event, ...args);
-    }
-    connect() {
+    };
+    DB.prototype.trigger = function (event) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        return this.emit.apply(this, [event].concat(args));
+    };
+    DB.prototype.connect = function () {
         return this.adapter.connect(this);
-    }
-    acquire() {
+    };
+    DB.prototype.acquire = function () {
         return this.connect();
-    }
-    use(db) {
+    };
+    DB.prototype.use = function (db) {
         this.config = db.config;
         this.dsn = db.dsn;
         this.adapter = db.adapter;
         return this;
-    }
-    ensureConnect() {
+    };
+    DB.prototype.ensureConnect = function () {
         if (!this.adapter.connection) {
             return this.connect();
         }
         else {
             return Promise.resolve(this);
         }
-    }
-    query(sql, ...bindings) {
-        return this.ensureConnect().then(() => {
+    };
+    DB.prototype.query = function (sql) {
+        var _this = this;
+        var bindings = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            bindings[_i - 1] = arguments[_i];
+        }
+        return this.ensureConnect().then(function () {
             if (bindings[0] instanceof Array)
                 bindings = bindings[0];
-            this.sql = sql.trim();
-            this.bindings = Object.assign([], bindings);
-            if (this.sql[this.sql.length - 1] == ";")
-                this.sql = this.sql.slice(0, -1);
-            let i = this.sql.indexOf(" "), command = this.sql.substring(0, i).toLowerCase();
-            this.command = command;
-            this.emit("query", this);
-            return this.adapter.query(this, sql, bindings);
+            _this.sql = sql.trim();
+            _this.bindings = assign([], bindings);
+            if (_this.sql[_this.sql.length - 1] == ";")
+                _this.sql = _this.sql.slice(0, -1);
+            var i = _this.sql.indexOf(" "), command = _this.sql.substring(0, i).toLowerCase();
+            _this.command = command;
+            _this.emit("query", _this);
+            return _this.adapter.query(_this, sql, bindings);
         });
-    }
-    transaction(cb) {
-        return this.ensureConnect().then(() => {
-            return this.adapter.transaction(this, cb);
+    };
+    DB.prototype.transaction = function (cb) {
+        var _this = this;
+        return this.ensureConnect().then(function () {
+            return _this.adapter.transaction(_this, cb);
         });
-    }
-    commit() {
-        return this.ensureConnect().then(() => {
-            return this.adapter.commit(this);
+    };
+    DB.prototype.commit = function () {
+        var _this = this;
+        return this.ensureConnect().then(function () {
+            return _this.adapter.commit(_this);
         });
-    }
-    rollback() {
-        return this.ensureConnect().then(() => {
-            return this.adapter.rollback(this);
+    };
+    DB.prototype.rollback = function () {
+        var _this = this;
+        return this.ensureConnect().then(function () {
+            return _this.adapter.rollback(_this);
         });
-    }
-    release() {
+    };
+    DB.prototype.release = function () {
         return this.adapter.release();
-    }
-    recycle() {
+    };
+    DB.prototype.recycle = function () {
         return this.release();
-    }
-    close() {
+    };
+    DB.prototype.close = function () {
         return this.adapter.close();
-    }
-    static init(config) {
-        this.config = Object.assign({}, this.config, config);
+    };
+    DB.init = function (config) {
+        this.config = assign({}, this.config, config);
         return this;
-    }
-    static on(event, listener) {
+    };
+    DB.on = function (event, listener) {
         if (!this.hasOwnProperty("_events")) {
-            this._events = Object.assign({}, this._events);
+            this._events = assign({}, this._events);
         }
         if (this._events[event] instanceof Function) {
             this._events[event] = [this._events[event], listener];
@@ -204,68 +228,68 @@ let DB = DB_1 = class DB extends events_1.EventEmitter {
             this._events[event] = listener;
         }
         return this;
-    }
-    static setAdapter(type, AdapterClass) {
+    };
+    DB.setAdapter = function (type, AdapterClass) {
         if (!this.hasOwnProperty("adapters")) {
-            this.adapters = Object.assign({}, this.adapters);
+            this.adapters = assign({}, this.adapters);
         }
         this.adapters[type] = AdapterClass;
         return this;
-    }
-    static close() {
-        for (let i in this.adapters) {
-            let adapter = this.adapters[i];
+    };
+    DB.close = function () {
+        for (var i in this.adapters) {
+            var adapter = this.adapters[i];
             adapter.close();
         }
-    }
-    static destroy() {
+    };
+    DB.destroy = function () {
         return this.close();
-    }
-};
-DB._events = {};
-DB.config = interfaces_1.DBConfig;
-DB.adapters = {
-    mysql: modelar_mysql_adapter_1.MysqlAdapter,
-    maria: modelar_mysql_adapter_1.MysqlAdapter,
-    postgres: modelar_postgres_adapter_1.PostgresAdapter,
-};
-DB = DB_1 = tslib_1.__decorate([
-    HideProtectedProperties
-], DB);
+    };
+    DB._events = {};
+    DB.config = interfaces_1.DBConfig;
+    DB.adapters = {
+        mysql: modelar_mysql_adapter_1.MysqlAdapter,
+        maria: modelar_mysql_adapter_1.MysqlAdapter,
+    };
+    DB = DB_1 = tslib_1.__decorate([
+        HideProtectedProperties
+    ], DB);
+    return DB;
+    var DB_1;
+}(events_1.EventEmitter));
 exports.DB = DB;
 Object.defineProperties(DB.prototype, {
     _dsn: {
-        get() {
+        get: function () {
             return this.dsn;
         },
-        set(v) {
+        set: function (v) {
             this.dsn = v;
         }
     },
     _command: {
-        get() {
+        get: function () {
             return this.command;
         },
-        set(v) {
+        set: function (v) {
             this.command = v;
         }
     },
     _config: {
-        get() {
+        get: function () {
             return this.config;
         },
-        set(v) {
+        set: function (v) {
             this.config = v;
         }
     },
     _data: {
-        get() {
+        get: function () {
             return this.data;
         },
-        set(v) {
+        set: function (v) {
             this.data = v;
         }
     }
 });
-var DB_1;
 //# sourceMappingURL=DB.js.map

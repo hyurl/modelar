@@ -1,90 +1,105 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const interfaces_1 = require("./interfaces");
-const DB_1 = require("./DB");
-const Model_1 = require("./Model");
-class Table extends DB_1.DB {
-    constructor(...args) {
-        super();
-        this.schema = {};
+var tslib_1 = require("tslib");
+var interfaces_1 = require("./interfaces");
+var DB_1 = require("./DB");
+var Model_1 = require("./Model");
+var assign = require("lodash/assign");
+var Table = (function (_super) {
+    tslib_1.__extends(Table, _super);
+    function Table() {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var _this = _super.call(this) || this;
+        _this.schema = {};
         if (args[0] instanceof Model_1.Model) {
-            let model = args[0];
-            this.name = model.table;
-            this.schema = model.schema;
-            this.use(model);
+            var model = args[0];
+            _this.name = model.table;
+            _this.schema = model.schema;
+            _this.use(model);
         }
         else {
-            this.name = args[0];
-            this.schema = args[1] = {};
+            _this.name = args[0];
+            _this.schema = args[1] = {};
         }
+        return _this;
     }
-    addColumn(field, type = "", length = 0) {
-        let _field;
+    Table.prototype.addColumn = function (field, type, length) {
+        if (type === void 0) { type = ""; }
+        if (length === void 0) { length = 0; }
+        var _field;
         if (typeof field === "string") {
             this._current = field;
-            _field = { name: field, type, length };
+            _field = { name: field, type: type, length: length };
         }
         else {
             this._current = field.name;
             _field = field;
         }
-        this.schema[this._current] = Object.assign({}, interfaces_1.FieldConfig, _field);
+        this.schema[this._current] = assign({}, interfaces_1.FieldConfig, _field);
         return this;
-    }
-    primary() {
+    };
+    Table.prototype.primary = function () {
         this.schema[this._current].primary = true;
         return this;
-    }
-    autoIncrement(start = 1, step = 1) {
+    };
+    Table.prototype.autoIncrement = function (start, step) {
+        if (start === void 0) { start = 1; }
+        if (step === void 0) { step = 1; }
         this.schema[this._current].autoIncrement = [start, step];
         return this;
-    }
-    unique() {
+    };
+    Table.prototype.unique = function () {
         this.schema[this._current].unique = true;
         return this;
-    }
-    default(value) {
+    };
+    Table.prototype.default = function (value) {
         this.schema[this._current].default = value;
         return this;
-    }
-    notNull() {
+    };
+    Table.prototype.notNull = function () {
         this.schema[this._current].notNull = true;
         return this;
-    }
-    unsigned() {
+    };
+    Table.prototype.unsigned = function () {
         this.schema[this._current].unsigned = true;
         return this;
-    }
-    comment(text) {
+    };
+    Table.prototype.comment = function (text) {
         this.schema[this._current].comment = text;
         return this;
-    }
-    foreignKey(input, field, onDelete = "set null", onUpdate = "no action") {
-        let foreignKey;
+    };
+    Table.prototype.foreignKey = function (input, field, onDelete, onUpdate) {
+        if (onDelete === void 0) { onDelete = "set null"; }
+        if (onUpdate === void 0) { onUpdate = "no action"; }
+        var foreignKey;
         if (typeof input === "object") {
             foreignKey = input;
         }
         else {
-            foreignKey = { table: input, field, onDelete, onUpdate };
+            foreignKey = { table: input, field: field, onDelete: onDelete, onUpdate: onUpdate };
         }
-        this.schema[this._current].foreignKey = Object.assign(this.schema[this._current].foreignKey, foreignKey);
+        this.schema[this._current].foreignKey = assign(this.schema[this._current].foreignKey, foreignKey);
         return this;
-    }
-    getDDL() {
+    };
+    Table.prototype.getDDL = function () {
         return this.adapter.getDDL(this);
-    }
-    create() {
+    };
+    Table.prototype.create = function () {
         return this.adapter.create(this);
-    }
-    save() {
+    };
+    Table.prototype.save = function () {
         return this.create();
-    }
-    drop() {
+    };
+    Table.prototype.drop = function () {
         return this.adapter.drop(this);
-    }
-    static drop(table) {
+    };
+    Table.drop = function (table) {
         return (new this(table)).drop();
-    }
-}
+    };
+    return Table;
+}(DB_1.DB));
 exports.Table = Table;
 //# sourceMappingURL=Table.js.map

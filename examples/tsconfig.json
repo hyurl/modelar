@@ -3,8 +3,9 @@
         "module": "commonjs",
         "target": "es2015",
         "preserveConstEnums": true,
-        "outDir": "../dist/test",
+        "outDir": "../dist/example",
         "experimentalDecorators": true,
+        "noUnusedParameters": true,
         "sourceMap": true,
         "importHelpers": true,
         "lib": [

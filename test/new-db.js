@@ -1,18 +1,10 @@
-const assert = require("assert");
-const { DB } = require("../");
+var assert = require("assert");
+var DB = require("../").DB;
+var config = require("./config/db");
 
-describe("new DB()", () => {
-    it("should create a DB instance as expected", () => {
-        let config = {
-            type: "mysql",
-            database: "modelar",
-            host: "localhost",
-            port: 3306,
-            user: "root",
-            password: "161301"
-        };
-
-        let db = new DB(config);
+describe("new DB()", function () {
+    it("should create a DB instance as expected", function () {
+        var db = new DB(config);
 
         assert.deepEqual(db.config, Object.assign({}, config, {
             charset: "utf8",

@@ -1,9 +1,9 @@
-const assert = require("assert");
-const { Query } = require("../");
+var assert = require("assert");
+var Query = require("../").Query;
 
-describe("Query.prototype.whereExists()", () => {
-    it("should generate SQL with a where exists clause", () => {
-        let query = new Query("users").select("*").whereExists(_query => {
+describe("Query.prototype.whereExists()", function () {
+    it("should generate SQL with a where exists clause", function () {
+        var query = new Query("users").select("*").whereExists(function (_query) {
             _query.select("*").from("users").where("name", "Ayon Lee");
         });
 
@@ -12,9 +12,9 @@ describe("Query.prototype.whereExists()", () => {
     });
 });
 
-describe("Query.prototype.whereNotExists()", () => {
-    it("should generate SQL with a where not exists clause", () => {
-        let query = new Query("users").select("*").whereNotExists(_query => {
+describe("Query.prototype.whereNotExists()", function () {
+    it("should generate SQL with a where not exists clause", function () {
+        var query = new Query("users").select("*").whereNotExists(function (_query) {
             _query.select("*").from("users").where("name", "Ayon Lee");
         });
 
@@ -23,10 +23,10 @@ describe("Query.prototype.whereNotExists()", () => {
     });
 });
 
-describe("Query.prototype.orWhereExists()", () => {
-    it("should generate SQL with a or where exists clause", () => {
-        let query = new Query("users").select("*").whereIn("id", [1, 10])
-            .orWhereExists(_query => {
+describe("Query.prototype.orWhereExists()", function () {
+    it("should generate SQL with a or where exists clause", function () {
+        var query = new Query("users").select("*").whereIn("id", [1, 10])
+            .orWhereExists(function (_query) {
                 _query.select("*").from("users").where("name", "Ayon Lee");
             });
 
@@ -35,10 +35,10 @@ describe("Query.prototype.orWhereExists()", () => {
     });
 });
 
-describe("Query.prototype.orWhereNotExists()", () => {
-    it("should generate SQL with a or where not exists clause", () => {
-        let query = new Query("users").select("*").whereIn("id", [1, 10])
-            .orWhereNotExists(_query => {
+describe("Query.prototype.orWhereNotExists()", function () {
+    it("should generate SQL with a or where not exists clause", function () {
+        var query = new Query("users").select("*").whereIn("id", [1, 10])
+            .orWhereNotExists(function (_query) {
                 _query.select("*").from("users").where("name", "Ayon Lee");
             });
 

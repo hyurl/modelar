@@ -1,19 +1,12 @@
-const assert = require("assert");
-const { DB, Query } = require("../");
+var assert = require("assert");
+var DB = require("../").DB;
+var Query = require("../").Query;
+var config = require("./config/db");
 
-describe("new Query()", () => {
-    it("should create a Query instance as expected", () => {
-        let config = {
-            type: "mysql",
-            database: "modelar",
-            host: "localhost",
-            port: 3306,
-            user: "root",
-            password: "161301"
-        };
-
-        let db = new DB(config);
-        let query = new Query("users").use(db);
+describe("new Query()", function () {
+    it("should create a Query instance as expected", function () {
+        var db = new DB(config);
+        var query = new Query("users").use(db);
 
         assert.deepEqual(query.config, Object.assign({}, config, {
             charset: "utf8",

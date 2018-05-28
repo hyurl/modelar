@@ -1,15 +1,15 @@
 import { FieldConfig, ForeignKeyConfig } from "./interfaces";
 import { Model } from "./Model";
-import { EventEmitter } from "events";
+import assign = require("lodash/assign");
 
 function prepare(proto: Model, prop: string) {
     if (!proto.hasOwnProperty("schema")) {
-        proto.schema = Object.assign({}, proto.schema);
-        proto.fields = Object.assign([], proto.fields);
+        proto.schema = assign({}, proto.schema);
+        proto.fields = assign([], proto.fields);
     }
 
     if (proto.schema[prop] === undefined)
-        proto.schema[prop] = Object.assign({}, FieldConfig, { name: prop });
+        proto.schema[prop] = assign({}, FieldConfig, { name: prop });
 }
 
 export type ModelDecorator = (proto: Model, prop: string) => void;
@@ -23,7 +23,7 @@ export function field(...args) {
 
         prepare(proto, prop);
 
-        if (!proto.fields.includes(prop))
+        if (proto.fields.indexOf(prop) === -1)
             proto.fields.push(prop);
     } else {
         let type: string = args[0],
@@ -45,9 +45,9 @@ export function primary(proto: Model, prop: string) {
 
 export function searchable(proto: Model, prop: string) {
     if (!proto.hasOwnProperty("searchable"))
-        proto.searchable = Object.assign([], proto.searchable);
+        proto.searchable = assign([], proto.searchable);
 
-    if (!proto.searchable.includes(prop)) {
+    if (proto.searchable.indexOf(prop) === -1) {
         proto.searchable.push(prop);
     }
 }
@@ -118,7 +118,7 @@ export function foreignKey(input, field?: string, onDelete = "set null", onUpdat
         foreignKey = <ForeignKeyConfig>{ table: input, field, onDelete, onUpdate };
     }
     return (proto: Model, prop: string) => {
-        proto.schema[prop].foreignKey = Object.assign(
+        proto.schema[prop].foreignKey = assign(
             proto.schema[prop].foreignKey,
             foreignKey
         );

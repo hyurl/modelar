@@ -1,6 +1,8 @@
 import { DB } from "./DB";
 import { PaginatedRecords } from "./interfaces";
 import { InsertionError, UpdateError } from "./Errors";
+import assign = require("lodash/assign");
+import fill = require("lodash/fill");
 
 /**
  * *Query Builder and beyond.*
@@ -455,7 +457,7 @@ export class Query extends DB {
         if (values instanceof Function) {
             return this._handleInChild(field, values, isIn);
         } else {
-            let _values = Array(values.length).fill("?");
+            let _values = fill(Array(values.length), "?");
             this._where += this.backquote(field) + (isIn ? "" : " not") +
                 " in (" + _values.join(", ") + ")";
             this._bindings = this._bindings.concat(values);
@@ -633,7 +635,7 @@ export class Query extends DB {
         this.emit("insert", this);
 
         return this.query(this.sql, bindings).then(() => {
-            this.bindings = Object.assign([], bindings);
+            this.bindings = assign([], bindings);
 
             // Fire event and call its listeners.
             this.emit("inserted", this);
@@ -713,7 +715,7 @@ export class Query extends DB {
         this.emit("update", this);
 
         return this.query(this.sql, bindings).then(() => {
-            this.bindings = Object.assign([], bindings);
+            this.bindings = assign([], bindings);
 
             // Fire event and call its listeners.
             this.emit("updated", this);
@@ -731,7 +733,7 @@ export class Query extends DB {
         this.emit("delete", this);
 
         return this.query(this.sql, this._bindings).then(() => {
-            this.bindings = Object.assign([], this._bindings);
+            this.bindings = assign([], this._bindings);
 
             // Fire event and call its listeners.
             this.emit("deleted", this);
@@ -804,11 +806,19 @@ export class Query extends DB {
      */
     chunk(length: number, cb: (data: any[]) => false | void): Promise<any[]> {
         let offset = 0,
-            loop = () => {
+            query = new Query(this.table).use(this);
+
+        query._where = this._where;
+        query._join = this._join;
+        query._bindings = this._bindings;
+
+        return query.count().then(total => {
+            let loop = () => {
                 return this.limit(length, offset).all().then(data => {
                     let ok = cb.call(this, data);
-                    if (data.length === length && ok !== false) {
-                        offset += length;
+                    offset += length;
+
+                    if (data.length == length && ok !== false && offset < total) {
                         // Running the function recursively.
                         return loop();
                     } else {
@@ -816,7 +826,8 @@ export class Query extends DB {
                     }
                 });
             };
-        return loop();
+            return loop();
+        });
     }
 
     /**
@@ -827,13 +838,14 @@ export class Query extends DB {
      */
     paginate(page: number, length?: number): Promise<PaginatedRecords> {
         if (!length)
-            length = parseInt(<string>this._limit) || 10;
+            length = parseInt(String(this._limit)) || 10;
 
         let offset = (page - 1) * length,
             query = new Query(this.table).use(this);
 
         query._where = this._where;
         query._join = this._join;
+        query._bindings = this._bindings;
 
         // Get all counts of records.
         return query.count().then(total => {
@@ -847,10 +859,9 @@ export class Query extends DB {
                 }
             } else { // If the are records, continue fetching data.
                 return this.limit(length, offset).all().then(data => {
-                    if (data.length && data[0].rn === undefined) {
-                        let first = (page - 1) * length + 1;
+                    if (data.length && data[0].rn !== undefined) {
                         for (let record of data) {
-                            record.rn = first++;
+                            delete record.rn;
                         }
                     }
 
@@ -877,7 +888,7 @@ export class Query extends DB {
     private _handleSelect(): Promise<any[] | { [field: string]: any }> {
         this.sql = this.getSelectSQL();
         return this.query(this.sql, this._bindings).then(query => {
-            this.bindings = Object.assign([], this._bindings);
+            this.bindings = assign([], this._bindings);
             return query.data;
         });
     }

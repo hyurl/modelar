@@ -1,27 +1,32 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const interfaces_1 = require("./interfaces");
+var interfaces_1 = require("./interfaces");
+var assign = require("lodash/assign");
 function prepare(proto, prop) {
     if (!proto.hasOwnProperty("schema")) {
-        proto.schema = Object.assign({}, proto.schema);
-        proto.fields = Object.assign([], proto.fields);
+        proto.schema = assign({}, proto.schema);
+        proto.fields = assign([], proto.fields);
     }
     if (proto.schema[prop] === undefined)
-        proto.schema[prop] = Object.assign({}, interfaces_1.FieldConfig, { name: prop });
+        proto.schema[prop] = assign({}, interfaces_1.FieldConfig, { name: prop });
 }
-function field(...args) {
+function field() {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
     if (typeof args[0] === "object") {
-        let proto = args[0], prop = args[1];
+        var proto = args[0], prop = args[1];
         prepare(proto, prop);
-        if (!proto.fields.includes(prop))
+        if (proto.fields.indexOf(prop) === -1)
             proto.fields.push(prop);
     }
     else {
-        let type = args[0], length = args[1] | 0;
-        return (proto, prop) => {
+        var type_1 = args[0], length_1 = args[1] | 0;
+        return function (proto, prop) {
             field(proto, prop);
-            proto.schema[prop].type = type;
-            proto.schema[prop].length = length;
+            proto.schema[prop].type = type_1;
+            proto.schema[prop].length = length_1;
         };
     }
 }
@@ -34,23 +39,27 @@ function primary(proto, prop) {
 exports.primary = primary;
 function searchable(proto, prop) {
     if (!proto.hasOwnProperty("searchable"))
-        proto.searchable = Object.assign([], proto.searchable);
-    if (!proto.searchable.includes(prop)) {
+        proto.searchable = assign([], proto.searchable);
+    if (proto.searchable.indexOf(prop) === -1) {
         proto.searchable.push(prop);
     }
 }
 exports.searchable = searchable;
-function autoIncrement(...args) {
+function autoIncrement() {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
     if (typeof args[0] === "object") {
-        let proto = args[0], prop = args[1];
+        var proto = args[0], prop = args[1];
         prepare(proto, prop);
         proto.schema[prop].autoIncrement = [1, 1];
     }
     else {
-        let start = args[0], step = args[1] || 1;
-        return (proto, prop) => {
+        var start_1 = args[0], step_1 = args[1] || 1;
+        return function (proto, prop) {
             prepare(proto, prop);
-            proto.schema[prop].autoIncrement = [start, step];
+            proto.schema[prop].autoIncrement = [start_1, step_1];
         };
     }
 }
@@ -61,7 +70,7 @@ function unique(proto, prop) {
 }
 exports.unique = unique;
 function defaultValue(value) {
-    return (proto, prop) => {
+    return function (proto, prop) {
         prepare(proto, prop);
         proto.schema[prop].default = value;
     };
@@ -78,22 +87,24 @@ function unsigned(proto, prop) {
 }
 exports.unsigned = unsigned;
 function comment(text) {
-    return (proto, prop) => {
+    return function (proto, prop) {
         prepare(proto, prop);
         proto.schema[prop].comment = text;
     };
 }
 exports.comment = comment;
-function foreignKey(input, field, onDelete = "set null", onUpdate = "no action") {
+function foreignKey(input, field, onDelete, onUpdate) {
+    if (onDelete === void 0) { onDelete = "set null"; }
+    if (onUpdate === void 0) { onUpdate = "no action"; }
     var foreignKey;
     if (typeof input === "object") {
         foreignKey = input;
     }
     else {
-        foreignKey = { table: input, field, onDelete, onUpdate };
+        foreignKey = { table: input, field: field, onDelete: onDelete, onUpdate: onUpdate };
     }
-    return (proto, prop) => {
-        proto.schema[prop].foreignKey = Object.assign(proto.schema[prop].foreignKey, foreignKey);
+    return function (proto, prop) {
+        proto.schema[prop].foreignKey = assign(proto.schema[prop].foreignKey, foreignKey);
     };
 }
 exports.foreignKey = foreignKey;

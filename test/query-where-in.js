@@ -1,19 +1,19 @@
-const assert = require("assert");
-const { Query } = require("../");
+var assert = require("assert");
+var Query = require("../").Query;
 
-describe("Query.prototype.whereIn()", () => {
-    describe("whereIn(field: string, values: string[] | number[])", () => {
-        it("should generate SQL with one where in clause", () => {
-            let query = new Query("users").select("*").whereIn("id", [1, 10]);
+describe("Query.prototype.whereIn()", function () {
+    describe("whereIn(field: string, values: string[] | number[])", function () {
+        it("should generate SQL with one where in clause", function () {
+            var query = new Query("users").select("*").whereIn("id", [1, 10]);
             assert.equal(query.getSelectSQL(), "select * from `users` where `id` in (?, ?)");
             assert.deepEqual(query["_bindings"], [1, 10]);
         });
     });
 
-    describe("whereIn(field: string, nested: (query: Query) => void)", () => {
-        it("should generate SQL with a nested where in clause", () => {
-            let query = new Query("users").select("*");
-            query.whereIn("id", _query => {
+    describe("whereIn(field: string, nested: (query: Query) => void)", function () {
+        it("should generate SQL with a nested where in clause", function () {
+            var query = new Query("users").select("*");
+            query.whereIn("id", function (_query) {
                 _query.select("id").from("users").where("name", "Ayon Lee");
             });
             assert.equal(query.getSelectSQL(), "select * from `users` where `id` in (select `id` from `users` where `name` = ?)");
@@ -22,18 +22,18 @@ describe("Query.prototype.whereIn()", () => {
     });
 });
 
-describe("Query.prototype.whereNotIn()", () => {
-    describe("whereNotIn(field: string, values: string[] | number[])", () => {
-        it("should generate SQL with one where not in clause", () => {
-            let query = new Query("users").select("*").whereNotIn("id", [1, 10]);
+describe("Query.prototype.whereNotIn()", function () {
+    describe("whereNotIn(field: string, values: string[] | number[])", function () {
+        it("should generate SQL with one where not in clause", function () {
+            var query = new Query("users").select("*").whereNotIn("id", [1, 10]);
             assert.equal(query.getSelectSQL(), "select * from `users` where `id` not in (?, ?)");
             assert.deepEqual(query["_bindings"], [1, 10]);
         });
     });
 
-    describe("whereNotIn(field: string, nested: (query: Query) => void)", () => {
-        it("should generate SQL with a nested where not in clause", () => {
-            let query = new Query("users").select("*").whereNotIn("id", _query => {
+    describe("whereNotIn(field: string, nested: (query: Query) => void)", function () {
+        it("should generate SQL with a nested where not in clause", function () {
+            var query = new Query("users").select("*").whereNotIn("id", function (_query) {
                 _query.select("id").from("users").where("name", "Ayon Lee");
             });
             assert.equal(query.getSelectSQL(), "select * from `users` where `id` not in (select `id` from `users` where `name` = ?)");
@@ -42,10 +42,10 @@ describe("Query.prototype.whereNotIn()", () => {
     });
 });
 
-describe("Query.prototype.orWhereIn()", () => {
-    describe("orWhereIn(field: string, values: string[] | number[])", () => {
-        it("should generate SQL with one where or in clause", () => {
-            let query = new Query("users")
+describe("Query.prototype.orWhereIn()", function () {
+    describe("orWhereIn(field: string, values: string[] | number[])", function () {
+        it("should generate SQL with one where or in clause", function () {
+            var query = new Query("users")
                 .select("*")
                 .where("name", "Luna")
                 .orWhereIn("id", [1, 10]);
@@ -55,12 +55,12 @@ describe("Query.prototype.orWhereIn()", () => {
         });
     });
 
-    describe("orWhereIn(field: string, nested: (query: Query) => void)", () => {
-        it("should generate SQL with a nested where or in clause", () => {
-            let query = new Query("users")
+    describe("orWhereIn(field: string, nested: (query: Query) => void)", function () {
+        it("should generate SQL with a nested where or in clause", function () {
+            var query = new Query("users")
                 .select("*")
                 .where("name", "Luna")
-                .orWhereIn("id", _query => {
+                .orWhereIn("id", function (_query) {
                     _query.select("id").from("users").where("name", "Ayon Lee");
                 });
 
@@ -70,10 +70,10 @@ describe("Query.prototype.orWhereIn()", () => {
     });
 });
 
-describe("Query.prototype.orWhereNotIn()", () => {
-    describe("orWhereNotIn(field: string, values: string[] | number[])", () => {
-        it("should generate SQL with one where or not in clause", () => {
-            let query = new Query("users")
+describe("Query.prototype.orWhereNotIn()", function () {
+    describe("orWhereNotIn(field: string, values: string[] | number[])", function () {
+        it("should generate SQL with one where or not in clause", function () {
+            var query = new Query("users")
                 .select("*")
                 .where("name", "Luna")
                 .orWhereNotIn("id", [1, 10]);
@@ -83,12 +83,12 @@ describe("Query.prototype.orWhereNotIn()", () => {
         });
     });
 
-    describe("orWhereNotIn(field: string, nested: (query: Query) => void)", () => {
-        it("should generate SQL with a nested where or not in clause", () => {
-            let query = new Query("users")
+    describe("orWhereNotIn(field: string, nested: (query: Query) => void)", function () {
+        it("should generate SQL with a nested where or not in clause", function () {
+            var query = new Query("users")
                 .select("*")
                 .where("name", "Luna")
-                .orWhereNotIn("id", _query => {
+                .orWhereNotIn("id", function (_query) {
                     _query.select("id").from("users").where("name", "Ayon Lee");
                 });
 

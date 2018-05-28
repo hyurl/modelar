@@ -8,3 +8,6 @@ export * from "./Model";
 export * from "./User";
 export * from "./interfaces";
 export * from "./decorators";
+
+import { Model } from "./Model";
+export default Model;

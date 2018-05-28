@@ -1,9 +1,9 @@
-const assert = require("assert");
-const { Query } = require("../");
+var assert = require("assert");
+var Query = require("../").Query;
 
-describe("Query.prototype.whereBetween()", () => {
-    it("should generate SQL with one where between clause", () => {
-        let query = new Query("users");
+describe("Query.prototype.whereBetween()", function () {
+    it("should generate SQL with one where between clause", function () {
+        var query = new Query("users");
 
         query.select("*").whereBetween("id", [1, 10]);
 
@@ -12,9 +12,9 @@ describe("Query.prototype.whereBetween()", () => {
     });
 });
 
-describe("Query.prototype.whereNotBetween()", () => {
-    it("should generate SQL with one where not between clause", () => {
-        let query = new Query("users");
+describe("Query.prototype.whereNotBetween()", function () {
+    it("should generate SQL with one where not between clause", function () {
+        var query = new Query("users");
 
         query.select("*").whereNotBetween("id", [1, 10]);
 
@@ -23,9 +23,9 @@ describe("Query.prototype.whereNotBetween()", () => {
     });
 });
 
-describe("Query.prototype.orWhereBetween()", () => {
-    it("should generate SQL with one where between or between clause", () => {
-        let query = new Query("users");
+describe("Query.prototype.orWhereBetween()", function () {
+    it("should generate SQL with one where between or between clause", function () {
+        var query = new Query("users");
 
         query.select("*").whereBetween("id", [1, 10]).orWhereBetween("id", [99, 100]);
 
@@ -34,9 +34,9 @@ describe("Query.prototype.orWhereBetween()", () => {
     });
 });
 
-describe("Query.prototype.orWhereNotBetween()", () => {
-    it("should generate SQL with one where between or not between clause", () => {
-        let query = new Query("users");
+describe("Query.prototype.orWhereNotBetween()", function () {
+    it("should generate SQL with one where between or not between clause", function () {
+        var query = new Query("users");
 
         query.select("*").whereBetween("id", [1, 10]).orWhereNotBetween("id", [99, 100]);
 

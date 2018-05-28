@@ -1,13 +1,13 @@
-const assert = require("assert");
-const { Query } = require("../");
+var assert = require("assert");
+var Query = require("../").Query;
 
-describe("Query.prototype.where()", () => {
-    describe("where(field: string, value: string | number | boolean | Date)", () => {
-        let query = new Query("users");
+describe("Query.prototype.where()", function () {
+    describe("where(field: string, value: string | number | boolean | Date)", function () {
+        var query = new Query("users");
 
         query.select("*");
 
-        it("should generate SQL with one where clause", () => {
+        it("should generate SQL with one where clause", function () {
 
             query.where("id", 1);
 
@@ -15,7 +15,7 @@ describe("Query.prototype.where()", () => {
             assert.deepEqual(query["_bindings"], [1]);
         });
 
-        it("should generate SQL with two where clauses", () => {
+        it("should generate SQL with two where clauses", function () {
             query.where("name", "Ayon Lee");
 
             assert.equal(query.getSelectSQL(), "select * from `users` where `id` = ? and `name` = ?");
@@ -23,19 +23,19 @@ describe("Query.prototype.where()", () => {
         });
     });
 
-    describe("where(field: string, operator: string, value: string | number | boolean | Date)", () => {
-        let query = new Query("users");
+    describe("where(field: string, operator: string, value: string | number | boolean | Date)", function () {
+        var query = new Query("users");
 
         query.select("*");
 
-        it("should generate SQL with where >", () => {
+        it("should generate SQL with where >", function () {
             query.where("id", ">", 1);
 
             assert.equal(query.getSelectSQL(), "select * from `users` where `id` > ?");
             assert.deepEqual(query["_bindings"], [1]);
         });
 
-        it("should generate SQL with where <>", () => {
+        it("should generate SQL with where <>", function () {
             query.where("name", "<>", "Luna");
 
             assert.equal(query.getSelectSQL(), "select * from `users` where `id` > ? and `name` <> ?");
@@ -43,12 +43,12 @@ describe("Query.prototype.where()", () => {
         });
     });
 
-    describe("where(fields: { [field: string]: string | number | boolean | Date })", () => {
-        let query = new Query("users");
+    describe("where(fields: { [field: string]: string | number | boolean | Date })", function () {
+        var query = new Query("users");
 
         query.select("*");
 
-        it("should generate SQL with where clause that contains multiple equal conditions", () => {
+        it("should generate SQL with where clause that contains multiple equal conditions", function () {
             query.where({
                 id: 1,
                 name: "Ayon Lee",
@@ -60,13 +60,13 @@ describe("Query.prototype.where()", () => {
         });
     });
 
-    describe("where(nested: (query: Query) => void)", () => {
-        let query = new Query("users");
+    describe("where(nested: (query: Query) => void)", function () {
+        var query = new Query("users");
 
         query.select("*");
 
-        it("should generate SQL with a nested where clause", () => {
-            query.where("id", 1).where((query) => {
+        it("should generate SQL with a nested where clause", function () {
+            query.where("id", 1).where(function (query) {
                 query.where("name", "<>", "Luna").where("email", "i@hyurl.com");
             });
 
@@ -75,13 +75,13 @@ describe("Query.prototype.where()", () => {
         });
     });
 
-    describe("where(field: string, nested: (query: Query) => void)", () => {
-        let query = new Query("users");
+    describe("where(field: string, nested: (query: Query) => void)", function () {
+        var query = new Query("users");
 
         query.select("*");
 
-        it("should generate SQL with a nested where clause compare to a specific field", () => {
-            query.where("id", (query) => {
+        it("should generate SQL with a nested where clause compare to a specific field", function () {
+            query.where("id", function (query) {
                 query.select("id").from("users").where("name", "Ayon Lee").limit(1);
             });
 
@@ -90,13 +90,13 @@ describe("Query.prototype.where()", () => {
         });
     });
 
-    describe("where(field: string, operator: string, nested: (query: Query) => void)", () => {
-        let query = new Query("users");
+    describe("where(field: string, operator: string, nested: (query: Query) => void)", function () {
+        var query = new Query("users");
 
         query.select("*");
 
-        it("should generate SQL with a nested where clause compare to a specific field", () => {
-            query.where("id", "<>", (query) => {
+        it("should generate SQL with a nested where clause compare to a specific field", function () {
+            query.where("id", "<>", function (query) {
                 query.select("id").from("users").where("name", "Ayon Lee").limit(1);
             });
 

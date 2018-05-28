@@ -1,35 +1,50 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const DB_1 = require("./DB");
-const Errors_1 = require("./Errors");
-class Query extends DB_1.DB {
-    constructor(table = "") {
-        super();
-        this._inserts = "";
-        this._updates = "";
-        this._selects = "*";
-        this._distinct = "";
-        this._join = "";
-        this._where = "";
-        this._orderBy = "";
-        this._groupBy = "";
-        this._having = "";
-        this._limit = "";
-        this._union = "";
-        this._bindings = [];
-        this._isModel = false;
-        this.from(table);
+var tslib_1 = require("tslib");
+var DB_1 = require("./DB");
+var Errors_1 = require("./Errors");
+var assign = require("lodash/assign");
+var fill = require("lodash/fill");
+var Query = (function (_super) {
+    tslib_1.__extends(Query, _super);
+    function Query(table) {
+        if (table === void 0) { table = ""; }
+        var _this = _super.call(this) || this;
+        _this._inserts = "";
+        _this._updates = "";
+        _this._selects = "*";
+        _this._distinct = "";
+        _this._join = "";
+        _this._where = "";
+        _this._orderBy = "";
+        _this._groupBy = "";
+        _this._having = "";
+        _this._limit = "";
+        _this._union = "";
+        _this._bindings = [];
+        _this._isModel = false;
+        _this.from(table);
+        return _this;
     }
-    field(name) {
+    Query.prototype.field = function (name) {
         return new Query.Field(name);
-    }
-    select(...args) {
-        let fields = args[0] instanceof Array ? args[0] : args;
-        fields = fields.map(field => this.backquote(field));
+    };
+    Query.prototype.select = function () {
+        var _this = this;
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var fields = args[0] instanceof Array ? args[0] : args;
+        fields = fields.map(function (field) { return _this.backquote(field); });
         this._selects = fields.join(", ");
         return this;
-    }
-    from(...tables) {
+    };
+    Query.prototype.from = function () {
+        var tables = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            tables[_i] = arguments[_i];
+        }
         if (tables.length > 1) {
             this.table = tables.join(", ");
         }
@@ -40,35 +55,59 @@ class Query extends DB_1.DB {
             this.table = tables[0];
         }
         return this;
-    }
-    join(table, ...args) {
-        return this._handleJoin(table, "inner", ...args);
-    }
-    leftJoin(table, ...args) {
-        return this._handleJoin(table, "left", ...args);
-    }
-    rightJoin(table, ...args) {
-        return this._handleJoin(table, "right", ...args);
-    }
-    fullJoin(table, ...args) {
-        return this._handleJoin(table, "full", ...args);
-    }
-    crossJoin(table, ...args) {
-        return this._handleJoin(table, "cross", ...args);
-    }
-    _handleJoin(table, type, ...args) {
+    };
+    Query.prototype.join = function (table) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        return this._handleJoin.apply(this, [table, "inner"].concat(args));
+    };
+    Query.prototype.leftJoin = function (table) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        return this._handleJoin.apply(this, [table, "left"].concat(args));
+    };
+    Query.prototype.rightJoin = function (table) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        return this._handleJoin.apply(this, [table, "right"].concat(args));
+    };
+    Query.prototype.fullJoin = function (table) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        return this._handleJoin.apply(this, [table, "full"].concat(args));
+    };
+    Query.prototype.crossJoin = function (table) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        return this._handleJoin.apply(this, [table, "cross"].concat(args));
+    };
+    Query.prototype._handleJoin = function (table, type) {
+        var args = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            args[_i - 2] = arguments[_i];
+        }
         if (!this._join) {
             this._join = this.backquote(this.table);
         }
         else {
             this._join = "(" + this._join + ")";
         }
-        this._join += ` ${type} join ${this.backquote(table)} on `;
+        this._join += " " + type + " join " + this.backquote(table) + " on ";
         if (args.length == 1) {
             if (typeof args[0] == "object") {
-                let joins = [];
-                for (let field in args[0]) {
-                    let value = args[0][field], statement = this.backquote(field) + " = ";
+                var joins = [];
+                for (var field in args[0]) {
+                    var value = args[0][field], statement = this.backquote(field) + " = ";
                     if (value instanceof Query.Field) {
                         statement += this.backquote(value.name);
                     }
@@ -81,7 +120,7 @@ class Query extends DB_1.DB {
                 this._join += joins.join(" and ");
             }
             else if (typeof args[0] == "function") {
-                let cb = args[0], query = new Query().use(this);
+                var cb = args[0], query = new Query().use(this);
                 cb.call(query, query);
                 if (query._where) {
                     this._join += query._where;
@@ -98,10 +137,12 @@ class Query extends DB_1.DB {
                 + this.backquote(args[2]);
         }
         return this;
-    }
-    where(field, operator = null, value = undefined) {
+    };
+    Query.prototype.where = function (field, operator, value) {
+        if (operator === void 0) { operator = null; }
+        if (value === void 0) { value = undefined; }
         if (typeof field === "object") {
-            for (let key in field) {
+            for (var key in field) {
                 this.where(key, "=", field[key]);
             }
         }
@@ -122,10 +163,12 @@ class Query extends DB_1.DB {
             }
         }
         return this;
-    }
-    orWhere(field, operator = null, value = undefined) {
+    };
+    Query.prototype.orWhere = function (field, operator, value) {
+        if (operator === void 0) { operator = null; }
+        if (value === void 0) { value = undefined; }
         if (typeof field === "object") {
-            for (let key in field) {
+            for (var key in field) {
                 this.orWhere(key, "=", field[key]);
             }
         }
@@ -146,8 +189,8 @@ class Query extends DB_1.DB {
             }
         }
         return this;
-    }
-    _handleWhere(field, operator, value) {
+    };
+    Query.prototype._handleWhere = function (field, operator, value) {
         if (value === undefined) {
             value = operator;
             operator = "=";
@@ -161,149 +204,170 @@ class Query extends DB_1.DB {
             this._bindings.push(value);
         }
         return this;
-    }
-    _handleNestedWhere(cb) {
-        let query = new Query().use(this);
+    };
+    Query.prototype._handleNestedWhere = function (cb) {
+        var query = new Query().use(this);
         cb.call(query, query);
         if (query._where) {
             this._where += "(" + query._where + ")";
             this._bindings = this._bindings.concat(query._bindings);
         }
         return this;
-    }
-    _handleWhereChild(field, cb, operator = "=") {
-        let query = this._getQueryBy(cb);
-        this._where += this.backquote(field) + ` ${operator} (${query.sql})`;
+    };
+    Query.prototype._handleWhereChild = function (field, cb, operator) {
+        if (operator === void 0) { operator = "="; }
+        var query = this._getQueryBy(cb);
+        this._where += this.backquote(field) + (" " + operator + " (" + query.sql + ")");
         this._bindings = this._bindings.concat(query._bindings);
         return this;
-    }
-    _getQueryBy(cb) {
-        let query = new Query().use(this);
+    };
+    Query.prototype._getQueryBy = function (cb) {
+        var query = new Query().use(this);
         cb.call(query, query);
         query.sql = query.getSelectSQL();
         return query;
-    }
-    whereBetween(field, [min, max]) {
+    };
+    Query.prototype.whereBetween = function (field, _a) {
+        var min = _a[0], max = _a[1];
         return this._handleBetween(field, [min, max]);
-    }
-    whereNotBetween(field, [min, max]) {
+    };
+    Query.prototype.whereNotBetween = function (field, _a) {
+        var min = _a[0], max = _a[1];
         return this._handleBetween(field, [min, max], false);
-    }
-    orWhereBetween(field, [min, max]) {
+    };
+    Query.prototype.orWhereBetween = function (field, _a) {
+        var min = _a[0], max = _a[1];
         return this._handleBetween(field, [min, max], true, "or");
-    }
-    orWhereNotBetween(field, [min, max]) {
+    };
+    Query.prototype.orWhereNotBetween = function (field, _a) {
+        var min = _a[0], max = _a[1];
         return this._handleBetween(field, [min, max], false, "or");
-    }
-    _handleBetween(field, [min, max], between = true, conj = "and") {
+    };
+    Query.prototype._handleBetween = function (field, _a, between, conj) {
+        var min = _a[0], max = _a[1];
+        if (between === void 0) { between = true; }
+        if (conj === void 0) { conj = "and"; }
         if (this._where)
-            this._where += ` ${conj} `;
+            this._where += " " + conj + " ";
         this._where += this.backquote(field) + (between ? "" : " not") +
             " between ? and ?";
         this._bindings = this._bindings.concat([min, max]);
         return this;
-    }
-    whereIn(field, values) {
+    };
+    Query.prototype.whereIn = function (field, values) {
         return this._handleIn(field, values);
-    }
-    whereNotIn(field, values) {
+    };
+    Query.prototype.whereNotIn = function (field, values) {
         return this._handleIn(field, values, false);
-    }
-    orWhereIn(field, values) {
+    };
+    Query.prototype.orWhereIn = function (field, values) {
         return this._handleIn(field, values, true, "or");
-    }
-    orWhereNotIn(field, values) {
+    };
+    Query.prototype.orWhereNotIn = function (field, values) {
         return this._handleIn(field, values, false, "or");
-    }
-    _handleIn(field, values, isIn = true, conj = "and") {
+    };
+    Query.prototype._handleIn = function (field, values, isIn, conj) {
+        if (isIn === void 0) { isIn = true; }
+        if (conj === void 0) { conj = "and"; }
         if (this._where)
-            this._where += ` ${conj} `;
+            this._where += " " + conj + " ";
         if (values instanceof Function) {
             return this._handleInChild(field, values, isIn);
         }
         else {
-            let _values = Array(values.length).fill("?");
+            var _values = fill(Array(values.length), "?");
             this._where += this.backquote(field) + (isIn ? "" : " not") +
                 " in (" + _values.join(", ") + ")";
             this._bindings = this._bindings.concat(values);
             return this;
         }
-    }
-    _handleInChild(field, cb, isIn = true) {
-        let query = this._getQueryBy(cb);
+    };
+    Query.prototype._handleInChild = function (field, cb, isIn) {
+        if (isIn === void 0) { isIn = true; }
+        var query = this._getQueryBy(cb);
         this._where += this.backquote(field) + (isIn ? "" : " not") +
             " in (" + query.sql + ")";
         this._bindings = this._bindings.concat(query._bindings);
         return this;
-    }
-    whereNull(field) {
+    };
+    Query.prototype.whereNull = function (field) {
         return this._handleWhereNull(field);
-    }
-    whereNotNull(field) {
+    };
+    Query.prototype.whereNotNull = function (field) {
         return this._handleWhereNull(field, false);
-    }
-    orWhereNull(field) {
+    };
+    Query.prototype.orWhereNull = function (field) {
         return this._handleWhereNull(field, true, "or");
-    }
-    orWhereNotNull(field) {
+    };
+    Query.prototype.orWhereNotNull = function (field) {
         return this._handleWhereNull(field, false, "or");
-    }
-    _handleWhereNull(field, isNull = true, conj = "and") {
+    };
+    Query.prototype._handleWhereNull = function (field, isNull, conj) {
+        if (isNull === void 0) { isNull = true; }
+        if (conj === void 0) { conj = "and"; }
         if (this._where)
-            this._where += ` ${conj} `;
+            this._where += " " + conj + " ";
         this._where += this.backquote(field) + " is " +
             (isNull ? "" : "not ") + "null";
         return this;
-    }
-    whereExists(nested) {
+    };
+    Query.prototype.whereExists = function (nested) {
         return this._handleExists(nested);
-    }
-    whereNotExists(nested) {
+    };
+    Query.prototype.whereNotExists = function (nested) {
         return this._handleExists(nested, false);
-    }
-    orWhereExists(nested) {
+    };
+    Query.prototype.orWhereExists = function (nested) {
         return this._handleExists(nested, true, "or");
-    }
-    orWhereNotExists(nested) {
+    };
+    Query.prototype.orWhereNotExists = function (nested) {
         return this._handleExists(nested, false, "or");
-    }
-    _handleExists(nested, exists = true, conj = "and") {
+    };
+    Query.prototype._handleExists = function (nested, exists, conj) {
+        if (exists === void 0) { exists = true; }
+        if (conj === void 0) { conj = "and"; }
         if (this._where)
-            this._where += ` ${conj} `;
-        let query = this._getQueryBy(nested);
+            this._where += " " + conj + " ";
+        var query = this._getQueryBy(nested);
         this._where += (exists ? "" : "not ") + "exists (" + query.sql + ")";
         this._bindings = this._bindings.concat(query._bindings);
         return this;
-    }
-    orderBy(field, sequence) {
-        let comma = this._orderBy ? ", " : "";
+    };
+    Query.prototype.orderBy = function (field, sequence) {
+        var comma = this._orderBy ? ", " : "";
         this._orderBy += comma + this.backquote(field);
         if (sequence)
             this._orderBy += " " + sequence;
         return this;
-    }
-    random() {
+    };
+    Query.prototype.random = function () {
         return this.adapter.random(this);
-    }
-    groupBy(...fields) {
+    };
+    Query.prototype.groupBy = function () {
+        var _this = this;
+        var fields = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            fields[_i] = arguments[_i];
+        }
         if (fields[0] instanceof Array)
             fields = fields[0];
-        fields = fields.map(field => this.backquote(field));
+        fields = fields.map(function (field) { return _this.backquote(field); });
         this._groupBy = fields.join(", ");
         return this;
-    }
-    having(raw) {
+    };
+    Query.prototype.having = function (raw) {
         this._having += (this._having ? " and " : "") + raw;
         return this;
-    }
-    limit(length, offset) {
+    };
+    Query.prototype.limit = function (length, offset) {
         return this.adapter.limit(this, length, offset);
-    }
-    distinct() {
+    };
+    Query.prototype.distinct = function () {
         this._distinct = "distinct";
         return this;
-    }
-    union(query, all = false) {
+    };
+    Query.prototype.union = function (query, all) {
+        if (all === void 0) { all = false; }
         if (this._union)
             this._union += " union ";
         if (query instanceof Query) {
@@ -315,47 +379,50 @@ class Query extends DB_1.DB {
             this._union += (all ? "all " : "") + query;
         }
         return this;
-    }
-    insert(data) {
-        let bindings = [], fields = [], values = [], isObj = !Array.isArray(data);
+    };
+    Query.prototype.insert = function (data) {
+        var _this = this;
+        var bindings = [], fields = [], values = [], isObj = !Array.isArray(data);
         if (!Object.keys(data).length) {
             throw new Errors_1.InsertionError("No valid data were given for inserting.");
         }
-        for (let field in data) {
+        for (var field in data) {
+            values.push("?");
             bindings.push(data[field]);
             if (isObj)
                 fields.push(this.backquote(field));
-            values.push("?");
         }
         if (isObj)
             fields = fields.join(", ");
         values = values.join(", ");
-        this._inserts = (isObj ? `(${fields}) ` : "") + `values (${values})`;
+        this._inserts = (isObj ? "(" + fields + ") " : "") + ("values (" + values + ")");
         this.sql = "insert into " + this.backquote(this.table) + " " +
             this._inserts;
         this.emit("insert", this);
-        return this.query(this.sql, bindings).then(() => {
-            this.bindings = Object.assign([], bindings);
-            this.emit("inserted", this);
-            return this;
+        return this.query(this.sql, bindings).then(function () {
+            _this.bindings = assign([], bindings);
+            _this.emit("inserted", _this);
+            return _this;
         });
-    }
-    update(data) {
-        let parts = [], bindings = [];
-        for (let field in data) {
+    };
+    Query.prototype.update = function (data) {
+        var parts = [], bindings = [];
+        for (var field in data) {
             parts.push(this.backquote(field) + " = ?");
             bindings.push(data[field]);
         }
         return this._handleUpdate(parts, bindings);
-    }
-    increase(field, step = 1) {
+    };
+    Query.prototype.increase = function (field, step) {
+        if (step === void 0) { step = 1; }
         return this._handleCrease(field, step, "+");
-    }
-    decrease(field, step = 1) {
+    };
+    Query.prototype.decrease = function (field, step) {
+        if (step === void 0) { step = 1; }
         return this._handleCrease(field, step, "-");
-    }
-    _handleCrease(field, step, type) {
-        let data, parts = [], bindings = [];
+    };
+    Query.prototype._handleCrease = function (field, step, type) {
+        var data, parts = [], bindings = [];
         if (typeof field == "object") {
             data = field;
         }
@@ -363,146 +430,162 @@ class Query extends DB_1.DB {
             data = {};
             data[field] = step;
         }
-        for (let field in data) {
-            if (data[field] > 0) {
-                bindings.push(data[field]);
-                field = this.backquote(field);
-                parts.push(`${field} = ${field} ${type} ?`);
+        for (var field_1 in data) {
+            if (data[field_1] > 0) {
+                bindings.push(data[field_1]);
+                field_1 = this.backquote(field_1);
+                parts.push(field_1 + " = " + field_1 + " " + type + " ?");
             }
         }
         return this._handleUpdate(parts, bindings);
-    }
-    _handleUpdate(parts, bindings) {
+    };
+    Query.prototype._handleUpdate = function (parts, bindings) {
+        var _this = this;
         if (Object.keys(parts).length === 0) {
             throw new Errors_1.UpdateError("No valid data were given for updating.");
         }
         bindings = bindings.concat(this._bindings);
         this._updates = parts.join(", ");
-        this.sql = `update ${this.backquote(this.table)} set ` +
+        this.sql = "update " + this.backquote(this.table) + " set " +
             this._updates + (this._where ? " where " + this._where : "");
         this.emit("update", this);
-        return this.query(this.sql, bindings).then(() => {
-            this.bindings = Object.assign([], bindings);
-            this.emit("updated", this);
-            return this;
+        return this.query(this.sql, bindings).then(function () {
+            _this.bindings = assign([], bindings);
+            _this.emit("updated", _this);
+            return _this;
         });
-    }
-    delete() {
+    };
+    Query.prototype.delete = function () {
+        var _this = this;
         this.sql = "delete from " + this.backquote(this.table) +
             (this._where ? " where " + this._where : "");
         this.emit("delete", this);
-        return this.query(this.sql, this._bindings).then(() => {
-            this.bindings = Object.assign([], this._bindings);
-            this.emit("deleted", this);
-            return this;
+        return this.query(this.sql, this._bindings).then(function () {
+            _this.bindings = assign([], _this._bindings);
+            _this.emit("deleted", _this);
+            return _this;
         });
-    }
-    get() {
-        let promise = this.limit(1)._handleSelect().then(data => data[0]);
+    };
+    Query.prototype.get = function () {
+        var promise = this.limit(1)._handleSelect().then(function (data) { return data[0]; });
         if (!this._isModel)
             this.emit("get", this);
         return promise;
-    }
-    all() {
-        let promise = this._handleSelect();
+    };
+    Query.prototype.all = function () {
+        var promise = this._handleSelect();
         if (!this._isModel)
             this.emit("get", this);
-        return promise.then(data => {
+        return promise.then(function (data) {
             return data instanceof Array ? data : [data];
         });
-    }
-    count(field = "*") {
+    };
+    Query.prototype.count = function (field) {
+        if (field === void 0) { field = "*"; }
         if (field != "*" && this._distinct)
             field = "distinct " + this.backquote(field);
         return this._handleAggregate("count", field);
-    }
-    max(field) {
+    };
+    Query.prototype.max = function (field) {
         return this._handleAggregate("max", field);
-    }
-    min(field) {
+    };
+    Query.prototype.min = function (field) {
         return this._handleAggregate("min", field);
-    }
-    avg(field) {
+    };
+    Query.prototype.avg = function (field) {
         return this._handleAggregate("avg", field);
-    }
-    sum(field) {
+    };
+    Query.prototype.sum = function (field) {
         return this._handleAggregate("sum", field);
-    }
-    chunk(length, cb) {
-        let offset = 0, loop = () => {
-            return this.limit(length, offset).all().then(data => {
-                let ok = cb.call(this, data);
-                if (data.length === length && ok !== false) {
-                    offset += length;
-                    return loop();
-                }
-                else {
-                    return data;
-                }
-            });
-        };
-        return loop();
-    }
-    paginate(page, length) {
-        if (!length)
-            length = parseInt(this._limit) || 10;
-        let offset = (page - 1) * length, query = new Query(this.table).use(this);
+    };
+    Query.prototype.chunk = function (length, cb) {
+        var _this = this;
+        var offset = 0, query = new Query(this.table).use(this);
         query._where = this._where;
         query._join = this._join;
-        return query.count().then(total => {
+        query._bindings = this._bindings;
+        return query.count().then(function (total) {
+            var loop = function () {
+                return _this.limit(length, offset).all().then(function (data) {
+                    var ok = cb.call(_this, data);
+                    offset += length;
+                    if (data.length == length && ok !== false && offset < total) {
+                        return loop();
+                    }
+                    else {
+                        return data;
+                    }
+                });
+            };
+            return loop();
+        });
+    };
+    Query.prototype.paginate = function (page, length) {
+        var _this = this;
+        if (!length)
+            length = parseInt(String(this._limit)) || 10;
+        var offset = (page - 1) * length, query = new Query(this.table).use(this);
+        query._where = this._where;
+        query._join = this._join;
+        query._bindings = this._bindings;
+        return query.count().then(function (total) {
             if (!total) {
                 return {
-                    page,
+                    page: page,
                     pages: 0,
                     limit: length,
-                    total,
+                    total: total,
                     data: [],
                 };
             }
             else {
-                return this.limit(length, offset).all().then(data => {
-                    if (data.length && data[0].rn === undefined) {
-                        let first = (page - 1) * length + 1;
-                        for (let record of data) {
-                            record.rn = first++;
+                return _this.limit(length, offset).all().then(function (data) {
+                    if (data.length && data[0].rn !== undefined) {
+                        for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
+                            var record = data_1[_i];
+                            delete record.rn;
                         }
                     }
                     return {
-                        page,
+                        page: page,
                         pages: Math.ceil(total / length),
                         limit: length,
-                        total,
-                        data,
+                        total: total,
+                        data: data,
                     };
                 });
             }
         });
-    }
-    _handleAggregate(name, field) {
+    };
+    Query.prototype._handleAggregate = function (name, field) {
         this._selects = name + "(" + this.backquote(field) + ") as " +
             this.backquote("num");
-        return this._handleSelect().then(data => {
+        return this._handleSelect().then(function (data) {
             return parseFloat(data[0].num);
         });
-    }
-    _handleSelect() {
+    };
+    Query.prototype._handleSelect = function () {
+        var _this = this;
         this.sql = this.getSelectSQL();
-        return this.query(this.sql, this._bindings).then(query => {
-            this.bindings = Object.assign([], this._bindings);
+        return this.query(this.sql, this._bindings).then(function (query) {
+            _this.bindings = assign([], _this._bindings);
             return query.data;
         });
-    }
-    getSelectSQL() {
+    };
+    Query.prototype.getSelectSQL = function () {
         return this.adapter.getSelectSQL(this);
-    }
-}
+    };
+    return Query;
+}(DB_1.DB));
 exports.Query = Query;
 (function (Query) {
-    class Field {
-        constructor(name) {
+    var Field = (function () {
+        function Field(name) {
             this.name = name;
         }
-    }
+        return Field;
+    }());
     Query.Field = Field;
 })(Query = exports.Query || (exports.Query = {}));
+exports.Query = Query;
 //# sourceMappingURL=Query.js.map

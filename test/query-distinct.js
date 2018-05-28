@@ -1,9 +1,9 @@
-const assert = require("assert");
-const { Query } = require("../");
+var assert = require("assert");
+var Query = require("../").Query;
 
-describe("Query.prototype.distinct()", () => {
-    it("should generate SQL with a distinct statement", () => {
-        let query = new Query()
+describe("Query.prototype.distinct()", function () {
+    it("should generate SQL with a distinct statement", function () {
+        var query = new Query()
             .distinct()
             .select("name")
             .from("users")

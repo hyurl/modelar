@@ -4,6 +4,10 @@
 
 See [API documentation](https://hyurl.github.io/modelar).
 
+## Prerequisites
+
+- `NodeJS` version higher than 4.0.0.
+
 ## Install
 
 To install Modelar in you project, just type the following command in your 
@@ -24,12 +28,9 @@ This module currently supports these databases:
 - `OracleDB` see [modelar-oracle-adapter](https://github.com/Hyurl/modelar-oracle-adapter).
 - `DB2` see [modelar-ibmdb-adapter](https://github.com/Hyurl/modelar-ibmdb-adapter).
 
-Not all adapters are installed automatically, only `MySQL/MariaDB` and 
-`PostgreSQL` are internally included, you must manually install other adapters
-if you're going to use them.
-
-Modelar is still growing, more databases might be supported in future 
-versions.
+Not all adapters are installed automatically, only `MySQL/MariaDB` (since 
+3.0.4) are internally included, you must manually install other adapters if 
+you're going to use them.
 
 ## What can I do with this module?
 
@@ -49,6 +50,9 @@ versions.
 * **Use Query Builder to handle data.**
     * This module provides most of the SQL supports to the Model.
     * Query builder provides an Object-Oriented way to generate SQL statements.
+
+Modelar is still growing, more features might be introduced in future 
+versions.
 
 ## Example
 
@@ -117,9 +121,10 @@ Above gives a very simple example that shows the convenience and expressive
 functionality that this module has, you can go into the real depth of it by 
 checking the [API documentation](https://hyurl.github.io/modelar).
 
-Although the example uses `async/await` to organize logics, this module only 
-uses `Promise` in its core, so it can run in every Node.js version that higher
-than 6.0.
+This package is written in TypeScript and compiled to ES5 standard (since 
+3.0.4) with some ES2015 features, so it can run it in any version of NodeJS 
+that higher than 4.0.0. BUT this feature may not work if the adapter you're 
+using doesn't support lower version of NodeJS.
 
 ## How to test?
 
