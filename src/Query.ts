@@ -663,7 +663,7 @@ export class Query extends DB {
     /** Increases a specified field with an optional step. */
     increase(field: string, step?: number): Promise<this>;
 
-    increase(field: string | object, step = 1) {
+    increase(field: string | any, step = 1) {
         return this._handleCrease(field, step, "+");
     }
 
@@ -673,11 +673,11 @@ export class Query extends DB {
     /** Decreases a specified field with an optional step. */
     decrease(field: string, step?: number): Promise<this>;
 
-    decrease(field: string | object, step = 1) {
+    decrease(field: string | any, step = 1) {
         return this._handleCrease(field, step, "-");
     }
 
-    private _handleCrease(field: string | object, step: number, type: "+" | "-"): Promise<this> {
+    private _handleCrease(field: string | any, step: number, type: "+" | "-"): Promise<this> {
         let data: { [field: string]: any },
             parts: string[] = [],
             bindings = [];

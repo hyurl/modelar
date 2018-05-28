@@ -22,7 +22,11 @@ var Table = (function (_super) {
         }
         else {
             _this.name = args[0];
-            _this.schema = args[1] = {};
+            _this.schema = args[1] || {};
+        }
+        for (var field in _this.schema) {
+            if (_this.schema[field].name === undefined)
+                _this.schema[field].name = field;
         }
         return _this;
     }
@@ -81,11 +85,14 @@ var Table = (function (_super) {
         else {
             foreignKey = { table: input, field: field, onDelete: onDelete, onUpdate: onUpdate };
         }
-        this.schema[this._current].foreignKey = assign(this.schema[this._current].foreignKey, foreignKey);
+        this.schema[this._current].foreignKey = assign({}, this.schema[this._current].foreignKey, foreignKey);
         return this;
     };
     Table.prototype.getDDL = function () {
         return this.adapter.getDDL(this);
+    };
+    Table.prototype.toString = function () {
+        return this.getDDL();
     };
     Table.prototype.create = function () {
         return this.adapter.create(this);

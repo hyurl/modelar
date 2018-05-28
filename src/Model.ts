@@ -497,19 +497,19 @@ export class Model extends Query {
      * Sets an extra `where...` clause for the SQL statement when updating or
      * deleting the model to mark the state.
      */
-    whereState(field: string, value: string | number | boolean | Date): this;
+    whereState(field: string, value: any): this;
 
     /**
      * Sets an extra `where...` clause for the SQL statement when updating or
      * deleting the model to mark the state.
      */
-    whereState(field: string, operator: string, value: string | number | boolean | Date): this;
+    whereState(field: string, operator: string, value: any): this;
 
     /**
      * Sets an extra `where...` clause for the SQL statement when updating or
      * deleting the model to mark the state.
      */
-    whereState(fields: { [field: string]: string | number | boolean | Date }): this;
+    whereState(fields: { [field: string]: any }): this;
 
     whereState(field, operator = null, value = undefined) {
         let query = new Query().use(this);
@@ -639,9 +639,9 @@ export class Model extends Query {
         return (new this).crossJoin(table, field1, operator, field2);
     }
 
-    static where(field: string, value: string | number | boolean | Date): Model;
-    static where(field: string, operator: string, value: string | number | boolean | Date): Model;
-    static where(fields: { [field: string]: string | number | boolean | Date }): Model;
+    static where(field: string, value: any): Model;
+    static where(field: string, operator: string, value: any): Model;
+    static where(fields: { [field: string]: any }): Model;
     static where(nested: (query: Query) => void): Model;
     static where(field: string, nested: (query: Query) => void): Model;
     static where(field: string, operator: string, nested: (query: Query) => void): Model;
@@ -753,9 +753,9 @@ export class Model extends Query {
         return (new this).getMany(options);
     }
 
-    static whereState(field: string, value: string | number | boolean | Date): Model;
-    static whereState(field: string, operator: string, value: string | number | boolean | Date): Model;
-    static whereState(fields: { [field: string]: string | number | boolean | Date }): Model;
+    static whereState(field: string, value: any): Model;
+    static whereState(field: string, operator: string, value: any): Model;
+    static whereState(fields: { [field: string]: any }): Model;
     static whereState(field, operator = null, value = undefined) {
         return (new this).whereState(field, operator, value);
     }

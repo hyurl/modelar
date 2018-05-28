@@ -31,7 +31,7 @@ exports.FieldConfig = {
     unsigned: false,
     unique: false,
     comment: "",
-    foreignKey: exports.ForeignKeyConfig,
+    foreignKey: null,
 };
 exports.ModelConfig = {
     table: "",

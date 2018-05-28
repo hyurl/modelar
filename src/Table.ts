@@ -27,7 +27,12 @@ export class Table extends DB {
             this.use(model);
         } else {
             this.name = args[0];
-            this.schema = args[1] = {};
+            this.schema = args[1] || {};
+        }
+
+        for (let field in this.schema) {
+            if (this.schema[field].name === undefined)
+                this.schema[field].name = field;
         }
     }
 
@@ -37,6 +42,7 @@ export class Table extends DB {
     addColumn(field: FieldConfig): this;
     addColumn(field: string | FieldConfig, type = "", length = 0) {
         let _field: FieldConfig;
+
         if (typeof field === "string") {
             this._current = field;
             _field = { name: field, type, length };
@@ -44,6 +50,7 @@ export class Table extends DB {
             this._current = field.name;
             _field = field;
         }
+
         this.schema[this._current] = assign({}, FieldConfig, _field);
         return this;
     }
@@ -75,7 +82,7 @@ export class Table extends DB {
     }
 
     /** Sets a default value for the current field. */
-    default(value: string | number | boolean | void | Date): this {
+    default(value: any): this {
         this.schema[this._current].default = value;
         return this;
     }
@@ -113,21 +120,25 @@ export class Table extends DB {
     foreignKey(
         table: string,
         field: string,
-        onDelete?: "no action" | "set null" | "cascade" | "restrict",
-        onUpdate?: "no action" | "set null" | "cascade" | "restrict"
+        onDelete?: ForeignKeyConfig["onDelete"],
+        onUpdate?: ForeignKeyConfig["onUpdate"]
     ): this;
 
     foreignKey(input, field?: string, onDelete = "set null", onUpdate = "no action") {
         let foreignKey: ForeignKeyConfig;
+
         if (typeof input === "object") {
             foreignKey = input;
         } else {
             foreignKey = <ForeignKeyConfig>{ table: input, field, onDelete, onUpdate };
         }
+
         this.schema[this._current].foreignKey = assign(
+            {},
             this.schema[this._current].foreignKey,
             foreignKey
         );
+
         return this;
     }
 
@@ -136,12 +147,17 @@ export class Table extends DB {
         return this.adapter.getDDL(this);
     }
 
+    /** An alias of `table.getDDL()`. */
+    toString() {
+        return this.getDDL();
+    }
+
     /** Creates the table in the database. */
     create(): Promise<this> {
         return this.adapter.create(this) as Promise<this>;
     }
 
-    /** An alias of table.create(). */
+    /** An alias of `table.create()`. */
     save(): Promise<this> {
         return this.create();
     }

@@ -68,7 +68,7 @@ export interface FieldConfig {
     type?: string;
     length?: number | [number, number];
     primary?: boolean;
-    autoIncrement?: boolean | [number, number];
+    autoIncrement?: false | [number, number];
     unique?: boolean;
     default?: any;
     unsigned?: boolean;
@@ -88,7 +88,7 @@ export const FieldConfig: FieldConfig = {
     unsigned: false,
     unique: false,
     comment: "",
-    foreignKey: ForeignKeyConfig,
+    foreignKey: null,
 }
 
 export interface ModelConfig {
