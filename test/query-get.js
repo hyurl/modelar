@@ -19,7 +19,7 @@ describe("Query.prototype.get()", function () {
         query.insert(data).then(function () {
             return query2.where("id", query.insertId).get();
         }).then(function (_data) {
-            let __data = Object.assign({ id:  query.insertId}, data);
+            var __data = Object.assign({ id:  query.insertId}, data);
             assert.deepStrictEqual(_data, __data);
             assert.equal(query2.sql, "select * from `users` where `id` = ? limit 1");
             assert.deepEqual(query2.bindings, [query.insertId]);

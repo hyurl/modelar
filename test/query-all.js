@@ -31,7 +31,7 @@ describe("Query.prototype.all()", function () {
             ids.push(query.insertId);
             return query2.whereIn("id", ids).all();
         }).then(function (_data) {
-            let __data = [
+            var __data = [
                 Object.assign({id: ids[0]}, data),
                 Object.assign({id: ids[1]}, data2)
             ];
