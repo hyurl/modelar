@@ -6,4 +6,5 @@ node_js:
 services:
   - mysql
 before_install:
-  mysql -u root < ./modelar.sql
+  mysql -e "create database modelar"
+  mysql -u root --default-character-set=utf8 modelar < ./modelar.sql
