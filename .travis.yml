@@ -10,4 +10,4 @@ before_install:
   - sudo mysql_upgrade
   - sudo service mysql restart
   - mysql -e "CREATE DATABASE modelar;"
-  - mysql -u root --default-character-set=utf8 modelar < ./modelar.sql
+  - mysql -u root -p 161301 --default-character-set=utf8 modelar < ./modelar.sql
