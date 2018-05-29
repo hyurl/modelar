@@ -2,6 +2,7 @@ var assert = require("assert");
 var DB = require("../").DB;
 var Model = require("../").Model;
 var config = require("./config/db");
+var values = require("lodash/values");
 
 describe("Model.prototype.insert()", function () {
     it("should insert a model to database as expected", function (done) {
@@ -22,6 +23,8 @@ describe("Model.prototype.insert()", function () {
             });
 
         model.use(db).insert(data).then(function () {
+            assert.equal(model.sql, "insert into `users` (`name`, `email`, `password`, `age`, `score`) values (?, ?, ?, ?, ?)");
+            assert.deepStrictEqual(model.bindings, values(data));
             assert.deepStrictEqual(model.data, Object.assign({ id: model.insertId }, data));
             db.close();
             done();
