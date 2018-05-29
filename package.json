@@ -3,7 +3,7 @@
     "version": "3.0.4",
     "description": "An expressive ORM with query builder and supports multiple databases.",
     "main": "dist/index.js",
-    "types": "src/index.ts",
+    "types": "types/index.d.ts",
     "engines": {
         "node": ">=4.0"
     },

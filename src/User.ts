@@ -132,6 +132,7 @@ export class User extends Model {
 
     static login(options: {
         [field: string]: string,
+        user?: string,
         password: string
     }): Promise<User> {
         return (new this).login(options);

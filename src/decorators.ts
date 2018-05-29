@@ -107,8 +107,8 @@ export function foreignKey(config: ForeignKeyConfig): TableDecorator;
 export function foreignKey(
     table: string,
     field: string,
-    onDelete?: "no action" | "set null" | "cascade" | "restrict",
-    onUpdate?: "no action" | "set null" | "cascade" | "restrict"
+    onDelete?: ForeignKeyConfig["onDelete"],
+    onUpdate?: ForeignKeyConfig["onUpdate"]
 ): Function;
 export function foreignKey(input, field?: string, onDelete = "set null", onUpdate = "no action") {
     var foreignKey: ForeignKeyConfig;
