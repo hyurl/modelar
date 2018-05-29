@@ -85,8 +85,6 @@ export class Query extends DB {
 
     /** Sets a `inner join...` clause for the SQL statement. */
     join(table: string, field1: string, field2: string): this;
-
-    /** Sets a `inner join...` clause for the SQL statement. */
     join(table: string, field1: string, operator: string, field2: string): this;
 
     join(table, ...args) {
@@ -107,8 +105,6 @@ export class Query extends DB {
 
     /** Sets a `left join...` clause for the SQL statement. */
     leftJoin(table: string, field1: string, field2: string): this;
-
-    /** Sets a `left join...` clause for the SQL statement. */
     leftJoin(table: string, field1: string, operator: string, field2: string): this;
 
     leftJoin(table, ...args) {
@@ -129,8 +125,6 @@ export class Query extends DB {
 
     /** Sets a `right join...` clause for the SQL statement. */
     rightJoin(table: string, field1: string, field2: string): this;
-
-    /** Sets a `right join...` clause for the SQL statement. */
     rightJoin(table: string, field1: string, operator: string, field2: string): this;
 
     rightJoin(table, ...args) {
@@ -151,8 +145,6 @@ export class Query extends DB {
 
     /** Sets a `full join...` clause for the SQL statement. */
     fullJoin(table: string, field1: string, field2: string): this;
-
-    /** Sets a `full join...` clause for the SQL statement. */
     fullJoin(table: string, field1: string, operator: string, field2: string): this;
 
     fullJoin(table, ...args) {
@@ -173,8 +165,6 @@ export class Query extends DB {
 
     /** Sets a `cross join...` clause for the SQL statement. */
     crossJoin(table: string, field1: string, field2: string): this;
-
-    /** Sets a `cross join...` clause for the SQL statement. */
     crossJoin(table: string, field1: string, operator: string, field2: string): this;
 
     crossJoin(table, ...args) {
@@ -233,11 +223,7 @@ export class Query extends DB {
 
     /** Sets a `where...` clause for the SQL statement with a nested query. */
     where(nested: (query: Query) => void): this;
-
-    /** Sets a `where...` clause for the SQL statement with a nested query. */
     where(field: string, nested: (query: Query) => void): this;
-
-    /** Sets a `where...` clause for the SQL statement with a nested query. */
     where(field: string, operator: string, nested: (query: Query) => void): this;
 
     /** Sets a `where...` clause for the SQL statement with multiple fields. */
@@ -245,8 +231,6 @@ export class Query extends DB {
 
     /** Sets a `where...` clause for the SQL statement. */
     where(field: string, value: any): this;
-
-    /** Sets a `where...` clause for the SQL statement with an operator. */
     where(field: string, operator: string, value: any): this;
 
     where(field, operator = null, value = undefined) {
@@ -274,29 +258,18 @@ export class Query extends DB {
      * query.
      */
     orWhere(nested: (query: Query) => void): this;
-
-    /**
-     * Sets a `where...or...` clause for the SQL statement with a nested 
-     * query.
-     */
     orWhere(field: string, nested: (query: Query) => void): this;
+    orWhere(field: string, operator: string, nested: (query: Query) => void): this;
 
     /**
-     * Sets a `where...or...` clause for the SQL statement with a nested 
-     * query.
+     * Sets a `where...or...` clause for the SQL statement with multiple 
+     * fields.
      */
-    orWhere(field: string, operator: string, nested: (query: Query) => void): this;
+    orWhere(fields: { [field: string]: any }): this;
 
     /** Sets a `where...or...` clause for the SQL statement. */
     orWhere(field: string, value: any): this;
-
-    /** Sets a `where...or...` clause for the SQL statement with an operator. */
     orWhere(field: string, operator: string, value: any): this;
-
-    /**
-     * Sets a `where...or...` clause for the SQL statement with multiple fields.
-     */
-    orWhere(fields: { [field: string]: any }): this;
 
     orWhere(field, operator = null, value = undefined) {
         if (typeof field === "object") {

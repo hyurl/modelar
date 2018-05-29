@@ -532,16 +532,11 @@ export class Model extends Query {
     /**
      * Sets an extra `where...` clause for the SQL statement when updating or
      * deleting the model to mark the state.
-     */
-    whereState(field: string, value: any): this;
-
-    /**
-     * Sets an extra `where...` clause for the SQL statement when updating or
-     * deleting the model to mark the state.
-     * 
-     * Unlike `query.where()` or other alike methods, this method can be 
+     *
+     * Unlike `query.where()` or other alike methods, this method can be
      * called only once.
      */
+    whereState(field: string, value: any): this;
     whereState(field: string, operator: string, value: any): this;
     whereState(fields: { [field: string]: any }): this;
     whereState(field, operator = null, value = undefined) {

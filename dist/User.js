@@ -22,6 +22,9 @@ var User = (function (_super) {
         },
         set: function (v) {
             this.data.password = bcrypt.hashSync(v);
+            if (!this.isNew) {
+                this["_modified"].password = this.data.password;
+            }
         },
         enumerable: true,
         configurable: true

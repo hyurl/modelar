@@ -109,8 +109,6 @@ export class Table extends DB {
     foreignKey(config: ForeignKeyConfig): this;
 
     /**
-     * Sets a foreign key constraint of the current field.
-     * 
      * @param table A table where the the foreign key is in.
      * @param field A field in the foreign table that related to the current 
      *  field.

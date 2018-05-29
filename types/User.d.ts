@@ -6,15 +6,14 @@ export declare class User extends Model {
     name: string;
     email: string;
     static loginable: string[];
-    constructor();
-    constructor(data: {
+    constructor(data?: {
         [field: string]: any;
     });
     /**  Creates a new instance with initial data and model configurations. */
     constructor(data: {
         [field: string]: any;
     }, config: ModelConfig);
-    /** Sets the password for the current user. */
+    /** The password for the current user. */
     password: string;
     /**
      * Trying to sign in a user.

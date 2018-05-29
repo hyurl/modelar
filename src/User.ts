@@ -22,9 +22,7 @@ export class User extends Model {
 
     static loginable: string[] = ["name", "email"];
 
-    constructor();
-
-    constructor(data: { [field: string]: any });
+    constructor(data?: { [field: string]: any });
 
     /**  Creates a new instance with initial data and model configurations. */
     constructor(data: { [field: string]: any }, config: ModelConfig);
@@ -37,14 +35,14 @@ export class User extends Model {
         });
     }
 
-    /** Sets the password for the current user. */
+    /** The password for the current user. */
     @field("varchar", 64)
     set password(v: string) {
         this.data.password = <string>bcrypt.hashSync(v);
 
-        // if (!this.isNew) {
-        //     this.modified.password = <string>this.data.password;
-        // }
+        if (!this.isNew) {
+            this["_modified"].password = this.data.password;
+        }
     }
 
     get password(): string {

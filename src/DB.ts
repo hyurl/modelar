@@ -117,10 +117,7 @@ export class DB extends EventEmitter {
 
     /** Sets database configurations for the current instance. */
     set(config: DBConfig): this;
-
-    /** Sets database configurations for the current instance. */
     set(name: string, value: any): this;
-
     set(...args) {
         let config,
             Class = <typeof DB>this.constructor;
@@ -251,14 +248,7 @@ export class DB extends EventEmitter {
      * @param bindings The data bound to the SQL statement.
      */
     query(sql: string, bindings?: any[]): Promise<this>;
-
-    /**
-     * Executes a SQL statement.
-     * @param sql The SQL statement.
-     * @param bindings The data bound to the SQL statement.
-     */
     query(sql: string, ...bindings: any[]): Promise<this>;
-
     query(sql: string, ...bindings: any[]) {
         return this.ensureConnect().then(() => {
             if (bindings[0] instanceof Array)

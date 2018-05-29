@@ -42,7 +42,6 @@ export declare class DB extends EventEmitter {
     protected adapter: Adapter;
     /** Sets database configurations for the current instance. */
     set(config: DBConfig): this;
-    /** Sets database configurations for the current instance. */
     set(name: string, value: any): this;
     /**
      * Adds quotes to a specified value.
@@ -78,11 +77,6 @@ export declare class DB extends EventEmitter {
      * @param bindings The data bound to the SQL statement.
      */
     query(sql: string, bindings?: any[]): Promise<this>;
-    /**
-     * Executes a SQL statement.
-     * @param sql The SQL statement.
-     * @param bindings The data bound to the SQL statement.
-     */
     query(sql: string, ...bindings: any[]): Promise<this>;
     /** Begins transaction. */
     transaction(): Promise<this>;
