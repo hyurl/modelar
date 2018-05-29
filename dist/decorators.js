@@ -5,7 +5,7 @@ var assign = require("lodash/assign");
 function prepare(proto, prop) {
     if (!proto.hasOwnProperty("schema")) {
         proto.schema = assign({}, proto.schema);
-        proto.fields = assign([], proto.fields);
+        proto.fields = [].concat(proto.fields);
     }
     if (proto.schema[prop] === undefined)
         proto.schema[prop] = assign({}, interfaces_1.FieldConfig, { name: prop });
@@ -39,7 +39,7 @@ function primary(proto, prop) {
 exports.primary = primary;
 function searchable(proto, prop) {
     if (!proto.hasOwnProperty("searchable"))
-        proto.searchable = assign([], proto.searchable);
+        proto.searchable = [].concat(proto.searchable);
     if (proto.searchable.indexOf(prop) === -1) {
         proto.searchable.push(prop);
     }
@@ -104,7 +104,7 @@ function foreignKey(input, field, onDelete, onUpdate) {
         foreignKey = { table: input, field: field, onDelete: onDelete, onUpdate: onUpdate };
     }
     return function (proto, prop) {
-        proto.schema[prop].foreignKey = assign(proto.schema[prop].foreignKey, foreignKey);
+        proto.schema[prop].foreignKey = assign({}, proto.schema[prop].foreignKey, foreignKey);
     };
 }
 exports.foreignKey = foreignKey;

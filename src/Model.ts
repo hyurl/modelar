@@ -75,8 +75,8 @@ export class Model extends Query {
     /** 
      * Creates a new model with optional initial data.
      */
-    constructor(data?: { [field: string]: any });
-    constructor(data: { [field: string]: any }, config: ModelConfig);
+    // constructor(data?: { [field: string]: any });
+    // constructor(data: { [field: string]: any }, config: ModelConfig);
     constructor(data?: { [field: string]: any }, config?: ModelConfig) {
         super(config && config.table || "");
 
@@ -106,8 +106,9 @@ export class Model extends Query {
     }
 
     private _defineProperties(fields: string[]): void {
-        let proto = Object.getPrototypeOf(this);
-        let props: { [prop: string]: PropertyDescriptor } = {};
+        let proto = Object.getPrototypeOf(this),
+            props: { [prop: string]: PropertyDescriptor } = {};
+
         for (let field of fields) {
             if (!(field in this)) {
                 props[field] = {
@@ -137,6 +138,7 @@ export class Model extends Query {
                 }
             }
         }
+
         Object.defineProperties(proto, props);
         proto._initiated = true;
     }
@@ -146,11 +148,13 @@ export class Model extends Query {
      * @param useSetter Use setters (if any) to process the data.
      */
     assign(data: { [field: string]: any }, useSetter = false): this {
+        let proto: this = Object.getPrototypeOf(this);
+
         if (this.data instanceof Array) {
             // `data` extends from DB class, so it could be an array.
             this.data = {};
         }
-        let proto: this = Object.getPrototypeOf(this);
+
         for (let key in data) {
             if (this.fields.indexOf(key) >= 0) {
                 // Only accept those fields that `fields` sets.
@@ -172,6 +176,7 @@ export class Model extends Query {
                 this.extra[key] = data[key];
             }
         }
+
         return this;
     }
 
@@ -197,7 +202,15 @@ export class Model extends Query {
 
         return super.insert(this.data).then(model => {
             model.where(model.primary, model.insertId);
-            return model.get(); // Get final data from database.
+            let sql = model.sql,
+                bindings = model.bindings;
+
+            // Get final data from the database.
+            return model.get().then(() => {
+                model.sql = sql;
+                model.bindings = bindings;
+                return model;
+            });
         });
     }
 
@@ -229,8 +242,17 @@ export class Model extends Query {
                     throw new UpdateError("No " + this.constructor["name"]
                         + " was updated by the given condition.");
                 } else {
+                    let sql = model.sql,
+                        bindings = model.bindings;
+
                     model._resetWhere(true);
-                    return model.get(); // Get final data from the database.
+
+                    // Get final data from the database.
+                    return model.get().then(() => {
+                        model.sql = sql;
+                        model.bindings = bindings;
+                        return model;
+                    });
                 }
             });
         }
@@ -296,8 +318,17 @@ export class Model extends Query {
                 throw new UpdateError("No " + this.constructor["name"]
                     + " was updated by the given condition.");
             } else {
+                let sql = model.sql,
+                    bindings = model.bindings;
+
                 model._resetWhere(true);
-                return model.get(); // Get final data from the database.
+
+                // Get final data from the database.
+                return model.get().then(() => {
+                    model.sql = sql;
+                    model.bindings = bindings;
+                    return model;
+                });
             }
         });
     }
@@ -324,7 +355,7 @@ export class Model extends Query {
         }
 
         if (!this["_where"]) {
-            throw new SyntaxError("No where condition is set to delete models.");
+            throw new Error("No where condition is set to delete models.");
         }
 
         this._resetWhere();
@@ -352,7 +383,7 @@ export class Model extends Query {
         }
 
         if (!this["_where"]) {
-            throw new SyntaxError("No where condition is set to fetch models.");
+            throw new Error("No where condition is set to fetch models.");
         }
 
         return super.get().then(data => {
@@ -387,12 +418,26 @@ export class Model extends Query {
             } else {
                 let models: Model[] = [],
                     ModelClass = <typeof Model>this.constructor;
+
                 for (let i in data) {
-                    let model = new ModelClass;
+                    let model: Model;
+
+                    if (ModelClass === Model) {
+                        model = new ModelClass(null, {
+                            table: this.table,
+                            primary: this.primary,
+                            fields: this.fields,
+                            searchable: this.searchable
+                        });
+                    } else {
+                        model = new ModelClass;
+                    }
+
                     // Assign data and emit event listeners for every model.
                     model.use(this).assign(data[i]).emit("get", model);
                     models.push(model);
                 }
+
                 return <this[]>models;
             }
         });
@@ -404,7 +449,7 @@ export class Model extends Query {
      *  carry.
      * @param cb A function for processing every chunked data.
      */
-    chunk(length: number, cb: (data: Model[]) => false | void): Promise<this[]> {
+    chunk(length: number, cb: (models: this[]) => false | void): Promise<this[]> {
         return super.chunk(length, cb);
     }
 
@@ -420,7 +465,7 @@ export class Model extends Query {
 
     /** Gets multiple models that suit the given condition. */
     getMany(options?: ModelGetManyOptions): Promise<PaginatedModels> {
-        let defaults = assign(ModelGetManyOptions, {
+        let defaults = assign({}, ModelGetManyOptions, {
             orderBy: this.primary
         });
 
@@ -451,7 +496,7 @@ export class Model extends Query {
             }
         }
 
-        // Set where clause by using keywords in a vague searching senario.
+        // Set where clause by using keywords in a vague searching scenario.
         if (options.keywords && this.searchable) {
             let keywords = options.keywords,
                 wildcard = this.config.type == "access" ? "*" : "%";
@@ -480,16 +525,7 @@ export class Model extends Query {
 
         // Get paginated information.
         return this.paginate(options.page, options.limit).then(info => {
-            return {
-                page: options.page,
-                pages: info.page,
-                limit: options.limit,
-                total: info.total,
-                orderBy: options.orderBy,
-                sequence: options.sequence,
-                keywords: options.keywords,
-                data: info.data
-            };
+            return assign(info, options);
         });
     }
 
@@ -502,15 +538,12 @@ export class Model extends Query {
     /**
      * Sets an extra `where...` clause for the SQL statement when updating or
      * deleting the model to mark the state.
+     * 
+     * Unlike `query.where()` or other alike methods, this method can be 
+     * called only once.
      */
     whereState(field: string, operator: string, value: any): this;
-
-    /**
-     * Sets an extra `where...` clause for the SQL statement when updating or
-     * deleting the model to mark the state.
-     */
     whereState(fields: { [field: string]: any }): this;
-
     whereState(field, operator = null, value = undefined) {
         let query = new Query().use(this);
         query.where(field, operator, value);
@@ -558,7 +591,7 @@ export class Model extends Query {
         let Class = <typeof Model>this.constructor;
 
         if (Class.oldIterator)
-            console.warn("\nWarn: Using old style of iterator is deprecated.\n");
+            process.emitWarning("\nWarn: Using old style of iterator is deprecated.\n");
 
         return (function* () {
             for (let key in data) {
@@ -569,7 +602,7 @@ export class Model extends Query {
     }
 
     private [inspect]() {
-        let res = super["inspect"]();
+        let res = super[inspect]();
         for (const field of this.fields) {
             res[field] = this[field];
         }
@@ -939,7 +972,7 @@ export class Model extends Query {
 
     withPivot(...args): this {
         if (!(this._caller instanceof Model)) {
-            throw new SyntaxError("Model.withPivot() can only be called "
+            throw new ReferenceError("Model.withPivot() can only be called "
                 + "after calling Model.hasVia() or Model.belongsToVia().");
         }
 
@@ -978,7 +1011,7 @@ export class Model extends Query {
 
     associate(input: number | Model): Promise<Model> {
         if (!(this._caller instanceof Model)) {
-            throw new SyntaxError("Model.associate() can only be called "
+            throw new ReferenceError("Model.associate() can only be called "
                 + "after calling Model.belongsTo().");
         }
 
@@ -1013,7 +1046,7 @@ export class Model extends Query {
      */
     dissociate(): Promise<Model> {
         if (!(this._caller instanceof Model)) {
-            throw new SyntaxError("Model.dissociate() can only be called "
+            throw new ReferenceError("Model.dissociate() can only be called "
                 + "after calling Model.belongsTo().");
         }
 
@@ -1071,8 +1104,8 @@ export class Model extends Query {
                 + " must be an array or an object.");
         }
         if (!(this._caller instanceof Model)) {
-            throw new SyntaxError("Model.attach() can only be called after "
-                + "calling Model.hasVia() or Model.belongsToVia().");
+            throw new ReferenceError("Model.attach() can only be called after"
+                + " calling Model.hasVia() or Model.belongsToVia().");
         }
 
         let target = this._caller,
@@ -1241,8 +1274,8 @@ export class Model extends Query {
                 + " must be an array.");
         }
         if (!(this._caller instanceof Model)) {
-            throw new SyntaxError("Model.attach() can only be called after "
-                + "calling Model.hasVia() or Model.belongsToVia().");
+            throw new ReferenceError("Model.attach() can only be called after"
+                + " calling Model.hasVia() or Model.belongsToVia().");
         }
 
         let target = this._caller,

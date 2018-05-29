@@ -174,7 +174,7 @@ var DB = (function (_super) {
             if (bindings[0] instanceof Array)
                 bindings = bindings[0];
             _this.sql = sql.trim();
-            _this.bindings = assign([], bindings);
+            _this.bindings = [].concat(bindings);
             if (_this.sql[_this.sql.length - 1] == ";")
                 _this.sql = _this.sql.slice(0, -1);
             var i = _this.sql.indexOf(" "), command = _this.sql.substring(0, i).toLowerCase();

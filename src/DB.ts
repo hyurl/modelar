@@ -265,7 +265,7 @@ export class DB extends EventEmitter {
                 bindings = bindings[0];
 
             this.sql = sql.trim();
-            this.bindings = assign([], bindings);
+            this.bindings = [].concat(bindings);
 
             // remove the trailing ';' in the sql.
             if (this.sql[this.sql.length - 1] == ";")

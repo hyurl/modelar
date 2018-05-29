@@ -1,7 +1,6 @@
 import { DB } from "./DB";
 import { PaginatedRecords } from "./interfaces";
 import { InsertionError, UpdateError } from "./Errors";
-import assign = require("lodash/assign");
 import fill = require("lodash/fill");
 
 /**
@@ -635,7 +634,7 @@ export class Query extends DB {
         this.emit("insert", this);
 
         return this.query(this.sql, bindings).then(() => {
-            this.bindings = assign([], bindings);
+            this.bindings = [].concat(bindings);
 
             // Fire event and call its listeners.
             this.emit("inserted", this);
@@ -715,7 +714,7 @@ export class Query extends DB {
         this.emit("update", this);
 
         return this.query(this.sql, bindings).then(() => {
-            this.bindings = assign([], bindings);
+            this.bindings = [].concat(bindings);
 
             // Fire event and call its listeners.
             this.emit("updated", this);
@@ -733,7 +732,7 @@ export class Query extends DB {
         this.emit("delete", this);
 
         return this.query(this.sql, this._bindings).then(() => {
-            this.bindings = assign([], this._bindings);
+            this.bindings = [].concat(this._bindings);
 
             // Fire event and call its listeners.
             this.emit("deleted", this);
@@ -888,7 +887,7 @@ export class Query extends DB {
     private _handleSelect(): Promise<any[] | { [field: string]: any }> {
         this.sql = this.getSelectSQL();
         return this.query(this.sql, this._bindings).then(query => {
-            this.bindings = assign([], this._bindings);
+            this.bindings = [].concat(this._bindings);
             return query.data;
         });
     }

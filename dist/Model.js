@@ -38,8 +38,7 @@ var Model = (function (_super) {
         configurable: true
     });
     Model.prototype._defineProperties = function (fields) {
-        var proto = Object.getPrototypeOf(this);
-        var props = {};
+        var proto = Object.getPrototypeOf(this), props = {};
         var _loop_1 = function (field) {
             if (!(field in this_1)) {
                 props[field] = {
@@ -78,10 +77,10 @@ var Model = (function (_super) {
     };
     Model.prototype.assign = function (data, useSetter) {
         if (useSetter === void 0) { useSetter = false; }
+        var proto = Object.getPrototypeOf(this);
         if (this.data instanceof Array) {
             this.data = {};
         }
-        var proto = Object.getPrototypeOf(this);
         for (var key in data) {
             if (this.fields.indexOf(key) >= 0) {
                 if (useSetter) {
@@ -120,7 +119,12 @@ var Model = (function (_super) {
             this.assign(data, true);
         return _super.prototype.insert.call(this, this.data).then(function (model) {
             model.where(model.primary, model.insertId);
-            return model.get();
+            var sql = model.sql, bindings = model.bindings;
+            return model.get().then(function () {
+                model.sql = sql;
+                model.bindings = bindings;
+                return model;
+            });
         });
     };
     Model.prototype.update = function (data) {
@@ -148,8 +152,13 @@ var Model = (function (_super) {
                         + " was updated by the given condition.");
                 }
                 else {
+                    var sql_1 = model.sql, bindings_1 = model.bindings;
                     model._resetWhere(true);
-                    return model.get();
+                    return model.get().then(function () {
+                        model.sql = sql_1;
+                        model.bindings = bindings_1;
+                        return model;
+                    });
                 }
             });
         }
@@ -198,8 +207,13 @@ var Model = (function (_super) {
                     + " was updated by the given condition.");
             }
             else {
+                var sql_2 = model.sql, bindings_2 = model.bindings;
                 model._resetWhere(true);
-                return model.get();
+                return model.get().then(function () {
+                    model.sql = sql_2;
+                    model.bindings = bindings_2;
+                    return model;
+                });
             }
         });
     };
@@ -224,7 +238,7 @@ var Model = (function (_super) {
             });
         }
         if (!this["_where"]) {
-            throw new SyntaxError("No where condition is set to delete models.");
+            throw new Error("No where condition is set to delete models.");
         }
         this._resetWhere();
         if (this._whereState.where) {
@@ -248,7 +262,7 @@ var Model = (function (_super) {
             return this.where(this.primary, id).get();
         }
         if (!this["_where"]) {
-            throw new SyntaxError("No where condition is set to fetch models.");
+            throw new Error("No where condition is set to fetch models.");
         }
         return _super.prototype.get.call(this).then(function (data) {
             if (!data || Object.keys(data).length === 0) {
@@ -277,7 +291,18 @@ var Model = (function (_super) {
             else {
                 var models = [], ModelClass = _this.constructor;
                 for (var i in data) {
-                    var model = new ModelClass;
+                    var model = void 0;
+                    if (ModelClass === Model) {
+                        model = new ModelClass(null, {
+                            table: _this.table,
+                            primary: _this.primary,
+                            fields: _this.fields,
+                            searchable: _this.searchable
+                        });
+                    }
+                    else {
+                        model = new ModelClass;
+                    }
                     model.use(_this).assign(data[i]).emit("get", model);
                     models.push(model);
                 }
@@ -293,7 +318,7 @@ var Model = (function (_super) {
     };
     Model.prototype.getMany = function (options) {
         var _this = this;
-        var defaults = assign(interfaces_1.ModelGetManyOptions, {
+        var defaults = assign({}, interfaces_1.ModelGetManyOptions, {
             orderBy: this.primary
         });
         options = assign(defaults, options);
@@ -342,16 +367,7 @@ var Model = (function (_super) {
             });
         }
         return this.paginate(options.page, options.limit).then(function (info) {
-            return {
-                page: options.page,
-                pages: info.page,
-                limit: options.limit,
-                total: info.total,
-                orderBy: options.orderBy,
-                sequence: options.sequence,
-                keywords: options.keywords,
-                data: info.data
-            };
+            return assign(info, options);
         });
     };
     Model.prototype.whereState = function (field, operator, value) {
@@ -393,7 +409,7 @@ var Model = (function (_super) {
         var data = this.valueOf();
         var Class = this.constructor;
         if (Class.oldIterator)
-            console.warn("\nWarn: Using old style of iterator is deprecated.\n");
+            process.emitWarning("\nWarn: Using old style of iterator is deprecated.\n");
         return (function () {
             var _a, _b, _i, key, value;
             return tslib_1.__generator(this, function (_c) {
@@ -421,7 +437,7 @@ var Model = (function (_super) {
         })();
     };
     Model.prototype[inspect] = function () {
-        var res = _super.prototype["inspect"].call(this);
+        var res = _super.prototype[inspect].call(this);
         for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
             var field = _a[_i];
             res[field] = this[field];
@@ -655,7 +671,7 @@ var Model = (function (_super) {
             args[_i] = arguments[_i];
         }
         if (!(this._caller instanceof Model)) {
-            throw new SyntaxError("Model.withPivot() can only be called "
+            throw new ReferenceError("Model.withPivot() can only be called "
                 + "after calling Model.hasVia() or Model.belongsToVia().");
         }
         var caller = this._caller, pivotTable = this._pivot[0], foreignKey1 = pivotTable + "." + this._pivot[1], foreignKey2 = pivotTable + "." + this._pivot[2], primary = this.table + "." + this.primary, fields = args[0] instanceof Array ? args[0] : args;
@@ -667,7 +683,7 @@ var Model = (function (_super) {
     };
     Model.prototype.associate = function (input) {
         if (!(this._caller instanceof Model)) {
-            throw new SyntaxError("Model.associate() can only be called "
+            throw new ReferenceError("Model.associate() can only be called "
                 + "after calling Model.belongsTo().");
         }
         var target = this._caller, id = null;
@@ -692,7 +708,7 @@ var Model = (function (_super) {
     };
     Model.prototype.dissociate = function () {
         if (!(this._caller instanceof Model)) {
-            throw new SyntaxError("Model.dissociate() can only be called "
+            throw new ReferenceError("Model.dissociate() can only be called "
                 + "after calling Model.belongsTo().");
         }
         var target = this._caller;
@@ -712,8 +728,8 @@ var Model = (function (_super) {
                 + " must be an array or an object.");
         }
         if (!(this._caller instanceof Model)) {
-            throw new SyntaxError("Model.attach() can only be called after "
-                + "calling Model.hasVia() or Model.belongsToVia().");
+            throw new ReferenceError("Model.attach() can only be called after"
+                + " calling Model.hasVia() or Model.belongsToVia().");
         }
         var target = this._caller, id1 = target.data[target.primary], ids = [];
         if (notArray) {
@@ -827,8 +843,8 @@ var Model = (function (_super) {
                 + " must be an array.");
         }
         if (!(this._caller instanceof Model)) {
-            throw new SyntaxError("Model.attach() can only be called after "
-                + "calling Model.hasVia() or Model.belongsToVia().");
+            throw new ReferenceError("Model.attach() can only be called after"
+                + " calling Model.hasVia() or Model.belongsToVia().");
         }
         var target = this._caller, id1 = target.data[target.primary], query = new Query_1.Query(this._pivot[0]).use(this);
         query.where(this._pivot[2], id1);

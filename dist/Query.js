@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var DB_1 = require("./DB");
 var Errors_1 = require("./Errors");
-var assign = require("lodash/assign");
 var fill = require("lodash/fill");
 var Query = (function (_super) {
     tslib_1.__extends(Query, _super);
@@ -400,7 +399,7 @@ var Query = (function (_super) {
             this._inserts;
         this.emit("insert", this);
         return this.query(this.sql, bindings).then(function () {
-            _this.bindings = assign([], bindings);
+            _this.bindings = [].concat(bindings);
             _this.emit("inserted", _this);
             return _this;
         });
@@ -450,7 +449,7 @@ var Query = (function (_super) {
             this._updates + (this._where ? " where " + this._where : "");
         this.emit("update", this);
         return this.query(this.sql, bindings).then(function () {
-            _this.bindings = assign([], bindings);
+            _this.bindings = [].concat(bindings);
             _this.emit("updated", _this);
             return _this;
         });
@@ -461,7 +460,7 @@ var Query = (function (_super) {
             (this._where ? " where " + this._where : "");
         this.emit("delete", this);
         return this.query(this.sql, this._bindings).then(function () {
-            _this.bindings = assign([], _this._bindings);
+            _this.bindings = [].concat(_this._bindings);
             _this.emit("deleted", _this);
             return _this;
         });
@@ -568,7 +567,7 @@ var Query = (function (_super) {
         var _this = this;
         this.sql = this.getSelectSQL();
         return this.query(this.sql, this._bindings).then(function (query) {
-            _this.bindings = assign([], _this._bindings);
+            _this.bindings = [].concat(_this._bindings);
             return query.data;
         });
     };
