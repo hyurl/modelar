@@ -1,3 +1,5 @@
+"use strict";
+
 var assert = require("assert");
 var Model = require("../").default;
 var DB = require("../").DB;
