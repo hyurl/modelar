@@ -33,6 +33,9 @@ describe("Model.prototype.save()", function () {
                 name: "Luna",
                 email: "luna@hyurl.com"
             }));
+            assert.equal(model.id, id);
+            assert.equal(model.name, "Luna");
+            assert.equal(model.email, "luna@hyurl.com");
             db.close();
             done();
         }).catch(function (err) {

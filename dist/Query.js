@@ -21,7 +21,6 @@ var Query = (function (_super) {
         _this._limit = "";
         _this._union = "";
         _this._bindings = [];
-        _this._isModel = false;
         _this.from(table);
         return _this;
     }
@@ -467,13 +466,13 @@ var Query = (function (_super) {
     };
     Query.prototype.get = function () {
         var promise = this.limit(1)._handleSelect().then(function (data) { return data[0]; });
-        if (!this._isModel)
+        if (!this["_isModel"])
             this.emit("get", this);
         return promise;
     };
     Query.prototype.all = function () {
         var promise = this._handleSelect();
-        if (!this._isModel)
+        if (!this["_isModel"])
             this.emit("get", this);
         return promise.then(function (data) {
             return data instanceof Array ? data : [data];

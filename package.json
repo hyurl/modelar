@@ -13,6 +13,7 @@
     "dependencies": {
         "@types/bcrypt-nodejs": "0.0.30",
         "@types/lodash": "^4.14.109",
+        "@types/mocha": "^5.2.0",
         "bcrypt-nodejs": "^0.0.3",
         "hide-protected-properties": "^0.1.1",
         "lodash": "^4.17.10",

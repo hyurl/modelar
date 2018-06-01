@@ -16,13 +16,12 @@ var Model = (function (_super) {
         _this._modified = {};
         _this.extra = {};
         config = config || interfaces_1.ModelConfig;
-        _this.fields = config.fields || _this.fields || [];
-        _this.primary = config.primary || _this.primary || "";
-        _this.searchable = config.searchable || _this.searchable || [];
-        _this.schema = _this.schema || {};
-        _this._initiated = _this._initiated || false;
-        _this["_isModel"] = true;
-        if (_this.fields.length && !_this._initiated)
+        _this._proto = Object.getPrototypeOf(_this);
+        _this.fields = config.fields || _this._protoProp("fields") || [];
+        _this.primary = config.primary || _this._protoProp("primary") || "";
+        _this.searchable = config.searchable || _this._protoProp("searchable") || [];
+        _this.schema = _this._protoProp("schema") || {};
+        if (_this.fields.length && !_this._protoProp("_initiated"))
             _this._defineProperties(_this.fields);
         if (data) {
             delete data[_this.primary];
@@ -37,8 +36,18 @@ var Model = (function (_super) {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(Model.prototype, "_isModel", {
+        get: function () {
+            return true;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Model.prototype._protoProp = function (name) {
+        return this._proto.hasOwnProperty(name) ? this._proto[name] : undefined;
+    };
     Model.prototype._defineProperties = function (fields) {
-        var proto = Object.getPrototypeOf(this), props = {};
+        var props = {};
         var _loop_1 = function (field) {
             if (!(field in this_1)) {
                 props[field] = {
@@ -55,7 +64,7 @@ var Model = (function (_super) {
                 };
             }
             else {
-                var desc = Object.getOwnPropertyDescriptor(proto, field);
+                var desc = Object.getOwnPropertyDescriptor(this_1._proto, field);
                 if (desc && desc.set) {
                     var oringin_1 = desc.set;
                     desc.set = function set(v) {
@@ -72,19 +81,18 @@ var Model = (function (_super) {
             var field = fields_1[_i];
             _loop_1(field);
         }
-        Object.defineProperties(proto, props);
-        proto._initiated = true;
+        Object.defineProperties(this._proto, props);
+        this._proto["_initiated"] = true;
     };
     Model.prototype.assign = function (data, useSetter) {
         if (useSetter === void 0) { useSetter = false; }
-        var proto = Object.getPrototypeOf(this);
         if (this.data instanceof Array) {
             this.data = {};
         }
         for (var key in data) {
             if (this.fields.indexOf(key) >= 0) {
                 if (useSetter) {
-                    var desc = Object.getOwnPropertyDescriptor(proto, key);
+                    var desc = Object.getOwnPropertyDescriptor(this._proto, key);
                     if (desc && desc.set instanceof Function) {
                         desc.set.call(this, data[key]);
                     }
@@ -380,10 +388,10 @@ var Model = (function (_super) {
         return this;
     };
     Model.prototype.valueOf = function () {
-        var data = {}, proto = Object.getPrototypeOf(this);
+        var data = {};
         for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
             var key = _a[_i];
-            var desc = Object.getOwnPropertyDescriptor(proto, key);
+            var desc = Object.getOwnPropertyDescriptor(this._proto, key);
             if (desc && desc.get instanceof Function) {
                 var value = desc.get.call(this, this.data[key]);
                 if (value !== undefined)

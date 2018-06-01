@@ -27,7 +27,7 @@ const inspect: string | symbol = require("util").inspect.custom || "inspect";
  * for...of... loop, like `for(let { key, value } of model)`.
  */
 export class Model extends Query {
-    private _initiated: boolean;
+    private _proto: this;
     private _caller: Model;
     private _foreignKey: string;
     private _type: string;
@@ -82,15 +82,14 @@ export class Model extends Query {
 
         config = config || ModelConfig;
 
-        this.fields = config.fields || this.fields || [];
-        this.primary = config.primary || this.primary || "";
-        this.searchable = config.searchable || this.searchable || [];
-        this.schema = this.schema || {};
-        this._initiated = this._initiated || false;
-        this["_isModel"] = true;
+        this._proto = Object.getPrototypeOf(this);
+        this.fields = config.fields || this._protoProp("fields") || [];
+        this.primary = config.primary || this._protoProp("primary") || "";
+        this.searchable = config.searchable || this._protoProp("searchable") || [];
+        this.schema = this._protoProp("schema") || {};
 
         // Define pseudo-properties.
-        if (this.fields.length && !this._initiated)
+        if (this.fields.length && !this._protoProp("_initiated"))
             this._defineProperties(this.fields);
 
         // Assign data to the instance.
@@ -105,12 +104,19 @@ export class Model extends Query {
         return this.data[this.primary] == undefined;
     }
 
+    private get _isModel(): boolean {
+        return true;
+    }
+
+    private _protoProp(name: string): any {
+        return this._proto.hasOwnProperty(name) ? this._proto[name] : undefined;
+    }
+
     private _defineProperties(fields: string[]): void {
-        let proto = Object.getPrototypeOf(this),
-            props: { [prop: string]: PropertyDescriptor } = {};
+        let props: { [prop: string]: PropertyDescriptor } = {};
 
         for (let field of fields) {
-            if (!(field in this)) {
+            if (!(field in this)) { // Define new setter/getter.
                 props[field] = {
                     get() {
                         return this.data[field];
@@ -125,9 +131,8 @@ export class Model extends Query {
                     }
                 }
             } else {
-                let desc = Object.getOwnPropertyDescriptor(proto, field);
-                if (desc && desc.set) {
-                    // Rewrite the setter.
+                let desc = Object.getOwnPropertyDescriptor(this._proto, field);
+                if (desc && desc.set) { // Rewrite the setter.
                     let oringin = desc.set;
                     desc.set = function set(v) {
                         oringin.call(this, v);
@@ -139,8 +144,8 @@ export class Model extends Query {
             }
         }
 
-        Object.defineProperties(proto, props);
-        proto._initiated = true;
+        Object.defineProperties(this._proto, props);
+        this._proto["_initiated"] = true;
     }
 
     /**
@@ -148,8 +153,6 @@ export class Model extends Query {
      * @param useSetter Use setters (if any) to process the data.
      */
     assign(data: { [field: string]: any }, useSetter = false): this {
-        let proto: this = Object.getPrototypeOf(this);
-
         if (this.data instanceof Array) {
             // `data` extends from DB class, so it could be an array.
             this.data = {};
@@ -159,7 +162,7 @@ export class Model extends Query {
             if (this.fields.indexOf(key) >= 0) {
                 // Only accept those fields that `fields` sets.
                 if (useSetter) {
-                    let desc = Object.getOwnPropertyDescriptor(proto, key);
+                    let desc = Object.getOwnPropertyDescriptor(this._proto, key);
                     if (desc && desc.set instanceof Function) {
                         desc.set.call(this, data[key]); // Calling setter
                     } else {
@@ -549,11 +552,10 @@ export class Model extends Query {
 
     /** Gets the data that the model represents. */
     valueOf(): { [field: string]: any } {
-        let data = {},
-            proto = Object.getPrototypeOf(this);
+        let data = {};
 
         for (let key of this.fields) {
-            let desc = Object.getOwnPropertyDescriptor(proto, key);
+            let desc = Object.getOwnPropertyDescriptor(this._proto, key);
             if (desc && desc.get instanceof Function) {
                 // Calling getter.
                 let value = desc.get.call(this, this.data[key]);
