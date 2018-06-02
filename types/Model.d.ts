@@ -16,11 +16,6 @@ import { ModelConfig, DBConfig, PaginatedModels, ModelGetManyOptions, FieldConfi
  * for...of... loop, like `for(let { key, value } of model)`.
  */
 export declare class Model extends Query {
-    /**
-     * Uses old style iterator when put the model in a `for...of...` loop,
-     * remember, old style is **deprecated**, a warning will be logged out.
-     */
-    static oldIterator: boolean;
     /** Primary key of the table. */
     primary: string;
     /** Fields in the table */
@@ -286,7 +281,7 @@ export declare class Model extends Query {
      * Sets extra `where...` clause when fetching data via a pivot table.
      * 
      * Can only be called after calling `model.hasVia()` or 
-     * `model.belongsToVia()`, and be called only once.
+     * `model.belongsToVia()`, and can be called only once.
      */
     wherePivot(nested: (query: Query) => void): this;
     wherePivot(field: string, value: any): this;

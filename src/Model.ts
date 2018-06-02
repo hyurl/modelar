@@ -961,7 +961,7 @@ export class Model extends Query {
      * Sets extra `where...` clause when fetching data via a pivot table.
      * 
      * Can only be called after calling `model.hasVia()` or 
-     * `model.belongsToVia()`, and be called only once.
+     * `model.belongsToVia()`, and can be called only once.
      */
     wherePivot(nested: (query: Query) => void): this;
     wherePivot(field: string, value: any): this;
