@@ -9,8 +9,6 @@ var Query = (function (_super) {
     function Query(table) {
         if (table === void 0) { table = ""; }
         var _this = _super.call(this) || this;
-        _this._inserts = "";
-        _this._updates = "";
         _this._selects = "*";
         _this._distinct = "";
         _this._join = "";
@@ -46,7 +44,7 @@ var Query = (function (_super) {
         if (tables.length > 1) {
             this.table = tables.join(", ");
         }
-        else if (Array.isArray(tables[0])) {
+        else if (tables[0] instanceof Array) {
             this.table = tables[0].join(", ");
         }
         else {
@@ -380,7 +378,7 @@ var Query = (function (_super) {
     };
     Query.prototype.insert = function (data) {
         var _this = this;
-        var bindings = [], fields = [], values = [], isObj = !Array.isArray(data);
+        var bindings = [], fields = [], values = [], isObj = !(data instanceof Array);
         if (!Object.keys(data).length) {
             throw new Errors_1.InsertionError("No valid data were given for inserting.");
         }
@@ -393,9 +391,8 @@ var Query = (function (_super) {
         if (isObj)
             fields = fields.join(", ");
         values = values.join(", ");
-        this._inserts = (isObj ? "(" + fields + ") " : "") + ("values (" + values + ")");
-        this.sql = "insert into " + this.backquote(this.table) + " " +
-            this._inserts;
+        this.sql = "insert into " + this.backquote(this.table)
+            + " " + (isObj ? "(" + fields + ") " : "") + ("values (" + values + ")");
         this.emit("insert", this);
         return this.query(this.sql, bindings).then(function () {
             _this.bindings = [].concat(bindings);
@@ -443,9 +440,8 @@ var Query = (function (_super) {
             throw new Errors_1.UpdateError("No valid data were given for updating.");
         }
         bindings = bindings.concat(this._bindings);
-        this._updates = parts.join(", ");
-        this.sql = "update " + this.backquote(this.table) + " set " +
-            this._updates + (this._where ? " where " + this._where : "");
+        this.sql = "update " + this.backquote(this.table) + " set "
+            + parts.join(", ") + (this._where ? " where " + this._where : "");
         this.emit("update", this);
         return this.query(this.sql, bindings).then(function () {
             _this.bindings = [].concat(bindings);

@@ -30,7 +30,7 @@ This module currently supports these databases:
 
 Not all adapters are installed automatically, only `MySQL/MariaDB` (since 
 3.0.4) are internally included, you must manually install other adapters if 
-you're going to use them.
+you want to use them.
 
 ## What can I do with this module?
 
@@ -112,16 +112,17 @@ class Article extends Model {
     } catch (e) {
         console.log(e);
     }
+
     if (db)
         db.close();
 })();
 ```
 
 Above gives a very simple example that shows the convenience and expressive 
-functionality that this module has, you can go into the real depth of it by 
-checking the [API documentation](https://hyurl.github.io/modelar).
+functionality that this package carries, you can go into the real depth of it 
+by checking the [API documentation](https://hyurl.github.io/modelar).
 
 This package is written in TypeScript and compiled to ES5 standard (since 
-3.0.4) with some ES2015 features, so it can run it in any version of NodeJS 
-that higher than 4.0.0. BUT this feature may not work if the adapter you're 
-using doesn't support lower version of NodeJS.
+3.0.4) with some ES2015 features, so it can run in any version of NodeJS that 
+higher than 4.0.0. But this feature relies on the support of the adapter 
+you're using, so check the specification of the adapter carefully. 

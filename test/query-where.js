@@ -2,7 +2,7 @@ var assert = require("assert");
 var Query = require("../").Query;
 
 describe("Query.prototype.where()", function () {
-    describe("where(field: string, value: string | number | boolean | Date)", function () {
+    describe("where(field: string, value: any)", function () {
         var query = new Query("users");
 
         query.select("*");
@@ -23,7 +23,7 @@ describe("Query.prototype.where()", function () {
         });
     });
 
-    describe("where(field: string, operator: string, value: string | number | boolean | Date)", function () {
+    describe("where(field: string, operator: string, value: any)", function () {
         var query = new Query("users");
 
         query.select("*");
@@ -43,7 +43,7 @@ describe("Query.prototype.where()", function () {
         });
     });
 
-    describe("where(fields: { [field: string]: string | number | boolean | Date })", function () {
+    describe("where(fields: { [field: string]: any })", function () {
         var query = new Query("users");
 
         query.select("*");

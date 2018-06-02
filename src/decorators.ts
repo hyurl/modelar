@@ -4,8 +4,8 @@ import assign = require("lodash/assign");
 
 function prepare(proto: Model, prop: string) {
     if (!proto.hasOwnProperty("schema")) {
-        proto.schema = assign({}, proto.schema);
-        proto.fields = [].concat(proto.fields);
+        proto.schema = proto.schema ? assign({}, proto.schema) : {};
+        proto.fields = proto.fields ? [].concat(proto.fields) : [];
     }
 
     if (proto.schema[prop] === undefined)
@@ -45,7 +45,7 @@ export function primary(proto: Model, prop: string) {
 
 export function searchable(proto: Model, prop: string) {
     if (!proto.hasOwnProperty("searchable"))
-        proto.searchable = [].concat(proto.searchable);
+        proto.searchable = proto.searchable ? [].concat(proto.searchable) : [];
 
     if (proto.searchable.indexOf(prop) === -1) {
         proto.searchable.push(prop);

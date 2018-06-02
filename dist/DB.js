@@ -245,6 +245,7 @@ var DB = (function (_super) {
     DB.destroy = function () {
         return this.close();
     };
+    var DB_1;
     DB._events = {};
     DB.config = interfaces_1.DBConfig;
     DB.adapters = {
@@ -255,7 +256,6 @@ var DB = (function (_super) {
         HideProtectedProperties
     ], DB);
     return DB;
-    var DB_1;
 }(events_1.EventEmitter));
 exports.DB = DB;
 Object.defineProperties(DB.prototype, {

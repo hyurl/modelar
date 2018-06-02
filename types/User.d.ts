@@ -28,6 +28,10 @@ export declare class User extends Model {
         user?: string;
         password: string;
     }): Promise<this>;
+    on(event: "query" | "save" | "saved" | "insert" | "inserted" | "update" | "updated" | "delete" | "deleted" | "get" | "login", listener: (thisObj: this) => void): this;
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
+    // static on(event: "query" | "save" | "saved" | "insert" | "inserted" | "update" | "updated" | "delete" | "deleted" | "get" | "login", listener: (user: User) => void): typeof User;
+    // static on(event: string | symbol, listener: (...args: any[]) => void): typeof User;
     static login(options: {
         [field: string]: string;
         user?: string;

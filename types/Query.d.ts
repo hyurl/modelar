@@ -281,6 +281,10 @@ export declare class Query extends DB {
     paginate(page: number, length?: number): Promise<PaginatedRecords>;
     /** Gets the select statement from the current instance. */
     getSelectSQL(): string;
+    on(event: "query" | "insert" | "inserted" | "update" | "updated" | "delete" | "deleted" | "get", listener: (thisObj: this) => void): this;
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
+    // static on(event: "query" | "insert" | "inserted" | "update" | "updated" | "delete" | "deleted" | "get", listener: (query: Query) => void): typeof Query;
+    // static on(event: string | symbol, listener: (...args: any[]) => void): typeof Query;
 }
 export declare namespace Query {
     class Field {

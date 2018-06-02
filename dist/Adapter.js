@@ -60,7 +60,7 @@ var Adapter = (function () {
         var isCount = (/count\(distinct\s\S+\)/i).test(query["_selects"]), distinct = query["_distinct"], selects = query["_selects"], join = query["_join"], where = query["_where"], orderBy = query["_orderBy"], groupBy = query["_groupBy"], having = query["_having"], union = query["_union"], limit;
         if (typeof query["_limit"] === "string")
             limit = query["_limit"];
-        else
+        else if (query["_limit"])
             limit = query["_limit"].toString();
         return "select " +
             (distinct && !isCount ? "distinct " : "") +

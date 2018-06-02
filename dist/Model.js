@@ -378,11 +378,13 @@ var Model = (function (_super) {
             return assign(info, options);
         });
     };
-    Model.prototype.whereState = function (field, operator, value) {
-        if (operator === void 0) { operator = null; }
-        if (value === void 0) { value = undefined; }
+    Model.prototype.whereState = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
         var query = new Query_1.Query().use(this);
-        query.where(field, operator, value);
+        query.where.apply(query, args);
         this._whereState.where = query["_where"];
         this._whereState.bindings = query["_bindings"];
         return this;
@@ -416,8 +418,6 @@ var Model = (function (_super) {
     Model.prototype[Symbol.iterator] = function () {
         var data = this.valueOf();
         var Class = this.constructor;
-        if (Class.oldIterator)
-            process.emitWarning("\nWarn: Using old style of iterator is deprecated.\n");
         return (function () {
             var _a, _b, _i, key, value;
             return tslib_1.__generator(this, function (_c) {
@@ -432,7 +432,7 @@ var Model = (function (_super) {
                         if (!(_i < _a.length)) return [3, 4];
                         key = _a[_i];
                         value = data[key];
-                        return [4, Class.oldIterator ? [key, value] : { key: key, value: value }];
+                        return [4, { key: key, value: value }];
                     case 2:
                         _c.sent();
                         _c.label = 3;
@@ -473,12 +473,12 @@ var Model = (function (_super) {
         return (new this).transaction(cb);
     };
     Model.select = function () {
+        var _a;
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
         return (_a = (new this)).select.apply(_a, args);
-        var _a;
     };
     Model.join = function (table, field1, operator, field2) {
         if (field2 === void 0) { field2 = ""; }
@@ -535,12 +535,12 @@ var Model = (function (_super) {
         return (new this).random();
     };
     Model.groupBy = function () {
+        var _a;
         var fields = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             fields[_i] = arguments[_i];
         }
         return (_a = (new this)).groupBy.apply(_a, fields);
-        var _a;
     };
     Model.having = function (raw) {
         return (new this).having(raw);
@@ -589,10 +589,13 @@ var Model = (function (_super) {
     Model.getMany = function (options) {
         return (new this).getMany(options);
     };
-    Model.whereState = function (field, operator, value) {
-        if (operator === void 0) { operator = null; }
-        if (value === void 0) { value = undefined; }
-        return (new this).whereState(field, operator, value);
+    Model.whereState = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var model = new this;
+        return model.whereState.apply(model, args);
     };
     Model.createTable = function () {
         return (new this).createTable();
@@ -634,7 +637,6 @@ var Model = (function (_super) {
         });
     };
     Model.prototype.hasVia = function (ModelClass, pivotTable, foreignKey1, foreignKey2, type) {
-        var _this = this;
         if (type === void 0) { type = ""; }
         var model = new ModelClass().use(this);
         model._caller = this;
@@ -645,16 +647,9 @@ var Model = (function (_super) {
             type,
             this.constructor["name"]
         ];
-        return model.whereIn(model.primary, function (query) {
-            query.select(model._pivot[1]).from(model._pivot[0])
-                .where(model._pivot[2], _this.data[_this.primary]);
-            if (model._pivot[3]) {
-                query.where(model._pivot[3], model._pivot[4]);
-            }
-        });
+        return this._handleVia(model);
     };
     Model.prototype.belongsToVia = function (ModelClass, pivotTable, foreignKey1, foreignKey2, type) {
-        var _this = this;
         if (type === void 0) { type = ""; }
         var model = new ModelClass().use(this);
         model._caller = this;
@@ -665,13 +660,36 @@ var Model = (function (_super) {
             type,
             ModelClass["name"]
         ];
+        return this._handleVia(model);
+    };
+    Model.prototype._handleVia = function (model, extra) {
+        var _this = this;
         return model.whereIn(model.primary, function (query) {
             query.select(model._pivot[1]).from(model._pivot[0])
                 .where(model._pivot[2], _this.data[_this.primary]);
             if (model._pivot[3]) {
                 query.where(model._pivot[3], model._pivot[4]);
             }
+            if (extra) {
+                query["_where"] += " and " + extra["_where"];
+                query["_bindings"] = query["_bindings"].concat(extra["_bindings"]);
+            }
         });
+    };
+    Model.prototype.wherePivot = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        if (!(this._caller instanceof Model)) {
+            throw new ReferenceError("Model.withPivot() can only be called "
+                + "after calling Model.hasVia() or Model.belongsToVia().");
+        }
+        var query = new Query_1.Query().use(this);
+        query.where.apply(query, args);
+        this["_where"] = "";
+        this["_bindings"] = [];
+        return this._caller._handleVia(this, query);
     };
     Model.prototype.withPivot = function () {
         var args = [];
@@ -680,7 +698,8 @@ var Model = (function (_super) {
         }
         if (!(this._caller instanceof Model)) {
             throw new ReferenceError("Model.withPivot() can only be called "
-                + "after calling Model.hasVia() or Model.belongsToVia().");
+                + "after calling Model.hasVia(), Model.belongsToVia(), or "
+                + "Model.wherePivot().");
         }
         var caller = this._caller, pivotTable = this._pivot[0], foreignKey1 = pivotTable + "." + this._pivot[1], foreignKey2 = pivotTable + "." + this._pivot[2], primary = this.table + "." + this.primary, fields = args[0] instanceof Array ? args[0] : args;
         fields = fields.map(function (field) { return pivotTable + "." + field; });
@@ -874,7 +893,6 @@ var Model = (function (_super) {
         }
         return query.delete().then(function () { return target; });
     };
-    Model.oldIterator = false;
     return Model;
 }(Query_1.Query));
 exports.Model = Model;

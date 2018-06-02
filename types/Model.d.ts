@@ -114,6 +114,7 @@ export declare class Model extends Query {
      * Unlike `query.where()` or other alike methods, this method can be
      * called only once.
      */
+    whereState(extra: (query: Query) => void): this;
     whereState(field: string, value: any): this;
     whereState(field: string, operator: string, value: any): this;
     whereState(fields: {
@@ -134,6 +135,10 @@ export declare class Model extends Query {
     }>;
     /** Create database table according to the class definition. */
     createTable(): Promise<this>;
+    on(event: "query" | "save" | "saved" | "insert" | "inserted" | "update" | "updated" | "delete" | "deleted" | "get", listener: (thisObj: this) => void): this;
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
+    // static on(event: "query" | "save" | "saved" | "insert" | "inserted" | "update" | "updated" | "delete" | "deleted" | "get", listener: (model: Model) => void): typeof Model;
+    // static on(event: string | symbol, listener: (...args: any[]) => void): typeof Model;
     static set(config: DBConfig): Model;
     static set(name: string, value: any): Model;
     static use(db: DB): Model;
@@ -188,6 +193,7 @@ export declare class Model extends Query {
     static chunk(length: number, cb: (data: Model[]) => false | void): Promise<Model[]>;
     static paginate(page: number, length?: number): Promise<PaginatedModels>;
     static getMany(options?: ModelGetManyOptions): Promise<PaginatedModels>;
+    static whereState(extra: (query: Query) => void): Model;
     static whereState(field: string, value: any): Model;
     static whereState(field: string, operator: string, value: any): Model;
     static whereState(fields: {
@@ -276,56 +282,56 @@ export declare class Model extends Query {
      *  associated model name.
      */
     protected belongsToVia(ModelClass: typeof Model, pivotTable: string, foreignKey1: string, foreignKey2: string, type: string): Model;
-    /** Gets extra data from the pivot table. */
+    /**
+     * Sets extra `where...` clause when fetching data via a pivot table.
+     * 
+     * Can only be called after calling `model.hasVia()` or 
+     * `model.belongsToVia()`, and be called only once.
+     */
+    wherePivot(nested: (query: Query) => void): this;
+    wherePivot(field: string, value: any): this;
+    wherePivot(field: string, operator: string, value: any): this;
+    wherePivot(fields: { [field: string]: any }): this;
+    /**
+     * Gets extra data from the pivot table.
+     * 
+     * Can only be called after calling `model.hasVia()`, 
+     * `model.belongsToVia()`, or `model.wherePivot()`.
+     */
     withPivot(fields: string[]): this;
-    /** Gets extra data from the pivot table. */
     withPivot(...fields: string[]): this;
     /**
      * Makes an association to a specified model.
      *
-     * This method can only be called after calling `model.belongsTo()`.
+     * Can only be called after calling `model.belongsTo()`.
      *
      * @param id The value of associative primary key.
      */
     associate(id: number): Promise<Model>;
     /**
-     * Makes an association to a specified model.
-     *
-     * This method can only be called after calling `model.belongsTo()`.
-     *
      * @param model Associative model instance.
      */
     associate(model: Model): Promise<Model>;
     /**
      * Removes the association bound by `model.associate()`.
      *
-     * This method can only be called after calling `model.belongsTo()`.
+     * Can only be called after calling `model.belongsTo()`.
      */
     dissociate(): Promise<Model>;
     /**
      * Updates associations in a pivot table.
      *
-     * This method can only be called after calling `model.hasVia()` or
+     * Can only be called after calling `model.hasVia()` or
      * `model.belongsToVia()`.
      *
      * @param ids Values of associative models' primary keys.
      */
     attach(ids: number[]): Promise<Model>;
     /**
-     * Updates associations in a pivot table.
-     *
-     * This method can only be called after calling `model.hasVia()` or
-     * `model.belongsToVia()`.
-     *
      * @param models Associative model instances.
      */
     attach(models: Model[]): Promise<Model>;
     /**
-     * Updates associations in a pivot table with additional fields.
-     *
-     * This method can only be called after calling `model.hasVia()` or
-     * `model.belongsToVia()`.
-     *
      * @param pairs The keys represents the values of associative models'
      *  primary keys, and values sets extra fields in the pivot table.
      */
@@ -337,18 +343,13 @@ export declare class Model extends Query {
     /**
      * Deletes associations in a pivot table.
      *
-     * This method can only be called after calling `model.hasVia()` or
+     * Can only be called after calling `model.hasVia()` or
      * `model.belongsToVia()`.
      *
      * @param ids Values of associative models' primary keys.
      */
     detach(ids?: number[]): Promise<Model>;
     /**
-     * Deletes associations in a pivot table.
-     *
-     * This method can only be called after calling `model.hasVia()` or
-     * `model.belongsToVia()`.
-     *
      * @param models Associative model instances.
      */
     detach(models?: Model[]): Promise<Model>;

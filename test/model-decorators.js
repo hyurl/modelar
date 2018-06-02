@@ -4,7 +4,7 @@ var config = require("./config/db");
 var decorate = require("tslib").__decorate;
 
 describe("Using @decorator", function () {
-    it("should define a model class with decorators", function () {
+    it("should define a model class with decorators as expected", function () {
         "use strict";
 
         var fields = ["id", "name", "email", "password", "age", "score"];

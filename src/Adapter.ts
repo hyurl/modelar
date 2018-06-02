@@ -82,7 +82,7 @@ export abstract class Adapter {
         
         if(typeof query["_limit"] === "string")
             limit = <string>query["_limit"];
-        else
+        else if (query["_limit"])
             limit = query["_limit"].toString();
 
         return "select " +

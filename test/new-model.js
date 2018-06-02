@@ -4,7 +4,7 @@ var Model = require("../").Model;
 var config = require("./config/db");
 
 describe("new Model()", function () {
-    it("should create a new model instance as expected", function () {
+    it("should create a new Model instance as expected", function () {
         var fields = ["id", "name", "email", "password", "age", "score"],
             data = {
                 name: "Ayon Lee",

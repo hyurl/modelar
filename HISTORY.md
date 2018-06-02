@@ -11,6 +11,14 @@
     calling.
 6. Add `query.field()` to keep a value as a field used in where and join 
     contexts.
+7. Fix bug in inheritance hierarchy.
+8. Add `model.wherePivot()` to more friendly fetching associative models.
+9. Support NodeJS versions lower than 6.0.
+10. More friendly docs for JavaScript users.
+11. `postgres` adapter no longer included by default.
+12. No longer support old iterator style.
+13. Fix a bug in creating table with foreign keys.
+14. `export default Model` for TypeScript.
 
 ## 3.0.2
 

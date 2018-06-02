@@ -34,12 +34,6 @@ export class Model extends Query {
     private _pivot: string[];
 
     /**
-     * Uses old style iterator when put the model in a `for...of...` loop,
-     * remember, old style is **deprecated**, a warning will be logged out.
-     */
-    static oldIterator: boolean = false;
-
-    /**
      * Sets an extra `where...` clause for the SQL statement when updating or 
      * deleting the model.
      */
@@ -75,8 +69,6 @@ export class Model extends Query {
     /** 
      * Creates a new model with optional initial data.
      */
-    // constructor(data?: { [field: string]: any });
-    // constructor(data: { [field: string]: any }, config: ModelConfig);
     constructor(data?: { [field: string]: any }, config?: ModelConfig) {
         super(config && config.table || "");
 
@@ -539,12 +531,13 @@ export class Model extends Query {
      * Unlike `query.where()` or other alike methods, this method can be
      * called only once.
      */
+    whereState(extra: (query: Query) => void): this;
     whereState(field: string, value: any): this;
     whereState(field: string, operator: string, value: any): this;
     whereState(fields: { [field: string]: any }): this;
-    whereState(field, operator = null, value = undefined) {
+    whereState(...args) {
         let query = new Query().use(this);
-        query.where(field, operator, value);
+        query.where.apply(query, args);
         this._whereState.where = query["_where"];
         this._whereState.bindings = query["_bindings"];
         return this;
@@ -568,6 +561,7 @@ export class Model extends Query {
                 data[key] = this.data[key];
             }
         }
+        
         return data;
     }
 
@@ -587,13 +581,10 @@ export class Model extends Query {
         let data = this.valueOf();
         let Class = <typeof Model>this.constructor;
 
-        if (Class.oldIterator)
-            process.emitWarning("\nWarn: Using old style of iterator is deprecated.\n");
-
         return (function* () {
             for (let key in data) {
                 let value = data[key];
-                yield Class.oldIterator ? <any>[key, value] : { key, value };
+                yield { key, value };
             }
         })();
     }
@@ -783,11 +774,13 @@ export class Model extends Query {
         return (new this).getMany(options);
     }
 
+    static whereState(extra: (query: Query) => void): Model;
     static whereState(field: string, value: any): Model;
     static whereState(field: string, operator: string, value: any): Model;
     static whereState(fields: { [field: string]: any }): Model;
-    static whereState(field, operator = null, value = undefined) {
-        return (new this).whereState(field, operator, value);
+    static whereState(...args) {
+        let model = new this;
+        return model.whereState.apply(model, args);
     }
 
     static createTable(): Promise<Model> {
@@ -909,14 +902,7 @@ export class Model extends Query {
             type,
             this.constructor["name"]
         ];
-        return model.whereIn(model.primary, query => {
-            query.select(model._pivot[1]).from(model._pivot[0])
-                .where(model._pivot[2], this.data[this.primary]);
-
-            if (model._pivot[3]) {
-                query.where(model._pivot[3], model._pivot[4]);
-            }
-        });
+        return this._handleVia(model);
     }
 
     /**
@@ -951,6 +937,11 @@ export class Model extends Query {
             type,
             ModelClass["name"]
         ];
+        return this._handleVia(model);
+    }
+
+    /** Handles `model.hasVia()` or `model.belongsToVia()`. */
+    private _handleVia(model: Model, extra?: Query): Model {
         return model.whereIn(model.primary, query => {
             query.select(model._pivot[1]).from(model._pivot[0])
                 .where(model._pivot[2], this.data[this.primary]);
@@ -958,19 +949,51 @@ export class Model extends Query {
             if (model._pivot[3]) {
                 query.where(model._pivot[3], model._pivot[4]);
             }
+
+            if (extra) {
+                query["_where"] += " and " + extra["_where"];
+                query["_bindings"] = query["_bindings"].concat(extra["_bindings"]);
+            }
         });
     }
 
-    /** Gets extra data from the pivot table. */
-    withPivot(fields: string[]): this;
-
-    /** Gets extra data from the pivot table. */
-    withPivot(...fields: string[]): this;
-
-    withPivot(...args): this {
+    /**
+     * Sets extra `where...` clause when fetching data via a pivot table.
+     * 
+     * Can only be called after calling `model.hasVia()` or 
+     * `model.belongsToVia()`, and be called only once.
+     */
+    wherePivot(nested: (query: Query) => void): this;
+    wherePivot(field: string, value: any): this;
+    wherePivot(field: string, operator: string, value: any): this;
+    wherePivot(fields: { [field: string]: any }): this;
+    wherePivot(...args) {
         if (!(this._caller instanceof Model)) {
             throw new ReferenceError("Model.withPivot() can only be called "
                 + "after calling Model.hasVia() or Model.belongsToVia().");
+        }
+
+        let query = new Query().use(this);
+        query.where.apply(query, args);
+        // reset where clause
+        this["_where"] = "";
+        this["_bindings"] = [];
+        return this._caller._handleVia(this, query);
+    }
+
+    /**
+     * Gets extra data from the pivot table.
+     * 
+     * Can only be called after calling `model.hasVia()`, 
+     * `model.belongsToVia()`, or `model.wherePivot()`.
+     */
+    withPivot(fields: string[]): this;
+    withPivot(...fields: string[]): this;
+    withPivot(...args): this {
+        if (!(this._caller instanceof Model)) {
+            throw new ReferenceError("Model.withPivot() can only be called "
+                + "after calling Model.hasVia(), Model.belongsToVia(), or "
+                + "Model.wherePivot().");
         }
 
         let caller = this._caller,
@@ -991,17 +1014,13 @@ export class Model extends Query {
     /**
      * Makes an association to a specified model.
      * 
-     * This method can only be called after calling `model.belongsTo()`.
+     * Can only be called after calling `model.belongsTo()`.
      * 
      * @param id The value of associative primary key.
      */
     associate(id: number): Promise<Model>;
 
     /**
-     * Makes an association to a specified model.
-     * 
-     * This method can only be called after calling `model.belongsTo()`.
-     * 
      * @param model Associative model instance.
      */
     associate(model: Model): Promise<Model>;
@@ -1039,7 +1058,7 @@ export class Model extends Query {
     /**
      * Removes the association bound by `model.associate()`.
      *
-     * This method can only be called after calling `model.belongsTo()`.
+     * Can only be called after calling `model.belongsTo()`.
      */
     dissociate(): Promise<Model> {
         if (!(this._caller instanceof Model)) {
@@ -1062,7 +1081,7 @@ export class Model extends Query {
     /**
      * Updates associations in a pivot table.
      *
-     * This method can only be called after calling `model.hasVia()` or
+     * Can only be called after calling `model.hasVia()` or
      * `model.belongsToVia()`.
      * 
      * @param ids Values of associative models' primary keys.
@@ -1070,21 +1089,11 @@ export class Model extends Query {
     attach(ids: number[]): Promise<Model>;
 
     /**
-     * Updates associations in a pivot table.
-     *
-     * This method can only be called after calling `model.hasVia()` or
-     * `model.belongsToVia()`.
-     * 
      * @param models Associative model instances.
      */
     attach(models: Model[]): Promise<Model>;
 
     /**
-     * Updates associations in a pivot table with additional fields.
-     * 
-     * This method can only be called after calling `model.hasVia()` or
-     * `model.belongsToVia()`.
-     * 
      * @param pairs The keys represents the values of associative models' 
      *  primary keys, and values sets extra fields in the pivot table.
      */
@@ -1248,7 +1257,7 @@ export class Model extends Query {
     /**
      * Deletes associations in a pivot table.
      *
-     * This method can only be called after calling `model.hasVia()` or
+     * Can only be called after calling `model.hasVia()` or
      * `model.belongsToVia()`.
      * 
      * @param ids Values of associative models' primary keys.
@@ -1256,11 +1265,6 @@ export class Model extends Query {
     detach(ids?: number[]): Promise<Model>;
 
     /**
-     * Deletes associations in a pivot table.
-     *
-     * This method can only be called after calling `model.hasVia()` or
-     * `model.belongsToVia()`.
-     * 
      * @param models Associative model instances.
      */
     detach(models?: Model[]): Promise<Model>;

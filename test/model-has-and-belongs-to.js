@@ -1,65 +1,10 @@
-"use strict";
-
 var assert = require("assert");
-var Model = require("../").default;
 var DB = require("../").DB;
 var config = require("./config/db");
 var co = require("co");
-
-class User extends Model {
-    constructor(data) {
-        super(data, {
-            table: "users2",
-            primary: "id",
-            fields: ["id", "name", "email"]
-        });
-    }
-
-    get article() {
-        return this.has(Article, "user_id");
-    }
-
-    get tag() {
-        return this.has(Tag, "taggable_id", "type");
-    }
-}
-
-class Article extends Model {
-    constructor(data) {
-        super(data, {
-            table: "articles2",
-            primary: "id",
-            fields: ["id", "title", "content", "user_id"],
-            searchable: ["title"]
-        });
-    }
-
-    get user() {
-        return this.belongsTo(User, "user_id");
-    }
-
-    get tag() {
-        return this.has(Tag, "taggable_id", "type");
-    }
-}
-
-class Tag extends Model {
-    constructor(data) {
-        super(data, {
-            table: "tags2",
-            primary: "id",
-            fields: ["id", "name", "taggable_id", "type"]
-        });
-    }
-
-    get users() {
-        return this.belongsTo(User, "taggable_id", "type");
-    }
-
-    get articles() {
-        return this.belongsTo(Article, "taggable_id", "type");
-    }
-}
+var User = require("./classes/user-article-tag").User;
+var Article = require("./classes/user-article-tag").Article;
+var Tag = require("./classes/user-article-tag").Tag;
 
 describe("Model.prototype.has() & Model.prototype.belongsTo()", function () {
     it("should create model associations as expected", function (done) {
@@ -79,7 +24,6 @@ describe("Model.prototype.has() & Model.prototype.belongsTo()", function () {
                 content: "Hello, World!",
                 user_id: user.id
             };
-
             var article1 = new Article(data1);
             var article2 = new Article(data2);
 

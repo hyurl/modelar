@@ -331,7 +331,7 @@ export class DB extends EventEmitter {
      * @param event The event name.
      * @param listener A function called when the event fires.
      */
-    static on(event: string | symbol, listener: (...args: any[]) => void): typeof DB {
+    static on(event: string, listener: (...args: any[]) => void): typeof DB {
         if (!this.hasOwnProperty("_events")) {
             this._events = assign({}, this._events);
         }

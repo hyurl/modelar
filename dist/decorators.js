@@ -4,8 +4,8 @@ var interfaces_1 = require("./interfaces");
 var assign = require("lodash/assign");
 function prepare(proto, prop) {
     if (!proto.hasOwnProperty("schema")) {
-        proto.schema = assign({}, proto.schema);
-        proto.fields = [].concat(proto.fields);
+        proto.schema = proto.schema ? assign({}, proto.schema) : {};
+        proto.fields = proto.fields ? [].concat(proto.fields) : [];
     }
     if (proto.schema[prop] === undefined)
         proto.schema[prop] = assign({}, interfaces_1.FieldConfig, { name: prop });
@@ -39,7 +39,7 @@ function primary(proto, prop) {
 exports.primary = primary;
 function searchable(proto, prop) {
     if (!proto.hasOwnProperty("searchable"))
-        proto.searchable = [].concat(proto.searchable);
+        proto.searchable = proto.searchable ? [].concat(proto.searchable) : [];
     if (proto.searchable.indexOf(prop) === -1) {
         proto.searchable.push(prop);
     }

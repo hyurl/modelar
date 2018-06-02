@@ -13,8 +13,6 @@ export class Query extends DB {
     /** The table that this query binds to. */
     table: string;
 
-    private _inserts: string = "";
-    private _updates: string = "";
     private _selects: string = "*";
     private _distinct: string = "";
     private _join: string = "";
@@ -61,7 +59,7 @@ export class Query extends DB {
     from(...tables): this {
         if (tables.length > 1) {
             this.table = tables.join(", ");
-        } else if (Array.isArray(tables[0])) {
+        } else if (tables[0] instanceof Array) {
             this.table = tables[0].join(", ");
         } else {
             this.table = tables[0];
@@ -579,7 +577,7 @@ export class Query extends DB {
         let bindings = [],
             fields: string[] | string = [],
             values: string[] | string = [],
-            isObj = !Array.isArray(data);
+            isObj = !(data instanceof Array);
 
         if (!Object.keys(data).length) {
             throw new InsertionError("No valid data were given for inserting.");
@@ -598,9 +596,9 @@ export class Query extends DB {
 
         values = values.join(", ");
 
-        this._inserts = (isObj ? `(${fields}) ` : "") + `values (${values})`;
-        this.sql = "insert into " + this.backquote(this.table) + " " +
-            this._inserts;
+        this.sql = "insert into " + this.backquote(this.table)
+            + " " + (isObj ? `(${fields}) ` : "") + `values (${values})`;
+            
 
         // Fire event and call its listeners.
         this.emit("insert", this);
@@ -678,9 +676,8 @@ export class Query extends DB {
 
         bindings = bindings.concat(this._bindings);
 
-        this._updates = parts.join(", ");
-        this.sql = `update ${this.backquote(this.table)} set ` +
-            this._updates + (this._where ? " where " + this._where : "");
+        this.sql = `update ${this.backquote(this.table)} set `
+            + parts.join(", ") + (this._where ? " where " + this._where : "");
 
         // Fire event and call its listeners.
         this.emit("update", this);

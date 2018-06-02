@@ -99,6 +99,8 @@ export declare class DB extends EventEmitter {
     recycle(): void;
     /** Closes the connection. */
     close(): void;
+    on(event: "query", listener: (thisObj: this) => void): this;
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
     /** Initiates database configurations for all instances. */
     static init(config: DBConfig): typeof DB;
     /**
@@ -107,7 +109,8 @@ export declare class DB extends EventEmitter {
      * @param event The event name.
      * @param listener A function called when the event fires.
      */
-    static on(event: string | symbol, listener: (...args: any[]) => void): typeof DB;
+    static on(event: "query", listener: (db: DB) => void): typeof DB;
+    static on(event: string, listener: (...args: any[]) => void): typeof DB;
     /**
      * Sets adapter for a specified database type.
      *

@@ -3,8 +3,8 @@ var DB = require("../").DB;
 var Table = require("../").Table;
 var config = require("./config/db");
 
-describe("Table.prototype.getDDL() and Table.prototype.drop()", function () {
-    it("should create and new table and drop it as expected", function (done) {
+describe("Table.prototype.create() and Table.prototype.drop()", function () {
+    it("should create a new table and drop it as expected", function (done) {
         var db = new DB(config),
             table = new Table("articles").use(db);
 
