@@ -31,13 +31,13 @@ describe("Table.prototype.addColumn()", function () {
     describe("addColumn(name: string, type: number)", function () {
         it("should add a column with the name and the type", function () {
             var table = new Table("users");
-            table.addColumn("id", "int");
+            table.addColumn("id", "integer");
             
             assert.equal(table._current, "id");
             assert.deepStrictEqual(table.schema, {
                 id: {
                     name: "id",
-                    type: "int",
+                    type: "integer",
                     length: 0,
                     notNull: false,
                     default: undefined,
@@ -52,17 +52,17 @@ describe("Table.prototype.addColumn()", function () {
         });
     });
 
-    describe("addColumn(name: string, type: number)", function () {
+    describe("addColumn(name: string, type: number, length: number | [number, number])", function () {
         it("should add a column with the name, the type and the length", function () {
             var table = new Table("users");
-            table.addColumn("id", "int", 10).primary().autoIncrement();
+            table.addColumn("id").primary().autoIncrement();
             
             assert.equal(table._current, "id");
             assert.deepStrictEqual(table.schema, {
                 id: {
                     name: "id",
-                    type: "int",
-                    length: 10,
+                    type: "",
+                    length: 0,
                     notNull: false,
                     default: undefined,
                     primary: true,
@@ -79,8 +79,8 @@ describe("Table.prototype.addColumn()", function () {
             assert.deepStrictEqual(table.schema, {
                 id: {
                     name: "id",
-                    type: "int",
-                    length: 10,
+                    type: "",
+                    length: 0,
                     notNull: false,
                     default: undefined,
                     primary: true,
@@ -119,12 +119,12 @@ describe("Table.prototype.addColumn()", function () {
 describe("Table.prototype.primary()", function () {
     it("should add a primary field as expected", function () {
         var table = new Table("users");
-        table.addColumn("id", "int", 10).primary();
+        table.addColumn("id").primary();
         assert.deepStrictEqual(table.schema, {
             id: {
                 name: "id",
-                type: "int",
-                length: 10,
+                type: "",
+                length: 0,
                 notNull: false,
                 default: undefined,
                 primary: true,
@@ -142,16 +142,16 @@ describe("Table.prototype.autoIncrement()", function () {
     describe("autoIncrement()", function () {
         it("should add a primary field as expected", function () {
             var table = new Table("users");
-            table.addColumn("id", "int", 10).primary();
+            table.addColumn("id").primary().autoIncrement();
             assert.deepStrictEqual(table.schema, {
                 id: {
                     name: "id",
-                    type: "int",
-                    length: 10,
+                    type: "",
+                    length: 0,
                     notNull: false,
                     default: undefined,
                     primary: true,
-                    autoIncrement: false,
+                    autoIncrement: [1, 1],
                     unsigned: false,
                     unique: false,
                     comment: "",
@@ -164,12 +164,12 @@ describe("Table.prototype.autoIncrement()", function () {
     describe("autoIncrement(start: number, step?: number)", function () {
         it("should add a primary auto-increment field as expected", function () {
             var table = new Table("users");
-            table.addColumn("id", "int", 10).primary().autoIncrement(1000);
+            table.addColumn("id").primary().autoIncrement(1000);
             assert.deepStrictEqual(table.schema, {
                 id: {
                     name: "id",
-                    type: "int",
-                    length: 10,
+                    type: "",
+                    length: 0,
                     notNull: false,
                     default: undefined,
                     primary: true,
@@ -182,12 +182,12 @@ describe("Table.prototype.autoIncrement()", function () {
             });
 
             var table2 = new Table("users");
-            table2.addColumn("id", "int", 10).primary().autoIncrement(1000, 5);
+            table2.addColumn("id").primary().autoIncrement(1000, 5);
             assert.deepStrictEqual(table2.schema, {
                 id: {
                     name: "id",
-                    type: "int",
-                    length: 10,
+                    type: "",
+                    length: 0,
                     notNull: false,
                     default: undefined,
                     primary: true,
@@ -205,12 +205,12 @@ describe("Table.prototype.autoIncrement()", function () {
 describe("Table.prototype.unique()", function () {
     it("should add a unique field as expected", function () {
         var table = new Table("users");
-        table.addColumn("id", "int", 10).primary().unique();
+        table.addColumn("id").primary().unique();
         assert.deepStrictEqual(table.schema, {
             id: {
                 name: "id",
-                type: "int",
-                length: 10,
+                type: "",
+                length: 0,
                 notNull: false,
                 default: undefined,
                 primary: true,
@@ -271,12 +271,12 @@ describe("Table.prototype.notNull()", function () {
 describe("Table.prototype.unsigned()", function () {
     it("should add a field with unsigned value as expected", function () {
         var table = new Table("users");
-        table.addColumn("age", "int", 10).unsigned();
+        table.addColumn("age", "int", 3).unsigned();
         assert.deepStrictEqual(table.schema, {
             age: {
                 name: "age",
                 type: "int",
-                length: 10,
+                length: 3,
                 notNull: false,
                 default: undefined,
                 primary: false,
@@ -293,12 +293,12 @@ describe("Table.prototype.unsigned()", function () {
 describe("Table.prototype.comment()", function () {
     it("should add a field with a comment as expected", function () {
         var table = new Table("users");
-        table.addColumn("age", "int", 10).unsigned().comment("How old is the user?");
+        table.addColumn("age", "int", 3).unsigned().comment("How old is the user?");
         assert.deepStrictEqual(table.schema, {
             age: {
                 name: "age",
                 type: "int",
-                length: 10,
+                length: 3,
                 notNull: false,
                 default: undefined,
                 primary: false,

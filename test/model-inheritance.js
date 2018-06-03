@@ -3,6 +3,7 @@ var DB = require("../").DB;
 var Model = require("../").Model;
 var config = require("./config/db");
 var co = require("co");
+var values = require("lodash/values");
 
 describe("Model Inheritance", function () {
     it("should define a new class that extends Model as expected", function (done) {
@@ -57,11 +58,11 @@ describe("Model Inheritance", function () {
             assert.deepStrictEqual(user.valueOf(), Object.assign({id: user.insertId}, _data));
 
             user.name = "Luna";
-            user.email = "i@hyurl.com";
+            user.email = "luna@hyurl.com";
             user.age = 32;
             yield user.save();
             assert.equal(user.sql, "update `users` set `name` = ?, `email` = ?, `age` = ? where `id` = ?");
-            assert.deepStrictEqual(user.bindings, ["Luna", "i@hyurl.com", 32, user.id]);
+            assert.deepStrictEqual(user.bindings, ["Luna", "luna@hyurl.com", 32, user.id]);
             assert.deepStrictEqual(user.data, {
                 id: user.id,
                 name: "Luna",
@@ -79,7 +80,7 @@ describe("Model Inheritance", function () {
             done();
         }).catch(function (err) {
             db.close();
-            done();
+            done(err);
         });
     });
 });

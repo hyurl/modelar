@@ -8,18 +8,18 @@ describe("Table.prototype.create() and Table.prototype.drop()", function () {
         var db = new DB(config),
             table = new Table("articles").use(db);
 
-        table.addColumn("id", "int").primary().autoIncrement().notNull();
+        table.addColumn("id").primary().autoIncrement(100).notNull();
         table.addColumn("title", "varchar", 255).unique().notNull().comment("The title of the current article.");
         table.addColumn("content", "text");
 
         table.create().then(function () {
             assert.equal(table.sql, [
                 "create table `articles` (",
-                "\t`id` int auto_increment not null,",
+                "\t`id` int(10) auto_increment not null,",
                 "\t`title` varchar(255) unique not null comment 'The title of the current article.',",
                 "\t`content` text,",
                 "\tprimary key (`id`)",
-                ") engine=InnoDB default charset=utf8 auto_increment=1"
+                ") engine=InnoDB default charset=utf8 auto_increment=100"
             ].join("\n"));
         }).then(function () {
             return table.drop();

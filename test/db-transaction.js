@@ -79,6 +79,9 @@ describe("DB.prototype.transaction()", function () {
                         });
 
                     return db;
+                }).catch(function (err) {
+                    db.close();
+                    done(err);
                 });
             });
         }).then(function (db) {

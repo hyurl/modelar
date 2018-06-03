@@ -92,8 +92,8 @@ CREATE TABLE `users`  (
   `name` varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
   `email` varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
   `password` varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
-  `age` int(10) UNSIGNED DEFAULT NULL,
-  `score` int(10) DEFAULT NULL,
+  `age` int(3) UNSIGNED DEFAULT NULL,
+  `score` int(3) DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
 

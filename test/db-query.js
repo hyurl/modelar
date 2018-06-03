@@ -18,8 +18,8 @@ describe("DB.prototype.query()", function () {
                 sql: "update `users` set `name` = ?, `email` = ? where id = ?",
                 bindings: ["Ayonium", "ayon@hyurl.com", 0],
             },
-            devarion = {
-                sql: "devare from `users` where `id` = ?",
+            deletion = {
+                sql: "delete from `users` where `id` = ?",
                 bindings: [0],
             },
             replaceQuestionMark = function (sql, bindings) {
@@ -34,7 +34,7 @@ describe("DB.prototype.query()", function () {
             assert(typeof db.insertId == "number" && db.insertId > 0);
             assert.equal(replaceQuestionMark(db.sql, db.bindings), replaceQuestionMark(insertion.sql, insertion.bindings));
 
-            insertId = selection.bindings[0] = update.bindings[2] = devarion.bindings[0] = db.insertId;
+            insertId = selection.bindings[0] = update.bindings[2] = deletion.bindings[0] = db.insertId;
 
             return db.query(selection.sql, selection.bindings);
         }).then(function (db) {
@@ -56,7 +56,7 @@ describe("DB.prototype.query()", function () {
         }).then(function (db) {
             assert.strictEqual(db.affectedRows, 1);
 
-            return db.query(devarion.sql, devarion.bindings);
+            return db.query(deletion.sql, deletion.bindings);
         }).then(function (db) {
             assert.strictEqual(db.affectedRows, 1);
 
@@ -66,7 +66,7 @@ describe("DB.prototype.query()", function () {
             done();
         }).catch(function (err) {
             db.close();
-            done();
+            done(err);
         });
     });
 });
