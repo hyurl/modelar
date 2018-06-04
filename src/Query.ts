@@ -72,7 +72,7 @@ export class Query extends DB {
      * Sets a `inner join...` clause for the SQL statement via a nested query,
      * in the nested query, use `where()` to set conditions for keyword `on`.
      */
-    join(table: string, nested: (query: Query) => void): this;
+    join(table: string, nested: (this: Query, query: Query) => void): this;
 
     /**
      * Sets a `inner join...` clause for the SQL statement with multiple 
@@ -92,7 +92,7 @@ export class Query extends DB {
      * Sets a `left join...` clause for the SQL statement via a nested query,
      * in the nested query, use `where()` to set conditions for keyword `on`.
      */
-    leftJoin(table: string, nested: (query: Query) => void): this;
+    leftJoin(table: string, nested: (this: Query, query: Query) => void): this;
 
     /**
      * Sets a `left join...` clause for the SQL statement with multiple 
@@ -112,7 +112,7 @@ export class Query extends DB {
      * Sets a `right join...` clause for the SQL statement via a nested query,
      * in the nested query, use `where()` to set conditions for keyword `on`.
      */
-    rightJoin(table: string, nested: (query: Query) => void): this;
+    rightJoin(table: string, nested: (this: Query, query: Query) => void): this;
 
     /**
      * Sets a `right join...` clause for the SQL statement with multiple 
@@ -132,7 +132,7 @@ export class Query extends DB {
      * Sets a `full join...` clause for the SQL statement via a nested query,
      * in the nested query, use `where()` to set conditions for keyword `on`.
      */
-    fullJoin(table: string, nested: (query: Query) => void): this;
+    fullJoin(table: string, nested: (this: Query, query: Query) => void): this;
 
     /**
      * Sets a `full join...` clause for the SQL statement with multiple 
@@ -152,7 +152,7 @@ export class Query extends DB {
      * Sets a `cross join...` clause for the SQL statement via a nested query,
      * in the nested query, use `where()` to set conditions for keyword `on`.
      */
-    crossJoin(table: string, nested: (query: Query) => void): this;
+    crossJoin(table: string, nested: (this: Query, query: Query) => void): this;
 
     /**
      * Sets a `cross join...` clause for the SQL statement with multiple 
@@ -219,9 +219,9 @@ export class Query extends DB {
     }
 
     /** Sets a `where...` clause for the SQL statement with a nested query. */
-    where(nested: (query: Query) => void): this;
-    where(field: string, nested: (query: Query) => void): this;
-    where(field: string, operator: string, nested: (query: Query) => void): this;
+    where(nested: (this: Query, query: Query) => void): this;
+    where(field: string, nested: (this: Query, query: Query) => void): this;
+    where(field: string, operator: string, nested: (this: Query, query: Query) => void): this;
 
     /** Sets a `where...` clause for the SQL statement with multiple fields. */
     where(fields: { [field: string]: any }): this;
@@ -254,9 +254,9 @@ export class Query extends DB {
      * Sets a `where...or...` clause for the SQL statement with a nested 
      * query.
      */
-    orWhere(nested: (query: Query) => void): this;
-    orWhere(field: string, nested: (query: Query) => void): this;
-    orWhere(field: string, operator: string, nested: (query: Query) => void): this;
+    orWhere(nested: (this: Query, query: Query) => void): this;
+    orWhere(field: string, nested: (this: Query, query: Query) => void): this;
+    orWhere(field: string, operator: string, nested: (this: Query, query: Query) => void): this;
 
     /**
      * Sets a `where...or...` clause for the SQL statement with multiple 
@@ -367,7 +367,7 @@ export class Query extends DB {
      * Sets a `where...in...` clause for the SQL statement with a nested 
      * query.
      */
-    whereIn(field: string, nested: (query: Query) => void): this;
+    whereIn(field: string, nested: (this: Query, query: Query) => void): this;
 
     whereIn(field, values) {
         return this._handleIn(field, values);
@@ -383,7 +383,7 @@ export class Query extends DB {
      * Sets a `where...not in...` clause for the SQL statement with a nested 
      * query.
      */
-    whereNotIn(field: string, nested: (query: Query) => void): this;
+    whereNotIn(field: string, nested: (this: Query, query: Query) => void): this;
 
     whereNotIn(field, values) {
         return this._handleIn(field, values, false);
@@ -399,7 +399,7 @@ export class Query extends DB {
      * Sets a `where...or...in...` clause for the SQL statement with a nested 
      * query.
      */
-    orWhereIn(field: string, nested: (query: Query) => void): this;
+    orWhereIn(field: string, nested: (this: Query, query: Query) => void): this;
 
     orWhereIn(field, values) {
         return this._handleIn(field, values, true, "or");
@@ -415,7 +415,7 @@ export class Query extends DB {
      * Sets a `where...or...not in...` clause for the SQL statement with a 
      * nested query.
      */
-    orWhereNotIn(field: string, nested: (query: Query) => void): this;
+    orWhereNotIn(field: string, nested: (this: Query, query: Query) => void): this;
 
     orWhereNotIn(field, values) {
         return this._handleIn(field, values, false, "or");
@@ -473,7 +473,7 @@ export class Query extends DB {
      * Sets a `where exists...` clause for the SQL statement with a nested 
      * query.
      */
-    whereExists(nested: (query: Query) => void): this {
+    whereExists(nested: (this: Query, query: Query) => void): this {
         return this._handleExists(nested);
     }
 
@@ -481,7 +481,7 @@ export class Query extends DB {
      * Sets a `where not exists...` clause for the SQL statement with a nested 
      * query.
      */
-    whereNotExists(nested: (query: Query) => void): this {
+    whereNotExists(nested: (this: Query, query: Query) => void): this {
         return this._handleExists(nested, false);
     }
 
@@ -489,7 +489,7 @@ export class Query extends DB {
      * Sets a `where...or exists...` clause for the SQL statement with a 
      * nested query.
      */
-    orWhereExists(nested: (query: Query) => void): this {
+    orWhereExists(nested: (this: Query, query: Query) => void): this {
         return this._handleExists(nested, true, "or");
     }
 
@@ -497,11 +497,11 @@ export class Query extends DB {
      * Sets a `where...or not exists...` clause for the SQL statement with a 
      * nested query.
      */
-    orWhereNotExists(nested: (query: Query) => void): this {
+    orWhereNotExists(nested: (this: Query, query: Query) => void): this {
         return this._handleExists(nested, false, "or");
     }
 
-    private _handleExists(nested: (query: Query) => void, exists = true, conj = "and"): this {
+    private _handleExists(nested: (this: Query, query: Query) => void, exists = true, conj = "and"): this {
         if (this._where) this._where += ` ${conj} `;
         let query = this._getQueryBy(nested);
         this._where += (exists ? "" : "not ") + "exists (" + query.sql + ")";
@@ -772,7 +772,7 @@ export class Query extends DB {
      *  carry.
      * @param cb A function for processing every chunked data.
      */
-    chunk(length: number, cb: (data: any[]) => false | void): Promise<any[]> {
+    chunk(length: number, cb: (this: this, data: any[]) => false | void): Promise<any[]> {
         let offset = 0,
             query = new Query(this.table).use(this);
 

@@ -444,7 +444,7 @@ export class Model extends Query {
      *  carry.
      * @param cb A function for processing every chunked data.
      */
-    chunk(length: number, cb: (models: this[]) => false | void): Promise<this[]> {
+    chunk(length: number, cb: (this: this, models: this[]) => false | void): Promise<this[]> {
         return super.chunk(length, cb);
     }
 
@@ -531,7 +531,7 @@ export class Model extends Query {
      * Unlike `query.where()` or other alike methods, this method can be
      * called only once.
      */
-    whereState(extra: (query: Query) => void): this;
+    whereState(extra: (this: Query, query: Query) => void): this;
     whereState(field: string, value: any): this;
     whereState(field: string, operator: string, value: any): this;
     whereState(fields: { [field: string]: any }): this;
@@ -629,43 +629,67 @@ export class Model extends Query {
         return (new this).select(...args);
     }
 
+    static join(table: string, nested: (this: Query, query: Query) => void): Model;
+    static join(table: string, fields: {
+        [field: string]: any;
+    }): Model;
     static join(table: string, field1: string, field2: string): Model;
     static join(table: string, field1: string, operator: string, field2: string): Model;
-    static join(table, field1, operator, field2 = "") {
-        return (new this).join(table, field1, operator, field2);
+    static join(...args) {
+        let model = new this;
+        return model.join.apply(model, args);
     }
 
-
+    static leftJoin(table: string, nested: (this: Query, query: Query) => void): Model;
+    static leftJoin(table: string, fields: {
+        [field: string]: any;
+    }): Model;
     static leftJoin(table: string, field1: string, field2: string): Model;
     static leftJoin(table: string, field1: string, operator: string, field2: string): Model;
-    static leftJoin(table, field1, operator, field2 = "") {
-        return (new this).leftJoin(table, field1, operator, field2);
+    static leftJoin(...args) {
+        let model = new this;
+        return model.leftJoin.apply(model, args);
     }
 
+    static rightJoin(table: string, nested: (this: Query, query: Query) => void): Model;
+    static rightJoin(table: string, fields: {
+        [field: string]: any;
+    }): Model;
     static rightJoin(table: string, field1: string, field2: string): Model;
     static rightJoin(table: string, field1: string, operator: string, field2: string): Model;
-    static rightJoin(table, field1, operator, field2 = "") {
-        return (new this).rightJoin(table, field1, operator, field2);
+    static rightJoin(...args) {
+        let model = new this;
+        return model.rightJoin.apply(model, args);
     }
 
+    static fullJoin(table: string, nested: (this: Query, query: Query) => void): Model;
+    static fullJoin(table: string, fields: {
+        [field: string]: any;
+    }): Model;
     static fullJoin(table: string, field1: string, field2: string): Model;
     static fullJoin(table: string, field1: string, operator: string, field2: string): Model;
-    static fullJoin(table, field1, operator, field2 = "") {
-        return (new this).fullJoin(table, field1, operator, field2);
+    static fullJoin(...args) {
+        let model = new this;
+        return model.fullJoin.apply(model, args);
     }
 
+    static crossJoin(table: string, nested: (this: Query, query: Query) => void): Model;
+    static crossJoin(table: string, fields: {
+        [field: string]: any;
+    }): Model;
     static crossJoin(table: string, field1: string, field2: string): Model;
     static crossJoin(table: string, field1: string, operator: string, field2: string): Model;
-    static crossJoin(table, field1, operator, field2 = "") {
-        return (new this).crossJoin(table, field1, operator, field2);
+    static crossJoin(...args) {
+        let model = new this;
+        return model.fullJoin.apply(model, args);
     }
 
     static where(field: string, value: any): Model;
     static where(field: string, operator: string, value: any): Model;
     static where(fields: { [field: string]: any }): Model;
-    static where(nested: (query: Query) => void): Model;
-    static where(field: string, nested: (query: Query) => void): Model;
-    static where(field: string, operator: string, nested: (query: Query) => void): Model;
+    static where(nested: (this: Query, query: Query) => void): Model;
+    static where(field: string, nested: (this: Query, query: Query) => void): Model;
+    static where(field: string, operator: string, nested: (this: Query, query: Query) => void): Model;
     static where(field, operator = null, value = undefined) {
         return (new this).where(field, operator, value);
     }
@@ -679,7 +703,7 @@ export class Model extends Query {
     }
 
     static whereIn(field: string, values: string[] | number[]): Model;
-    static whereIn(field: string, nested: (query: Query) => void): Model;
+    static whereIn(field: string, nested: (this: Query, query: Query) => void): Model;
     static whereIn(field, values) {
         return (new this).whereIn(field, values);
     }
@@ -692,11 +716,11 @@ export class Model extends Query {
         return (new this).whereNotNull(field);
     }
 
-    static whereExists(nested: (query: Query) => void): Model {
+    static whereExists(nested: (this: Query, query: Query) => void): Model {
         return (new this).whereExists(nested);
     }
 
-    static whereNotExists(nested: (query: Query) => void): Model {
+    static whereNotExists(nested: (this: Query, query: Query) => void): Model {
         return (new this).whereNotExists(nested);
     }
 
@@ -762,7 +786,7 @@ export class Model extends Query {
         return (new this).sum(field);
     }
 
-    static chunk(length: number, cb: (data: Model[]) => false | void): Promise<Model[]> {
+    static chunk(length: number, cb: (this: Model, models: Model[]) => false | void): Promise<Model[]> {
         return (new this).chunk(length, cb);
     }
 
@@ -774,7 +798,7 @@ export class Model extends Query {
         return (new this).getMany(options);
     }
 
-    static whereState(extra: (query: Query) => void): Model;
+    static whereState(extra: (this: Query, query: Query) => void): Model;
     static whereState(field: string, value: any): Model;
     static whereState(field: string, operator: string, value: any): Model;
     static whereState(fields: { [field: string]: any }): Model;
@@ -963,7 +987,7 @@ export class Model extends Query {
      * Can only be called after calling `model.hasVia()` or 
      * `model.belongsToVia()`, and can be called only once.
      */
-    wherePivot(nested: (query: Query) => void): this;
+    wherePivot(extra: (this: Query, query: Query) => void): this;
     wherePivot(field: string, value: any): this;
     wherePivot(field: string, operator: string, value: any): this;
     wherePivot(fields: { [field: string]: any }): this;

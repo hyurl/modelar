@@ -480,25 +480,45 @@ var Model = (function (_super) {
         }
         return (_a = (new this)).select.apply(_a, args);
     };
-    Model.join = function (table, field1, operator, field2) {
-        if (field2 === void 0) { field2 = ""; }
-        return (new this).join(table, field1, operator, field2);
+    Model.join = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var model = new this;
+        return model.join.apply(model, args);
     };
-    Model.leftJoin = function (table, field1, operator, field2) {
-        if (field2 === void 0) { field2 = ""; }
-        return (new this).leftJoin(table, field1, operator, field2);
+    Model.leftJoin = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var model = new this;
+        return model.leftJoin.apply(model, args);
     };
-    Model.rightJoin = function (table, field1, operator, field2) {
-        if (field2 === void 0) { field2 = ""; }
-        return (new this).rightJoin(table, field1, operator, field2);
+    Model.rightJoin = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var model = new this;
+        return model.rightJoin.apply(model, args);
     };
-    Model.fullJoin = function (table, field1, operator, field2) {
-        if (field2 === void 0) { field2 = ""; }
-        return (new this).fullJoin(table, field1, operator, field2);
+    Model.fullJoin = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var model = new this;
+        return model.fullJoin.apply(model, args);
     };
-    Model.crossJoin = function (table, field1, operator, field2) {
-        if (field2 === void 0) { field2 = ""; }
-        return (new this).crossJoin(table, field1, operator, field2);
+    Model.crossJoin = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var model = new this;
+        return model.fullJoin.apply(model, args);
     };
     Model.where = function (field, operator, value) {
         if (operator === void 0) { operator = null; }

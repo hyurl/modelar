@@ -92,7 +92,7 @@ export declare class Model extends Query {
      *  carry.
      * @param cb A function for processing every chunked data.
      */
-    chunk(length: number, cb: (models: this[]) => false | void): Promise<this[]>;
+    chunk(length: number, cb: (this: this, models: this[]) => false | void): Promise<this[]>;
     /**
      * Gets paginated information of all records that suit given conditions.
      * @param page The current page.
@@ -109,7 +109,7 @@ export declare class Model extends Query {
      * Unlike `query.where()` or other alike methods, this method can be
      * called only once.
      */
-    whereState(extra: (query: Query) => void): this;
+    whereState(extra: (this: Query, query: Query) => void): this;
     whereState(field: string, value: any): this;
     whereState(field: string, operator: string, value: any): this;
     whereState(fields: {
@@ -141,14 +141,34 @@ export declare class Model extends Query {
     static transaction(cb: (model: Model) => Promise<any>): Promise<Model>;
     static select(fields: string[]): Model;
     static select(...fields: string[]): Model;
+    static join(table: string, nested: (this: Query, query: Query) => void): Model;
+    static join(table: string, fields: {
+        [field: string]: any;
+    }): Model;
     static join(table: string, field1: string, field2: string): Model;
     static join(table: string, field1: string, operator: string, field2: string): Model;
+    static leftJoin(table: string, nested: (this: Query, query: Query) => void): Model;
+    static leftJoin(table: string, fields: {
+        [field: string]: any;
+    }): Model;
     static leftJoin(table: string, field1: string, field2: string): Model;
     static leftJoin(table: string, field1: string, operator: string, field2: string): Model;
+    static rightJoin(table: string, nested: (this: Query, query: Query) => void): Model;
+    static rightJoin(table: string, fields: {
+        [field: string]: any;
+    }): Model;
     static rightJoin(table: string, field1: string, field2: string): Model;
     static rightJoin(table: string, field1: string, operator: string, field2: string): Model;
+    static fullJoin(table: string, nested: (this: Query, query: Query) => void): Model;
+    static fullJoin(table: string, fields: {
+        [field: string]: any;
+    }): Model;
     static fullJoin(table: string, field1: string, field2: string): Model;
     static fullJoin(table: string, field1: string, operator: string, field2: string): Model;
+    static crossJoin(table: string, nested: (this: Query, query: Query) => void): Model;
+    static crossJoin(table: string, fields: {
+        [field: string]: any;
+    }): Model;
     static crossJoin(table: string, field1: string, field2: string): Model;
     static crossJoin(table: string, field1: string, operator: string, field2: string): Model;
     static where(field: string, value: any): Model;
@@ -156,17 +176,17 @@ export declare class Model extends Query {
     static where(fields: {
         [field: string]: any;
     }): Model;
-    static where(nested: (query: Query) => void): Model;
-    static where(field: string, nested: (query: Query) => void): Model;
-    static where(field: string, operator: string, nested: (query: Query) => void): Model;
+    static where(nested: (this: Query, query: Query) => void): Model;
+    static where(field: string, nested: (this: Query, query: Query) => void): Model;
+    static where(field: string, operator: string, nested: (this: Query, query: Query) => void): Model;
     static whereBetween(field: string, [min, max]: [number, number]): Model;
     static whereNotBetween(field: string, [min, max]: [number, number]): Model;
     static whereIn(field: string, values: string[] | number[]): Model;
-    static whereIn(field: string, nested: (query: Query) => void): Model;
+    static whereIn(field: string, nested: (this: Query, query: Query) => void): Model;
     static whereNull(field: string): Model;
     static whereNotNull(field: string): Model;
-    static whereExists(nested: (query: Query) => void): Model;
-    static whereNotExists(nested: (query: Query) => void): Model;
+    static whereExists(nested: (this: Query, query: Query) => void): Model;
+    static whereNotExists(nested: (this: Query, query: Query) => void): Model;
     static orderBy(field: string, sequence?: "asc" | "desc"): Model;
     static random(): Model;
     static groupBy(fields: string[]): Model;
@@ -185,10 +205,10 @@ export declare class Model extends Query {
     static min(field: string): Promise<number>;
     static avg(field: string): Promise<number>;
     static sum(field: string): Promise<number>;
-    static chunk(length: number, cb: (data: Model[]) => false | void): Promise<Model[]>;
+    static chunk(length: number, cb: (this: Model, models: Model[]) => false | void): Promise<Model[]>;
     static paginate(page: number, length?: number): Promise<PaginatedModels>;
     static getMany(options?: ModelGetManyOptions): Promise<PaginatedModels>;
-    static whereState(extra: (query: Query) => void): Model;
+    static whereState(extra: (this: Query, query: Query) => void): Model;
     static whereState(field: string, value: any): Model;
     static whereState(field: string, operator: string, value: any): Model;
     static whereState(fields: {
@@ -283,7 +303,7 @@ export declare class Model extends Query {
      * Can only be called after calling `model.hasVia()` or 
      * `model.belongsToVia()`, and can be called only once.
      */
-    wherePivot(nested: (query: Query) => void): this;
+    wherePivot(extra: (this: Query, query: Query) => void): this;
     wherePivot(field: string, value: any): this;
     wherePivot(field: string, operator: string, value: any): this;
     wherePivot(fields: { [field: string]: any }): this;
