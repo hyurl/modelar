@@ -21,7 +21,7 @@ export abstract class Adapter {
 
     transaction(db: DB, cb: (db: DB) => Promise<any>): Promise<DB> {
         if (typeof cb == "function") {
-            return this.query(db, "begin").then(db => {
+            return db.query("begin").then(db => {
                 let res = cb.call(db, db);
                 if (res && res.then instanceof Function) {
                     return res.then(() => db) as Promise<DB>;
@@ -36,16 +36,16 @@ export abstract class Adapter {
                 });
             });
         } else {
-            return this.query(db, "begin");
+            return db.query("begin");
         }
     }
 
     commit(db: DB): Promise<DB> {
-        return this.query(db, "commit");
+        return db.query("commit");
     }
 
     rollback(db: DB): Promise<DB> {
-        return this.query(db, "rollback");
+        return db.query("rollback");
     }
 
     create(table: Table): Promise<Table> {

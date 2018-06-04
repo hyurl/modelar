@@ -28,14 +28,7 @@ describe("Query.prototype.insert()", function () {
 
     describe("insert(data: any[] })", function () {
         it("should insert data with an array", function (done) {
-            var db = new DB({
-                type: "mysql",
-                database: "modelar",
-                host: "localhost",
-                port: 3306,
-                user: "root",
-                password: "161301"
-            });
+            var db = new DB(config);
             var query = new Query("users").use(db);
 
             query.insert([

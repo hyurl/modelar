@@ -14,7 +14,7 @@ var Adapter = (function () {
     Adapter.prototype.transaction = function (db, cb) {
         var _this = this;
         if (typeof cb == "function") {
-            return this.query(db, "begin").then(function (db) {
+            return db.query("begin").then(function (db) {
                 var res = cb.call(db, db);
                 if (res && res.then instanceof Function) {
                     return res.then(function () { return db; });
@@ -31,14 +31,14 @@ var Adapter = (function () {
             });
         }
         else {
-            return this.query(db, "begin");
+            return db.query("begin");
         }
     };
     Adapter.prototype.commit = function (db) {
-        return this.query(db, "commit");
+        return db.query("commit");
     };
     Adapter.prototype.rollback = function (db) {
-        return this.query(db, "rollback");
+        return db.query("rollback");
     };
     Adapter.prototype.create = function (table) {
         return table.query(table.getDDL());
