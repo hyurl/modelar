@@ -15,7 +15,7 @@ describe("DB.prototype.transaction()", function () {
                 bindings: [0],
             },
             update = {
-                sql: "update `users` set `name` = ?, `email` = ? where id = ?",
+                sql: "update `users` set `name` = ?, `email` = ? where `id` = ?",
                 bindings: ["Ayonium", "ayon@hyurl.com", 0],
             },
             replaceQuestionMark = function (sql, bindings) {

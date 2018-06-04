@@ -5,7 +5,7 @@ var co = require("co");
 var User = require("./classes/user-role").User;
 var Role = require("./classes/user-role").Role;
 
-describe("Model.prototype.hasVia() & Model.prototype.belongsToVia()", function () {
+describe("Model.prototype.attach() & Model.prototype.detach()", function () {
     it("should add, update and remove associations as expected", function (done) {
         var db = new DB(config);
 

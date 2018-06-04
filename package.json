@@ -1,6 +1,6 @@
 {
     "name": "modelar",
-    "version": "3.0.5",
+    "version": "3.0.6",
     "description": "An expressive ORM with query builder and supports multiple databases.",
     "main": "dist/index.js",
     "types": "types/index.d.ts",

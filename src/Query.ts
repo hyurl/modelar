@@ -827,12 +827,6 @@ export class Query extends DB {
                 }
             } else { // If the are records, continue fetching data.
                 return this.limit(length, offset).all().then(data => {
-                    if (data.length && data[0].rn !== undefined) {
-                        for (let record of data) {
-                            delete record.rn;
-                        }
-                    }
-
                     return {
                         page,
                         pages: Math.ceil(total / length),

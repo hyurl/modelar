@@ -534,12 +534,6 @@ var Query = (function (_super) {
             }
             else {
                 return _this.limit(length, offset).all().then(function (data) {
-                    if (data.length && data[0].rn !== undefined) {
-                        for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
-                            var record = data_1[_i];
-                            delete record.rn;
-                        }
-                    }
                     return {
                         page: page,
                         pages: Math.ceil(total / length),
