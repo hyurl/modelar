@@ -125,4 +125,4 @@ by checking the [API documentation](https://hyurl.github.io/modelar).
 This package is written in TypeScript and compiled to ES5 standard (since 
 3.0.4) with some ES2015 features, so it can run in any version of NodeJS that 
 higher than 4.0.0. But this feature relies on the support of the adapter 
-you're using, so check the specification of the adapter carefully. 
+you're using, so check the specification of the adapter carefully.

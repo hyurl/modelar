@@ -17,6 +17,9 @@ const IdentifierException = /[~`!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:"'<>,\?\/\s]/;
  */
 @HideProtectedProperties
 export class DB extends EventEmitter {
+    /** The last executed SQL command. */
+    command: string = "";
+
     /** The SQL statement. */
     sql: string = "";
 
@@ -35,14 +38,11 @@ export class DB extends EventEmitter {
     /** Data source name of the current instance. */
     dsn: string = "";
 
-    /** The last executed SQL command. */
-    command: string = "";
-
     /** Database configurations of the current instance. */
     config: DBConfig;
 
     /** The data fetched by executing a select statement. */
-    data: any[] | { [field: string]: any } = [];
+    data: any[] | { [field: string]: any };
 
     private _events: { [event: string]: any };
     private _eventsCount: number;
@@ -71,6 +71,7 @@ export class DB extends EventEmitter {
 
         this.set(assign({}, Class.config, config));
         this.dsn = this._getDSN();
+        this.data = [];
         this._events = assign({}, Class._events);
         this._eventsCount = Object.keys(this._events).length;
     }

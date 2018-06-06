@@ -43,7 +43,7 @@ export class Model extends Query {
     primary: string;
 
     /** Fields in the table */
-    fields: string[];
+    private _fields: string[];
 
     /** Searchable fields in the table. */
     searchable: string[];
@@ -51,8 +51,11 @@ export class Model extends Query {
     /** The schema of the table. */
     schema: { [field: string]: FieldConfig };
 
-    /** The true data of the model. */
+    /** The real data of the model. */
     data: { [field: string]: any } = {};
+
+    /** The initial data provided to the constructor. */
+    private _initData: this["data"];
 
     /** The data that needs to be updated to the database. */
     private _modified: { [field: string]: any } = {};
@@ -66,6 +69,13 @@ export class Model extends Query {
      */
     readonly extra: { [field: string]: any } = {};
 
+    /**
+     * If `false`, then failed calling `model.get()` and `model.all()` will 
+     * not throw a `NotFoundError`, just return `null` on `get()` and `[]` on 
+     * `all()`. Default is `true`.
+     */
+    throwNotFoundError = true;
+
     /** 
      * Creates a new model with optional initial data.
      */
@@ -75,19 +85,29 @@ export class Model extends Query {
         config = config || ModelConfig;
 
         this._proto = Object.getPrototypeOf(this);
-        this.fields = config.fields || this._protoProp("fields") || [];
+        this._initData = data;
         this.primary = config.primary || this._protoProp("primary") || "";
+        this.fields = config.fields || this._protoProp("fields") || [];
         this.searchable = config.searchable || this._protoProp("searchable") || [];
         this.schema = this._protoProp("schema") || {};
+    }
 
-        // Define pseudo-properties.
-        if (this.fields.length && !this._protoProp("_initiated"))
-            this._defineProperties(this.fields);
+    /** Fields in the table. */
+    get fields(): string[] {
+        return this._fields;
+    }
 
-        // Assign data to the instance.
-        if (data) {
-            delete data[this.primary]; // Filter primary key.
-            this.assign(data, true);
+    set fields(names: string[]) {
+        this._fields = names;
+
+        // define pseudo-properties
+        if (!this._protoProp("_initiated") && names && names.length)
+            this._defineProperties(names);
+
+        // assign data
+        if (this._initData && names && names.length) {
+            delete this._initData[this.primary]; // filter primary key
+            this.assign(this._initData, true);
         }
     }
 
@@ -383,9 +403,13 @@ export class Model extends Query {
 
         return super.get().then(data => {
             if (!data || Object.keys(data).length === 0) {
-                // If no model is retrieved, throw an error.
-                throw new NotFoundError("No " + this.constructor["name"]
-                    + " was found by the given condition.");
+                if (this.throwNotFoundError) {
+                    // If no model is retrieved, throw an error.
+                    throw new NotFoundError("No " + this.constructor["name"]
+                        + " was found by the given condition.");
+                } else {
+                    return null;
+                }
             } else {
                 // Remove temporary property.
                 delete this._caller;
@@ -407,9 +431,13 @@ export class Model extends Query {
     all(): Promise<this[]> {
         return super.all().then(data => {
             if (data.length === 0) {
-                // If no models are retrieved, throw an error.
-                throw new NotFoundError("No " + this.constructor["name"]
-                    + " was found by the given condition.");
+                if (this.throwNotFoundError) {
+                    // If no models are retrieved, throw an error.
+                    throw new NotFoundError("No " + this.constructor["name"]
+                        + " was found by the given condition.");
+                } else {
+                    return data;
+                }
             } else {
                 let models: Model[] = [],
                     ModelClass = <typeof Model>this.constructor;
@@ -561,7 +589,7 @@ export class Model extends Query {
                 data[key] = this.data[key];
             }
         }
-        
+
         return data;
     }
 
@@ -591,9 +619,24 @@ export class Model extends Query {
 
     private [inspect]() {
         let res = super[inspect]();
+
+        // delete properties
+        delete res["data"];
+        delete res["searchable"];
+        delete res["schema"];
+        delete res["extra"];
+
+        // re-assign properties
+        res["fields"] = this.fields;
+        res["searchable"] = this.searchable;
+        res["schema"] = this.schema;
+        res["data"] = this.data;
+        res["extra"] = this.extra;
+
         for (const field of this.fields) {
             res[field] = this[field];
         }
+
         return res;
     }
 

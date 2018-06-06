@@ -7,4 +7,4 @@ services:
   - mysql
 before_install:
   - mysql -e "CREATE DATABASE modelar;"
-  - mysql -u root --default-character-set=utf8 modelar < ./modelar.sql
+  - npm run init

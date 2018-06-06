@@ -11,18 +11,18 @@ var DB = (function (_super) {
     tslib_1.__extends(DB, _super);
     function DB(config) {
         var _this = _super.call(this) || this;
+        _this.command = "";
         _this.sql = "";
         _this.bindings = [];
         _this.insertId = 0;
         _this.affectedRows = 0;
         _this.dsn = "";
-        _this.command = "";
-        _this.data = [];
         if (typeof config == "string")
             config = { database: config };
         var Class = _this.constructor;
         _this.set(assign({}, Class.config, config));
         _this.dsn = _this._getDSN();
+        _this.data = [];
         _this._events = assign({}, Class._events);
         _this._eventsCount = Object.keys(_this._events).length;
         return _this;

@@ -35,8 +35,8 @@ exports.FieldConfig = {
 };
 exports.ModelConfig = {
     table: "",
-    fields: null,
     primary: "",
+    fields: null,
     searchable: null
 };
 exports.ModelGetManyOptions = {

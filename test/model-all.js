@@ -3,23 +3,23 @@ var DB = require("../").DB;
 var Model = require("../").Model;
 var config = require("./config/db");
 var co = require("co");
+var fields = ["id", "name", "email", "password", "age", "score"];
+var modelConf = {
+    table: "users",
+    primary: "id",
+    fields: fields,
+    searchable: ["name", "email"]
+};
 
 describe("Model.prototype.all()", function () {
     it("should get all models that suit the given condition from database", function (done) {
         var db = new DB(config),
-            fields = ["id", "name", "email", "password", "age", "score"],
             data = {
                 name: "Ayon Lee",
                 email: "i@hyurl.com",
                 password: "123456",
                 age: 20,
                 score: 90
-            },
-            modelConf = {
-                table: "users",
-                primary: "id",
-                fields: fields,
-                searchable: ["name", "email"]
             },
             ids = [];
 
@@ -51,6 +51,26 @@ describe("Model.prototype.all()", function () {
         }).catch(function (err) {
             db.close();
             done(err);
+        });
+    });
+
+    it("should try to get a non-existent models and doesn't throw error", function (done) {
+        co(function* () {
+            var db = new DB(config);
+
+            try {
+                var model = new Model(null, modelConf);
+                model.throwNotFoundError = false;
+
+                var _model = yield model.use(db).where("id", "<", 1).all();
+
+                assert.deepStrictEqual(_model, []);
+                done();
+            } catch (err) {
+                done(err);
+            }
+
+            db.close();
         });
     });
 });

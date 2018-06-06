@@ -1,6 +1,6 @@
 {
     "name": "modelar",
-    "version": "3.0.6",
+    "version": "3.1.0",
     "description": "An expressive ORM with query builder and supports multiple databases.",
     "main": "dist/index.js",
     "types": "types/index.d.ts",
@@ -8,7 +8,8 @@
         "node": ">=4.0"
     },
     "scripts": {
-        "test": "mocha"
+        "test": "mocha",
+        "init": "node test/before-test"
     },
     "dependencies": {
         "bcrypt-nodejs": "^0.0.3",

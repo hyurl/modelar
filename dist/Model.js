@@ -15,20 +15,32 @@ var Model = (function (_super) {
         _this.data = {};
         _this._modified = {};
         _this.extra = {};
+        _this.throwNotFoundError = true;
         config = config || interfaces_1.ModelConfig;
         _this._proto = Object.getPrototypeOf(_this);
-        _this.fields = config.fields || _this._protoProp("fields") || [];
+        _this._initData = data;
         _this.primary = config.primary || _this._protoProp("primary") || "";
+        _this.fields = config.fields || _this._protoProp("fields") || [];
         _this.searchable = config.searchable || _this._protoProp("searchable") || [];
         _this.schema = _this._protoProp("schema") || {};
-        if (_this.fields.length && !_this._protoProp("_initiated"))
-            _this._defineProperties(_this.fields);
-        if (data) {
-            delete data[_this.primary];
-            _this.assign(data, true);
-        }
         return _this;
     }
+    Object.defineProperty(Model.prototype, "fields", {
+        get: function () {
+            return this._fields;
+        },
+        set: function (names) {
+            this._fields = names;
+            if (!this._protoProp("_initiated") && names && names.length)
+                this._defineProperties(names);
+            if (this._initData && names && names.length) {
+                delete this._initData[this.primary];
+                this.assign(this._initData, true);
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(Model.prototype, "isNew", {
         get: function () {
             return this.data[this.primary] == undefined;
@@ -274,8 +286,13 @@ var Model = (function (_super) {
         }
         return _super.prototype.get.call(this).then(function (data) {
             if (!data || Object.keys(data).length === 0) {
-                throw new Errors_1.NotFoundError("No " + _this.constructor["name"]
-                    + " was found by the given condition.");
+                if (_this.throwNotFoundError) {
+                    throw new Errors_1.NotFoundError("No " + _this.constructor["name"]
+                        + " was found by the given condition.");
+                }
+                else {
+                    return null;
+                }
             }
             else {
                 delete _this._caller;
@@ -293,8 +310,13 @@ var Model = (function (_super) {
         var _this = this;
         return _super.prototype.all.call(this).then(function (data) {
             if (data.length === 0) {
-                throw new Errors_1.NotFoundError("No " + _this.constructor["name"]
-                    + " was found by the given condition.");
+                if (_this.throwNotFoundError) {
+                    throw new Errors_1.NotFoundError("No " + _this.constructor["name"]
+                        + " was found by the given condition.");
+                }
+                else {
+                    return data;
+                }
             }
             else {
                 var models = [], ModelClass = _this.constructor;
@@ -446,6 +468,15 @@ var Model = (function (_super) {
     };
     Model.prototype[inspect] = function () {
         var res = _super.prototype[inspect].call(this);
+        delete res["data"];
+        delete res["searchable"];
+        delete res["schema"];
+        delete res["extra"];
+        res["fields"] = this.fields;
+        res["searchable"] = this.searchable;
+        res["schema"] = this.schema;
+        res["data"] = this.data;
+        res["extra"] = this.extra;
         for (var _i = 0, _a = this.fields; _i < _a.length; _i++) {
             var field = _a[_i];
             res[field] = this[field];

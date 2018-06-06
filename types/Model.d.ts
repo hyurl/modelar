@@ -18,7 +18,7 @@ import { ModelConfig, DBConfig, PaginatedModels, ModelGetManyOptions, FieldConfi
 export declare class Model extends Query {
     /** Primary key of the table. */
     primary: string;
-    /** Fields in the table */
+    /** Fields in the table. */
     fields: string[];
     /** Searchable fields in the table. */
     searchable: string[];
@@ -40,14 +40,20 @@ export declare class Model extends Query {
     readonly extra: {
         [field: string]: any;
     };
+    /** Whether the current model is new. */
+    readonly isNew: boolean;
+    /**
+     * If `false`, then failed calling `model.get()` and `model.all()` will 
+     * not throw a `NotFoundError`, just return `null` on `get()` and `[]` on 
+     * `all()`. Default is `true`.
+     */
+    throwNotFoundError: boolean;
     /**
      * Creates a new model with optional initial data.
      */
     constructor(data?: {
         [field: string]: any;
     }, config?: ModelConfig);
-    /** Whether the current model is new. */
-    readonly isNew: boolean;
     /**
      * Assigns data to the model instance.
      * @param useSetter Use setters (if any) to process the data.

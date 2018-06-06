@@ -1,5 +1,13 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 3.1.0
+
+1. Add `model.throwNotFoundError` to control whether the model should throw 
+    error when fetching data failed.
+2. When define a model class, now you can define model configs via setting 
+    properties to `this` (e.g. `this.table = 'users'`), instead of putting 
+    them in the `super()` constructor.
+
 ## 3.0.4
 
 1. Fix bug in `db.transation()`, now it can automatically open the connection.

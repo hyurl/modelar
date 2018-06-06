@@ -94,18 +94,18 @@ export const FieldConfig: FieldConfig = {
 export interface ModelConfig {
     /** The table that the model binds to. */
     table: string;
-    /** Fields in the model's table. */
-    fields: string[];
     /** Primary key of the model's table. */
     primary: string;
+    /** Fields in the model's table. */
+    fields: string[];
     /** Searchable fields in the model's table. */
     searchable?: string[];
 }
 
 export const ModelConfig: ModelConfig = {
     table: "",
-    fields: null,
     primary: "",
+    fields: null,
     searchable: null
 };
 

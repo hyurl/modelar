@@ -5,7 +5,7 @@ var assign = require("lodash/assign");
 function prepare(proto, prop) {
     if (!proto.hasOwnProperty("schema")) {
         proto.schema = proto.schema ? assign({}, proto.schema) : {};
-        proto.fields = proto.fields ? [].concat(proto.fields) : [];
+        proto["_fields"] = proto["_fields"] ? [].concat(proto["_fields"]) : [];
     }
     if (proto.schema[prop] === undefined)
         proto.schema[prop] = assign({}, interfaces_1.FieldConfig, { name: prop });
@@ -18,8 +18,8 @@ function field() {
     if (typeof args[0] === "object") {
         var proto = args[0], prop = args[1];
         prepare(proto, prop);
-        if (proto.fields.indexOf(prop) === -1)
-            proto.fields.push(prop);
+        if (proto["_fields"].indexOf(prop) === -1)
+            proto["_fields"].push(prop);
     }
     else {
         var type_1 = args[0], length_1 = args[1] | 0;
