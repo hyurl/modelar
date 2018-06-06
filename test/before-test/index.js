@@ -1,5 +1,5 @@
-var DB = require("modelar").DB;
-var Table = require("modelar").Table;
+var DB = require("../../").DB;
+var Table = require("../../").Table;
 var co = require("co");
 var config = require("../config/db");
 
@@ -73,11 +73,11 @@ co(function* () {
         yield table8.save();
         yield table9.save();
         yield table10.save();
-        DB.close();
 
         console.log("#### OK ####");
     } catch (err) {
-        DB.close();
         throw err;
+    } finally {
+        db.close();
     }
 });
