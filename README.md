@@ -22,12 +22,12 @@ npm install modelar --save
 
 This module currently supports these databases:
 
-- `MySQL/MariaDB` see [modelar-mysql-adapter](https://github.com/Hyurl/modelar-mysql-adapter).
-- `PostgreSQL` see [modelar-postgres-adapter](https://github.com/Hyurl/modelar-postgres-adapter).
-- `SQLite` see [modelar-sqlite-adapter](https://github.com/Hyurl/modelar-sqlite-adapter).
-- `MicroSoft SQL Server` see [modelar-mssql-adapter](https://github.com/Hyurl/modelar-mssql-adapter).
-- `OracleDB` see [modelar-oracle-adapter](https://github.com/Hyurl/modelar-oracle-adapter).
-- `DB2` see [modelar-ibmdb-adapter](https://github.com/Hyurl/modelar-ibmdb-adapter).
+- `MySQL/MariaDB` see [modelar-mysql-adapter](https://github.com/hyurl/modelar-mysql-adapter).
+- `PostgreSQL` see [modelar-postgres-adapter](https://github.com/hyurl/modelar-postgres-adapter).
+- `SQLite` see [modelar-sqlite-adapter](https://github.com/hyurl/modelar-sqlite-adapter).
+- `MicroSoft SQL Server` see [modelar-mssql-adapter](https://github.com/hyurl/modelar-mssql-adapter).
+- `OracleDB` see [modelar-oracle-adapter](https://github.com/hyurl/modelar-oracle-adapter).
+- `DB2` see [modelar-ibmdb-adapter](https://github.com/hyurl/modelar-ibmdb-adapter).
 
 Not all adapters are installed automatically, only `MySQL/MariaDB` (since 
 3.0.4) are internally included, you must manually install other adapters if 
