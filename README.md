@@ -2,7 +2,8 @@
 
 **An expressive ORM with query builder and supports multiple databases.**
 
-See [API documentation](https://hyurl.github.io/modelar).
+See [API documentation](https://modelarjs.org) on official website. or on 
+[GitHub Pages](https://hyurl.github.io/modelar).
 
 ## Prerequisites
 

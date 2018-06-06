@@ -10,21 +10,21 @@ import { Adapter } from "./Adapter";
  * resources and speeding up the program.
  */
 export declare class DB extends EventEmitter {
-    /** The SQL statement. */
+    /** The last executed SQL command. */
+    command: string;
+    /** The last executed SQL statement. */
     sql: string;
-    /** The binding data. */
+    /** The binding data of the last executed SQL statement. */
     bindings: any[];
     /** The ID returned by executing the last insert statement. */
     insertId: number;
     /**
-     * A count that represents how many records are affected by executing the
+     * A number that represents how many records are affected by executing the
      * last SQL statement.
      */
     affectedRows: number;
-    /** Data source name of the current instance. */
+    /** Data Source Name of the current instance. */
     dsn: string;
-    /** The last executed SQL command. */
-    command: string;
     /** Database configurations of the current instance. */
     config: DBConfig;
     /** The data fetched by executing a select statement. */

@@ -5,6 +5,10 @@ export declare class User extends Model {
     readonly id: number;
     name: string;
     email: string;
+    /**
+     * Setting the possible fields that can be used for calling `user.login()`
+     * and passing the `user` field.
+     */
     static loginable: string[];
     constructor(data?: {
         [field: string]: any;

@@ -20,13 +20,18 @@ export declare class Model extends Query {
     primary: string;
     /** Fields in the table. */
     fields: string[];
-    /** Searchable fields in the table. */
+    /**
+     * Searchable fields in the table.
+     * 
+     * These fields are used when calling `model.getMany()` and set `keywords`
+     * for fuzzy query.
+     */
     searchable: string[];
     /** The schema of the table. */
     schema: {
         [field: string]: FieldConfig;
     };
-    /** The true data of the model. */
+    /** The real data of the model. */
     data: {
         [field: string]: any;
     };

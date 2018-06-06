@@ -20,17 +20,17 @@ export class DB extends EventEmitter {
     /** The last executed SQL command. */
     command: string = "";
 
-    /** The SQL statement. */
+    /** The last executed SQL statement. */
     sql: string = "";
 
-    /** The binding data. */
+    /** The binding data of the last executed SQL statement. */
     bindings: any[] = [];
 
     /** The ID returned by executing the last insert statement. */
     insertId: number = 0;
 
     /**
-     * A count that represents how many records are affected by executing the 
+     * A number that represents how many records are affected by executing the 
      * last SQL statement.
      */
     affectedRows: number = 0;

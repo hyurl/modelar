@@ -45,7 +45,12 @@ export class Model extends Query {
     /** Fields in the table */
     private _fields: string[];
 
-    /** Searchable fields in the table. */
+    /**
+     * Searchable fields in the table.
+     * 
+     * These fields are used when calling `model.getMany()` and set `keywords`
+     * for fuzzy query.
+     */
     searchable: string[];
 
     /** The schema of the table. */

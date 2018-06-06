@@ -20,6 +20,10 @@ export class User extends Model {
     @searchable
     email: string;
 
+    /**
+     * Setting the possible fields that can be used for calling `user.login()`
+     * and passing the `user` field.
+     */
     static loginable: string[] = ["name", "email"];
 
     constructor(data?: { [field: string]: any });
