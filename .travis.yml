@@ -7,4 +7,5 @@ services:
   - mysql
 before_install:
   - mysql -e "CREATE DATABASE modelar;"
+before_script:
   - npm run init
