@@ -149,7 +149,7 @@ export declare class Model extends Query {
     static set(name: string, value: any): Model;
     static use(db: DB): Model;
     static transaction(): Promise<Model>;
-    static transaction(cb: (model: Model) => Promise<any>): Promise<Model>;
+    static transaction(cb: (model: Model) => any): Promise<Model>;
     static select(fields: string[]): Model;
     static select(...fields: string[]): Model;
     static join(table: string, nested: (this: Query, query: Query) => void): Model;

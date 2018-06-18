@@ -88,7 +88,7 @@ export declare class DB extends EventEmitter {
      *  automatically committed, otherwise it will be automatically rolled
      *  back.
      */
-    transaction(cb: (db: this) => Promise<any>): Promise<this>;
+    transaction(cb: (db: this) => any): Promise<this>;
     /** Commits the transaction when things going well. */
     commit(): Promise<this>;
     /** Rolls the transaction back when things going wrong. */
