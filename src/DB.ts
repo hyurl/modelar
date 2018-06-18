@@ -283,9 +283,9 @@ export class DB extends EventEmitter {
      *  automatically committed, otherwise it will be automatically rolled 
      *  back.
      */
-    transaction(cb: (db: this) => Promise<any>): Promise<this>;
+    transaction(cb: (db: this) => any): Promise<this>;
 
-    transaction(cb?: (db: this) => Promise<any>) {
+    transaction(cb?: (db: this) => any) {
         return this.ensureConnect().then(() => {
             return this.adapter.transaction(this, cb);
         });

@@ -666,8 +666,8 @@ export class Model extends Query {
     }
 
     static transaction(): Promise<Model>;
-    static transaction(cb: (model: Model) => Promise<any>): Promise<Model>;
-    static transaction(cb?: (model: Model) => Promise<any>) {
+    static transaction(cb: (model: Model) => any): Promise<Model>;
+    static transaction(cb?: (model: Model) => any) {
         return (new this).transaction(cb);
     }
 
@@ -1295,31 +1295,33 @@ export class Model extends Query {
                 });
             };
 
+            // Run the procedure.
             if (deletes.length || updates.length || inserts.length) {
-                // Handle the procedure in a transaction.
-                return this.transaction(() => {
-                    if (deletes.length) {
-                        // Delete association records which are not in the 
-                        // provided models.
-                        _query.whereIn(this._pivot[1], deletes)
-                            .where(this._pivot[2], id1);
+                let promise: Promise<any>;
 
-                        if (this._pivot[3])
-                            _query.where(this._pivot[3], this._pivot[4]);
+                if (deletes.length) {
+                    // Delete association records which are not in the 
+                    // provided models.
+                    _query.whereIn(this._pivot[1], deletes)
+                        .where(this._pivot[2], id1);
 
-                        return _query.delete().then(_query => {
-                            return updates.length ? doUpdate(_query) : _query;
-                        }).then(_query => {
-                            return inserts.length ? doInsert(_query) : _query;
-                        });
-                    } else if (updates.length) {
-                        return doUpdate(_query).then(_query => {
-                            return inserts.length ? doInsert(_query) : _query;
-                        });
-                    } else if (inserts.length) {
-                        return doInsert(_query);
-                    }
-                }).then(() => target);
+                    if (this._pivot[3])
+                        _query.where(this._pivot[3], this._pivot[4]);
+
+                    promise = _query.delete().then(_query => {
+                        return updates.length ? doUpdate(_query) : _query;
+                    }).then(_query => {
+                        return inserts.length ? doInsert(_query) : _query;
+                    });
+                } else if (updates.length) {
+                    promise = doUpdate(_query).then(_query => {
+                        return inserts.length ? doInsert(_query) : _query;
+                    });
+                } else if (inserts.length) {
+                    promise = doInsert(_query);
+                }
+
+                return promise.then(() => target);
             } else {
                 return target;
             }

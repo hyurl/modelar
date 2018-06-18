@@ -19,11 +19,11 @@ export abstract class Adapter {
         throw new ReferenceError("Static method Adapter.close() is not implemented.");
     }
 
-    transaction(db: DB, cb: (db: DB) => Promise<any>): Promise<DB> {
+    transaction(db: DB, cb: (db: DB) => any): Promise<DB> {
         if (typeof cb == "function") {
             return db.query("begin").then(db => {
                 let res = cb.call(db, db);
-                if (res && res.then instanceof Function) {
+                if (res && res.then instanceof Function) { // Promise
                     return res.then(() => db) as Promise<DB>;
                 } else {
                     return db;

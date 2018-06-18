@@ -887,27 +887,27 @@ var Model = (function (_super) {
                 });
             };
             if (deletes.length || updates.length || inserts.length) {
-                return _this.transaction(function () {
-                    if (deletes.length) {
-                        _query.whereIn(_this._pivot[1], deletes)
-                            .where(_this._pivot[2], id1);
-                        if (_this._pivot[3])
-                            _query.where(_this._pivot[3], _this._pivot[4]);
-                        return _query.delete().then(function (_query) {
-                            return updates.length ? doUpdate(_query) : _query;
-                        }).then(function (_query) {
-                            return inserts.length ? doInsert(_query) : _query;
-                        });
-                    }
-                    else if (updates.length) {
-                        return doUpdate(_query).then(function (_query) {
-                            return inserts.length ? doInsert(_query) : _query;
-                        });
-                    }
-                    else if (inserts.length) {
-                        return doInsert(_query);
-                    }
-                }).then(function () { return target; });
+                var promise = void 0;
+                if (deletes.length) {
+                    _query.whereIn(_this._pivot[1], deletes)
+                        .where(_this._pivot[2], id1);
+                    if (_this._pivot[3])
+                        _query.where(_this._pivot[3], _this._pivot[4]);
+                    promise = _query.delete().then(function (_query) {
+                        return updates.length ? doUpdate(_query) : _query;
+                    }).then(function (_query) {
+                        return inserts.length ? doInsert(_query) : _query;
+                    });
+                }
+                else if (updates.length) {
+                    promise = doUpdate(_query).then(function (_query) {
+                        return inserts.length ? doInsert(_query) : _query;
+                    });
+                }
+                else if (inserts.length) {
+                    promise = doInsert(_query);
+                }
+                return promise.then(function () { return target; });
             }
             else {
                 return target;
