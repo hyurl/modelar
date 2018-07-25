@@ -527,15 +527,16 @@ export class Model extends Query {
         // Set where clause by using keywords in a vague searching scenario.
         if (options.keywords && this.searchable) {
             let keywords = options.keywords,
-                wildcard = this.config.type == "access" ? "*" : "%";
+                wildcard = this.config.type == "access" ? "*" : "%",
+                wildcardRegExp = new RegExp("\\" + wildcard, "g");
 
             if (typeof keywords == "string")
                 keywords = [keywords];
 
             for (let i in keywords) {
                 // Escape special characters.
-                keywords[i] = keywords[i].replace("\\", "\\\\")
-                    .replace(wildcard, "\\" + wildcard);
+                keywords[i] = keywords[i].replace(/\\/g, "\\\\")
+                    .replace(wildcardRegExp, "\\" + wildcard);
             }
 
             // Construct nested conditions.

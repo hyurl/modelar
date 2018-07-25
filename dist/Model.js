@@ -373,12 +373,12 @@ var Model = (function (_super) {
             }
         }
         if (options.keywords && this.searchable) {
-            var keywords_1 = options.keywords, wildcard_1 = this.config.type == "access" ? "*" : "%";
+            var keywords_1 = options.keywords, wildcard_1 = this.config.type == "access" ? "*" : "%", wildcardRegExp = new RegExp("\\" + wildcard_1, "g");
             if (typeof keywords_1 == "string")
                 keywords_1 = [keywords_1];
             for (var i in keywords_1) {
-                keywords_1[i] = keywords_1[i].replace("\\", "\\\\")
-                    .replace(wildcard_1, "\\" + wildcard_1);
+                keywords_1[i] = keywords_1[i].replace(/\\/g, "\\\\")
+                    .replace(wildcardRegExp, "\\" + wildcard_1);
             }
             this.where(function (query) {
                 var _loop_2 = function (field) {
@@ -504,11 +504,11 @@ var Model = (function (_super) {
         return (new this).transaction(cb);
     };
     Model.select = function () {
-        var _a;
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
+        var _a;
         return (_a = (new this)).select.apply(_a, args);
     };
     Model.join = function () {
@@ -586,11 +586,11 @@ var Model = (function (_super) {
         return (new this).random();
     };
     Model.groupBy = function () {
-        var _a;
         var fields = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             fields[_i] = arguments[_i];
         }
+        var _a;
         return (_a = (new this)).groupBy.apply(_a, fields);
     };
     Model.having = function (raw) {
