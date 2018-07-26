@@ -352,8 +352,6 @@ var Model = (function (_super) {
             orderBy: this.primary
         });
         options = assign(defaults, options);
-        var offset = (options.page - 1) * options.limit;
-        this.limit(options.limit, offset);
         if (options.sequence !== "asc" && options.sequence != "desc")
             this.random();
         else

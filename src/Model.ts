@@ -499,10 +499,6 @@ export class Model extends Query {
 
         options = assign(defaults, options);
 
-        // Set basic query conditions.
-        let offset = (options.page - 1) * options.limit;
-        this.limit(options.limit, offset);
-
         if (options.sequence !== "asc" && options.sequence != "desc")
             this.random();
         else
