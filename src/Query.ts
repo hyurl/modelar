@@ -1,4 +1,4 @@
-import { DB } from "./DB";
+import { DB, i } from "./DB";
 import { PaginatedRecords } from "./interfaces";
 import { InsertionError, UpdateError } from "./Errors";
 import fill = require("lodash/fill");
@@ -13,15 +13,25 @@ export class Query extends DB {
     /** The table that this query binds to. */
     table: string;
 
+    /** @private */
     private _selects: string = "*";
+    /** @private */
     private _distinct: string = "";
+    /** @private */
     private _join: string = "";
+    /** @private */
     private _where: string = "";
+    /** @private */
     private _orderBy: string = "";
+    /** @private */
     private _groupBy: string = "";
+    /** @private */
     private _having: string = "";
+    /** @private */
     private _limit: string | number | [number, number] = "";
+    /** @private */
     private _union: string = "";
+    /** @private */
     private _bindings: any[] = [];
 
     /** Creates a new Query instance with a specified table name. */
@@ -31,143 +41,154 @@ export class Query extends DB {
     }
 
     /**
-     * Treats the given name as a field and keep its form in where or join 
+     * Treats the given string as a field and keep its form in where or join 
      * clause.
+     * @deprecated use tagged template string instead.
      */
-    field(name: string): Query.Field {
-        return new Query.Field(name);
+    field(name: string) {
+        return i`${name}`;
     }
 
     /** Sets what fields that need to be fetched. */
-    select(fields: string[]): this;
     select(...fields: string[]): this;
+    select(fields: string[]): this;
+    select() {
+        let fields = arguments[0] instanceof Array
+            ? arguments[0]
+            : Array.from(arguments);
 
-    select(...args) {
-        let fields = args[0] instanceof Array ? args[0] : args;
         fields = fields.map(field => this.backquote(field));
         this._selects = fields.join(", ");
+
         return this;
     }
 
-    /** Sets the table name that the current instance binds to. */
-    from(table: string): this;
-
-    /** Sets multiple table names that the current instance binds to. */
-    from(tables: string[]): this;
+    /** Sets the table name(s) that the current instance binds to. */
     from(...tables: string[]): this;
-
-    from(...tables): this {
-        if (tables.length > 1) {
-            this.table = tables.join(", ");
-        } else if (tables[0] instanceof Array) {
-            this.table = tables[0].join(", ");
+    from(tables: string[]): this;
+    from(): this {
+        if (arguments.length > 1) {
+            this.table = Array.from(arguments).join(", ");
+        } else if (arguments[0] instanceof Array) {
+            this.table = arguments[0].join(", ");
         } else {
-            this.table = tables[0];
+            this.table = arguments[0];
         }
 
         return this;
     }
 
-    /**
-     * Sets a `inner join...` clause for the SQL statement via a nested query,
-     * in the nested query, use `where()` to set conditions for keyword `on`.
-     */
-    join(table: string, nested: (this: Query, query: Query) => void): this;
-
+    /** Sets a `inner join...` clause for the SQL statement. */
+    join(table: string, field1: string, field2: string): this;
+    join(
+        table: string,
+        field1: string,
+        operator: string,
+        field2: string
+    ): this;
     /**
      * Sets a `inner join...` clause for the SQL statement with multiple 
      * fields.
      */
     join(table: string, fields: { [field: string]: any }): this;
-
-    /** Sets a `inner join...` clause for the SQL statement. */
-    join(table: string, field1: string, field2: string): this;
-    join(table: string, field1: string, operator: string, field2: string): this;
-
-    join(table, ...args) {
-        return this._handleJoin(table, "inner", ...args);
-    }
-
     /**
-     * Sets a `left join...` clause for the SQL statement via a nested query,
+     * Sets a `inner join...` clause for the SQL statement via a nested query,
      * in the nested query, use `where()` to set conditions for keyword `on`.
      */
-    leftJoin(table: string, nested: (this: Query, query: Query) => void): this;
+    join(table: string, nested: (this: Query, query: Query) => void): this;
+    join(table) {
+        return this._handleJoin(table, "inner", ...Array.from(arguments).slice(1));
+    }
 
+    /** Sets a `left join...` clause for the SQL statement. */
+    leftJoin(table: string, field1: string, field2: string): this;
+    leftJoin(
+        table: string,
+        field1: string,
+        operator: string,
+        field2: string
+    ): this;
     /**
      * Sets a `left join...` clause for the SQL statement with multiple 
      * fields.
      */
     leftJoin(table: string, fields: { [field: string]: any }): this;
-
-    /** Sets a `left join...` clause for the SQL statement. */
-    leftJoin(table: string, field1: string, field2: string): this;
-    leftJoin(table: string, field1: string, operator: string, field2: string): this;
-
-    leftJoin(table, ...args) {
-        return this._handleJoin(table, "left", ...args);
-    }
-
     /**
-     * Sets a `right join...` clause for the SQL statement via a nested query,
+     * Sets a `left join...` clause for the SQL statement via a nested query,
      * in the nested query, use `where()` to set conditions for keyword `on`.
      */
-    rightJoin(table: string, nested: (this: Query, query: Query) => void): this;
+    leftJoin(table: string, nested: (this: Query, query: Query) => void): this;
+    leftJoin(table) {
+        return this._handleJoin(table, "left", ...Array.from(arguments).slice(1));
+    }
 
+    /** Sets a `right join...` clause for the SQL statement. */
+    rightJoin(table: string, field1: string, field2: string): this;
+    rightJoin(
+        table: string,
+        field1: string,
+        operator: string,
+        field2: string
+    ): this;
     /**
      * Sets a `right join...` clause for the SQL statement with multiple 
      * fields.
      */
     rightJoin(table: string, fields: { [field: string]: any }): this;
-
-    /** Sets a `right join...` clause for the SQL statement. */
-    rightJoin(table: string, field1: string, field2: string): this;
-    rightJoin(table: string, field1: string, operator: string, field2: string): this;
-
-    rightJoin(table, ...args) {
-        return this._handleJoin(table, "right", ...args);
-    }
-
     /**
-     * Sets a `full join...` clause for the SQL statement via a nested query,
+     * Sets a `right join...` clause for the SQL statement via a nested query,
      * in the nested query, use `where()` to set conditions for keyword `on`.
      */
-    fullJoin(table: string, nested: (this: Query, query: Query) => void): this;
+    rightJoin(table: string, nested: (this: Query, query: Query) => void): this;
+    rightJoin(table) {
+        return this._handleJoin(table, "right", ...Array.from(arguments).slice(1));
+    }
 
+    /** Sets a `full join...` clause for the SQL statement. */
+    fullJoin(table: string, field1: string, field2: string): this;
+    fullJoin(
+        table: string,
+        field1: string,
+        operator: string,
+        field2: string
+    ): this;
     /**
      * Sets a `full join...` clause for the SQL statement with multiple 
      * fields.
      */
     fullJoin(table: string, fields: { [field: string]: any }): this;
-
-    /** Sets a `full join...` clause for the SQL statement. */
-    fullJoin(table: string, field1: string, field2: string): this;
-    fullJoin(table: string, field1: string, operator: string, field2: string): this;
-
-    fullJoin(table, ...args) {
-        return this._handleJoin(table, "full", ...args);
-    }
-
     /**
-     * Sets a `cross join...` clause for the SQL statement via a nested query,
+     * Sets a `full join...` clause for the SQL statement via a nested query,
      * in the nested query, use `where()` to set conditions for keyword `on`.
      */
-    crossJoin(table: string, nested: (this: Query, query: Query) => void): this;
+    fullJoin(table: string, nested: (this: Query, query: Query) => void): this;
+    fullJoin(table) {
+        return this._handleJoin(table, "full", ...Array.from(arguments).slice(1));
+    }
 
+    /** Sets a `cross join...` clause for the SQL statement. */
+    crossJoin(table: string, field1: string, field2: string): this;
+    crossJoin(
+        table: string,
+        field1: string,
+        operator: string,
+        field2: string
+    ): this;
     /**
      * Sets a `cross join...` clause for the SQL statement with multiple 
      * fields.
      */
     crossJoin(table: string, fields: { [field: string]: any }): this;
-
-    /** Sets a `cross join...` clause for the SQL statement. */
-    crossJoin(table: string, field1: string, field2: string): this;
-    crossJoin(table: string, field1: string, operator: string, field2: string): this;
-
-    crossJoin(table, ...args) {
-        return this._handleJoin(table, "cross", ...args);
+    /**
+     * Sets a `cross join...` clause for the SQL statement via a nested query,
+     * in the nested query, use `where()` to set conditions for keyword `on`.
+     */
+    crossJoin(table: string, nested: (this: Query, query: Query) => void): this;
+    crossJoin(table) {
+        return this._handleJoin(table, "cross", ...Array.from(arguments).slice(1));
     }
 
+    /** @private */
     private _handleJoin(table: string, type: string, ...args): this {
         if (!this._join) { // One join.
             this._join = this.backquote(this.table);
@@ -185,8 +206,8 @@ export class Query extends DB {
                     let value = args[0][field],
                         statement = this.backquote(field) + " = ";
 
-                    if (value instanceof Query.Field) {
-                        statement += this.backquote(value.name);
+                    if (value instanceof DB.Identifier) {
+                        statement += this.backquote(value);
                     } else {
                         statement += "?";
                         this._bindings.push(value);
@@ -207,37 +228,48 @@ export class Query extends DB {
                     this._bindings = this._bindings.concat(query._bindings);
                 }
             }
-        } else if (args.length == 2) { // field1 = field2
-            this._join += this.backquote(args[0]) + " = " + this.backquote(args[1]);
-        } else if (args.length == 3) { // field1 <operator> field2
-            this._join += this.backquote(args[0])
-                + " " + this.backquote(args[1]) + " "
-                + this.backquote(args[2]);
+        } else {
+            let field1: string = args[0],
+                op: string = args.length == 2 ? "=" : args[1],
+                field2: string = args.length == 2 ? args[1] : args[2];
+
+            this._join += this.backquote(field1)
+                + " " + op + " "
+                + this.backquote(field2);
         }
 
         return this;
     }
 
+    /** Sets a `where...` clause with an ES6 `tagged template` string. */
+    where(clause: DB.Statement): this;
     /** Sets a `where...` clause for the SQL statement with a nested query. */
     where(nested: (this: Query, query: Query) => void): this;
     where(field: string, nested: (this: Query, query: Query) => void): this;
-    where(field: string, operator: string, nested: (this: Query, query: Query) => void): this;
-
-    /** Sets a `where...` clause for the SQL statement with multiple fields. */
-    where(fields: { [field: string]: any }): this;
-
+    where(
+        field: string,
+        operator: string,
+        nested: (this: Query, query: Query) => void
+    ): this;
     /** Sets a `where...` clause for the SQL statement. */
     where(field: string, value: any): this;
     where(field: string, operator: string, value: any): this;
-
+    /** Sets a `where...` clause for the SQL statement with multiple fields. */
+    where(fields: { [field: string]: any }): this;
     where(field, operator = null, value = undefined) {
-        if (typeof field === "object") {
+        let isTpl = field instanceof DB.Statement;
+
+        if (typeof field === "object" && !isTpl) {
             for (let key in field) {
                 this.where(key, "=", field[key]);
             }
         } else {
             if (this._where) this._where += " and ";
-            if (field instanceof Function) {
+            if (isTpl) {
+                let { sql, bindings } = this.processStatement(field);
+                this._where += sql;
+                this._bindings = this._bindings.concat(bindings);
+            } else if (field instanceof Function) {
                 this._handleNestedWhere(field);
             } else if (operator instanceof Function) {
                 this._handleWhereChild(field, operator);
@@ -250,32 +282,39 @@ export class Query extends DB {
         return this;
     }
 
+    /** Sets a `where...or...` clause with an ES6 `tagged template` string. */
+    orWhere(clause: DB.Statement): this;
     /**
-     * Sets a `where...or...` clause for the SQL statement with a nested 
-     * query.
+     * Sets a `where...or...` clause for the SQL statement with a nested query.
      */
     orWhere(nested: (this: Query, query: Query) => void): this;
     orWhere(field: string, nested: (this: Query, query: Query) => void): this;
-    orWhere(field: string, operator: string, nested: (this: Query, query: Query) => void): this;
-
-    /**
-     * Sets a `where...or...` clause for the SQL statement with multiple 
-     * fields.
-     */
-    orWhere(fields: { [field: string]: any }): this;
-
+    orWhere(
+        field: string,
+        operator: string,
+        nested: (this: Query, query: Query) => void
+    ): this;
     /** Sets a `where...or...` clause for the SQL statement. */
     orWhere(field: string, value: any): this;
     orWhere(field: string, operator: string, value: any): this;
-
+    /**
+     * Sets a `where...or...` clause for the SQL statement with multiple fields.
+     */
+    orWhere(fields: { [field: string]: any }): this;
     orWhere(field, operator = null, value = undefined) {
-        if (typeof field === "object") {
+        let isTpl = field instanceof DB.Statement;
+
+        if (typeof field == "object" && !isTpl) {
             for (let key in field) {
                 this.orWhere(key, "=", field[key]);
             }
         } else {
             if (this._where) this._where += " or ";
-            if (field instanceof Function) {
+            if (isTpl) {
+                let { sql, bindings } = this.processStatement(field);
+                this._where += sql;
+                this._bindings = this._bindings.concat(bindings);
+            } else if (field instanceof Function) {
                 this._handleNestedWhere(field);
             } else if (operator instanceof Function) {
                 this._handleWhereChild(field, operator);
@@ -288,6 +327,7 @@ export class Query extends DB {
         return this;
     }
 
+    /** @private */
     private _handleWhere(field: string, operator: string, value?: any): this {
         if (value === undefined) {
             value = operator;
@@ -296,15 +336,17 @@ export class Query extends DB {
 
         this._where += this.backquote(field) + " " + operator;
 
-        if (value instanceof Query.Field) {
-            this._where += " " + this.backquote(value.name);
+        if (value instanceof DB.Identifier) {
+            this._where += " " + this.backquote(value);
         } else {
             this._where += " ?";
             this._bindings.push(value);
         }
+
         return this;
     }
 
+    /** @private */
     private _handleNestedWhere(cb: (query: Query) => void): this {
         let query = new Query().use(this); // new instance for nested scope.
         cb.call(query, query);
@@ -315,13 +357,19 @@ export class Query extends DB {
         return this;
     }
 
-    private _handleWhereChild(field: string, cb: (query: Query) => void, operator = "="): this {
+    /** @private */
+    private _handleWhereChild(
+        field: string,
+        cb: (query: Query) => void,
+        operator = "="
+    ): this {
         let query = this._getQueryBy(cb);
         this._where += this.backquote(field) + ` ${operator} (${query.sql})`;
         this._bindings = this._bindings.concat(query._bindings);
         return this;
     }
 
+    /** @private */
     private _getQueryBy(cb: (query: Query) => void): Query {
         let query = new Query().use(this); // Create a new instance for nested scope.
         cb.call(query, query);
@@ -349,10 +397,16 @@ export class Query extends DB {
         return this._handleBetween(field, [min, max], false, "or");
     }
 
-    private _handleBetween(field: string, [min, max]: [number, number], between = true, conj = "and"): this {
+    /** @private */
+    private _handleBetween(
+        field: string,
+        [min, max]: [number, number],
+        between = true,
+        conj = "and"
+    ): this {
         if (this._where) this._where += ` ${conj} `;
-        this._where += this.backquote(field) + (between ? "" : " not") +
-            " between ? and ?";
+        this._where += this.backquote(field) + (between ? "" : " not")
+            + " between ? and ?";
         this._bindings = this._bindings.concat([min, max]);
         return this;
     }
@@ -362,13 +416,11 @@ export class Query extends DB {
      * @param values An array carries all possible values.
      */
     whereIn(field: string, values: any[]): this;
-
     /**
      * Sets a `where...in...` clause for the SQL statement with a nested 
      * query.
      */
     whereIn(field: string, nested: (this: Query, query: Query) => void): this;
-
     whereIn(field, values) {
         return this._handleIn(field, values);
     }
@@ -378,13 +430,11 @@ export class Query extends DB {
      * @param values An array carries all possible values.
      */
     whereNotIn(field: string, values: any[]): this;
-
     /**
      * Sets a `where...not in...` clause for the SQL statement with a nested 
      * query.
      */
     whereNotIn(field: string, nested: (this: Query, query: Query) => void): this;
-
     whereNotIn(field, values) {
         return this._handleIn(field, values, false);
     }
@@ -394,13 +444,11 @@ export class Query extends DB {
      * @param values An array carries all possible values.
      */
     orWhereIn(field: string, values: any[]): this;
-
     /**
      * Sets a `where...or...in...` clause for the SQL statement with a nested 
      * query.
      */
     orWhereIn(field: string, nested: (this: Query, query: Query) => void): this;
-
     orWhereIn(field, values) {
         return this._handleIn(field, values, true, "or");
     }
@@ -410,34 +458,46 @@ export class Query extends DB {
      * @param values An array carries all possible values.
      */
     orWhereNotIn(field: string, values: any[]): this;
-
     /**
      * Sets a `where...or...not in...` clause for the SQL statement with a 
      * nested query.
      */
-    orWhereNotIn(field: string, nested: (this: Query, query: Query) => void): this;
-
+    orWhereNotIn(
+        field: string,
+        nested: (this: Query, query: Query) => void
+    ): this;
     orWhereNotIn(field, values) {
         return this._handleIn(field, values, false, "or");
     }
 
-    private _handleIn(field: string, values: any[] | ((query: Query) => void), isIn = true, conj = "and"): this {
+    /** @private */
+    private _handleIn(
+        field: string,
+        values: any[] | ((query: Query) => void),
+        isIn = true,
+        conj = "and"
+    ): this {
         if (this._where) this._where += ` ${conj} `;
         if (values instanceof Function) {
             return this._handleInChild(field, values, isIn);
         } else {
             let _values = fill(Array(values.length), "?");
-            this._where += this.backquote(field) + (isIn ? "" : " not") +
-                " in (" + _values.join(", ") + ")";
+            this._where += this.backquote(field) + (isIn ? "" : " not")
+                + " in (" + _values.join(", ") + ")";
             this._bindings = this._bindings.concat(values);
             return this;
         }
     }
 
-    private _handleInChild(field: string, cb: (query: Query) => void, isIn = true): this {
+    /** @private */
+    private _handleInChild(
+        field: string,
+        cb: (query: Query) => void,
+        isIn = true
+    ): this {
         let query = this._getQueryBy(cb);
-        this._where += this.backquote(field) + (isIn ? "" : " not") +
-            " in (" + query.sql + ")";
+        this._where += this.backquote(field) + (isIn ? "" : " not")
+            + " in (" + query.sql + ")";
         this._bindings = this._bindings.concat(query._bindings);
         return this;
     }
@@ -462,10 +522,11 @@ export class Query extends DB {
         return this._handleWhereNull(field, false, "or");
     }
 
+    /** @private */
     private _handleWhereNull(field: string, isNull = true, conj = "and"): this {
         if (this._where) this._where += ` ${conj} `;
-        this._where += this.backquote(field) + " is " +
-            (isNull ? "" : "not ") + "null";
+        this._where += this.backquote(field) + " is " + (isNull ? "" : "not ")
+            + "null";
         return this;
     }
 
@@ -501,7 +562,12 @@ export class Query extends DB {
         return this._handleExists(nested, false, "or");
     }
 
-    private _handleExists(nested: (this: Query, query: Query) => void, exists = true, conj = "and"): this {
+    /** @private */
+    private _handleExists(
+        nested: (this: Query, query: Query) => void,
+        exists = true,
+        conj = "and"
+    ): this {
         if (this._where) this._where += ` ${conj} `;
         let query = this._getQueryBy(nested);
         this._where += (exists ? "" : "not ") + "exists (" + query.sql + ")";
@@ -523,22 +589,26 @@ export class Query extends DB {
     }
 
     /** Sets a `group by...` clause for the SQL statement. */
-    groupBy(fields: string[]): this;
-
-    /** Sets a `group by...` clause for the SQL statement. */
     groupBy(...fields: string[]): this;
-
+    /** Sets a `group by...` clause for the SQL statement. */
+    groupBy(fields: string[]): this;
     groupBy(...fields) {
-        if (fields[0] instanceof Array)
-            fields = fields[0];
+        if (fields[0] instanceof Array) fields = fields[0];
         fields = fields.map(field => this.backquote(field));
-        this._groupBy = fields.join(", ");
+        this._groupBy = (<string[]>fields).join(", ");
         return this;
     }
 
     /** Sets a `having...` clause for the SQL statement. */
-    having(raw: string): this {
-        this._having += (this._having ? " and " : "") + raw;
+    having(clause: string | DB.Statement): this {
+        if (clause instanceof DB.Statement) {
+            let { sql, bindings } = this.processStatement(clause);
+            this._having += (this._having ? " and " : "") + sql;
+            this._bindings = this._bindings.concat(bindings);
+        } else {
+            this._having += (this._having ? " and " : "") + clause;
+        }
+
         return this;
     }
 
@@ -559,16 +629,21 @@ export class Query extends DB {
      * Unites two SQL statements into one.
      * @param all Use `union all` to concatenate results.
      */
-    union(query: string | Query, all = false): this {
+    union(query: string | DB.Statement | Query, all = false): this {
         if (this._union) this._union += " union ";
 
         if (query instanceof Query) {
             query.sql = query.getSelectSQL();
             this._union += (all ? "all " : "") + query.sql;
             this._bindings = this._bindings.concat(query._bindings);
+        } else if (query instanceof DB.Statement) {
+            let { sql, bindings } = this.processStatement(query);
+            this._union += (all ? "all " : "") + sql;
+            this._bindings = this._bindings.concat(bindings);
         } else {
             this._union += (all ? "all " : "") + query;
         }
+
         return this;
     }
 
@@ -598,7 +673,7 @@ export class Query extends DB {
 
         this.sql = "insert into " + this.backquote(this.table)
             + " " + (isObj ? `(${fields}) ` : "") + `values (${values})`;
-            
+
 
         // Fire event and call its listeners.
         this.emit("insert", this);
@@ -626,27 +701,28 @@ export class Query extends DB {
         return this._handleUpdate(parts, bindings);
     }
 
-    /** Increases multiple fields at one time. */
-    increase(fields: { [field: string]: number }): Promise<this>;
-
     /** Increases a specified field with an optional step. */
     increase(field: string, step?: number): Promise<this>;
-
-    increase(field: string | any, step = 1) {
+    /** Increases multiple fields at one time. */
+    increase(fields: { [field: string]: number }): Promise<this>;
+    increase(field: string | object, step = 1) {
         return this._handleCrease(field, step, "+");
     }
 
-    /** Decreases multiple fields at one time. */
-    decrease(fields: { [field: string]: number }): Promise<this>;
-
     /** Decreases a specified field with an optional step. */
     decrease(field: string, step?: number): Promise<this>;
-
-    decrease(field: string | any, step = 1) {
+    /** Decreases multiple fields at one time. */
+    decrease(fields: { [field: string]: number }): Promise<this>;
+    decrease(field: string | object, step = 1) {
         return this._handleCrease(field, step, "-");
     }
 
-    private _handleCrease(field: string | any, step: number, type: "+" | "-"): Promise<this> {
+    /** @private */
+    private _handleCrease(
+        field: string | object,
+        step: number,
+        type: "+" | "-"
+    ): Promise<this> {
         let data: { [field: string]: any },
             parts: string[] = [],
             bindings = [];
@@ -654,8 +730,7 @@ export class Query extends DB {
         if (typeof field == "object") {
             data = field;
         } else {
-            data = {};
-            data[field] = step;
+            data = { [field]: step };
         }
 
         for (let field in data) {
@@ -669,6 +744,7 @@ export class Query extends DB {
         return this._handleUpdate(parts, bindings);
     }
 
+    /** @private */
     private _handleUpdate(parts: string[], bindings: any[]): Promise<this> {
         if (Object.keys(parts).length === 0) {
             throw new UpdateError("No valid data were given for updating.");
@@ -736,11 +812,29 @@ export class Query extends DB {
         });
     }
 
+    /** @private */
+    private _handleSelect(): Promise<any[] | { [field: string]: any }> {
+        this.sql = this.getSelectSQL();
+        return this.query(this.sql, this._bindings).then(query => {
+            this.bindings = [].concat(this._bindings);
+            return query.data;
+        });
+    }
+
+    /** @private */
+    private _handleAggregate(name: string, field: string): Promise<number> {
+        this._selects = name + "(" + this.backquote(field) + ") as "
+            + this.backquote("num");
+        return this._handleSelect().then(data => {
+            return parseFloat(data[0].num);
+        });
+    }
+
     /**
      * Gets all counts of records or a specified field.
      * @param field Count a specified field.
      */
-    count(field = "*"): Promise<number> {
+    count(field: string = "*"): Promise<number> {
         if (field != "*" && this._distinct)
             field = "distinct " + this.backquote(field);
         return this._handleAggregate("count", field);
@@ -772,7 +866,10 @@ export class Query extends DB {
      *  carry.
      * @param cb A function for processing every chunked data.
      */
-    chunk(length: number, cb: (this: this, data: any[]) => false | void): Promise<any[]> {
+    chunk(
+        length: number,
+        cb: (this: this, data: any[]) => false | void
+    ): Promise<any[]> {
         let offset = 0,
             query = new Query(this.table).use(this);
 
@@ -783,15 +880,13 @@ export class Query extends DB {
         return query.count().then(total => {
             let loop = () => {
                 return this.limit(length, offset).all().then(data => {
-                    let ok = cb.call(this, data);
+                    let ok: false | void = cb.call(this, data);
                     offset += length;
 
-                    if (data.length == length && ok !== false && offset < total) {
-                        // Running the function recursively.
-                        return loop();
-                    } else {
+                    if (data.length == length && ok !== false && offset < total)
+                        return loop(); // Running the function recursively.
+                    else
                         return data;
-                    }
                 });
             };
             return loop();
@@ -839,34 +934,16 @@ export class Query extends DB {
         });
     }
 
-    private _handleAggregate(name: string, field: string): Promise<number> {
-        this._selects = name + "(" + this.backquote(field) + ") as " +
-            this.backquote("num");
-        return this._handleSelect().then(data => {
-            return parseFloat(data[0].num);
-        });
-    }
-
-    private _handleSelect(): Promise<any[] | { [field: string]: any }> {
-        this.sql = this.getSelectSQL();
-        return this.query(this.sql, this._bindings).then(query => {
-            this.bindings = [].concat(this._bindings);
-            return query.data;
-        });
-    }
-
     /** Gets the select statement from the current instance. */
     getSelectSQL(): string {
         return this.adapter.getSelectSQL(this);
     }
 }
 
-export namespace Query {
-    export class Field {
-        name: string;
-
-        constructor(name: string) {
-            this.name = name;
-        }
-    }
+export interface Query {
+    on(
+        event: "query" | "insert" | "inserted" | "update" | "updated" | "delete" | "deleted" | "get",
+        listener: (thisObj: this) => void
+    ): this;
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
 }

@@ -85,6 +85,8 @@ var DB = (function (_super) {
     };
     DB.prototype.quote = function (value) {
         var quote = this.adapter.quote || "'", re = new RegExp(quote, "g");
+        if (value instanceof DB_1.Identifier)
+            return this.backquote(value);
         switch (typeof value) {
             case "string":
                 value = value.replace(/\\/g, "\\\\").replace(re, "\\" + quote);
@@ -103,8 +105,11 @@ var DB = (function (_super) {
     };
     DB.prototype.backquote = function (identifier) {
         var _this = this;
-        if (typeof identifier !== "string")
-            return identifier;
+        identifier = identifier instanceof DB_1.Identifier
+            ? identifier.name
+            : identifier;
+        if (typeof identifier != "string")
+            return String(identifier);
         var sep = identifier.indexOf(",") > 0 ? "," : ".", parts = identifier.split(sep).map(function (part) { return part.trim(); }), quote;
         if (this.adapter.backquote !== undefined) {
             if (this.adapter.backquote instanceof Array) {
@@ -171,16 +176,23 @@ var DB = (function (_super) {
             bindings[_i - 1] = arguments[_i];
         }
         return this.ensureConnect().then(function () {
-            if (bindings[0] instanceof Array)
-                bindings = bindings[0];
-            _this.sql = sql.trim();
-            _this.bindings = [].concat(bindings);
+            if (sql instanceof DB_1.Statement) {
+                var res = _this.processStatement(sql);
+                _this.sql = res.sql.trim();
+                _this.bindings = [].concat(res.bindings);
+            }
+            else {
+                if (bindings[0] instanceof Array)
+                    bindings = bindings[0];
+                _this.sql = sql.trim();
+                _this.bindings = [].concat(bindings);
+            }
             if (_this.sql[_this.sql.length - 1] == ";")
                 _this.sql = _this.sql.slice(0, -1);
             var i = _this.sql.indexOf(" "), command = _this.sql.substring(0, i).toLowerCase();
             _this.command = command;
             _this.emit("query", _this);
-            return _this.adapter.query(_this, sql, bindings);
+            return _this.adapter.query(_this, _this.sql, _this.bindings);
         });
     };
     DB.prototype.transaction = function (cb) {
@@ -210,6 +222,29 @@ var DB = (function (_super) {
     DB.prototype.close = function () {
         return this.adapter.close();
     };
+    DB.prototype.processStatement = function (callSite) {
+        var _this = this;
+        var sql = "", bindings = [];
+        callSite.pieces.forEach(function (piece, i) {
+            if (i > 0) {
+                var j = i - 1;
+                if (callSite.bindings[j] instanceof DB_1.Statement) {
+                    var res = _this.processStatement(callSite.bindings[j]);
+                    sql += res.sql;
+                    bindings = bindings.concat(res.bindings);
+                }
+                else if (callSite.bindings[j] instanceof DB_1.Identifier) {
+                    sql += _this.backquote(callSite.bindings[j].name);
+                }
+                else {
+                    sql += "?";
+                    bindings.push(callSite.bindings[j]);
+                }
+            }
+            sql += piece;
+        });
+        return { sql: sql, bindings: bindings };
+    };
     DB.init = function (config) {
         this.config = assign({}, this.config, config);
         return this;
@@ -237,8 +272,8 @@ var DB = (function (_super) {
         return this;
     };
     DB.close = function () {
-        for (var i in this.adapters) {
-            var adapter = this.adapters[i];
+        for (var i_1 in this.adapters) {
+            var adapter = this.adapters[i_1];
             adapter.close();
         }
     };
@@ -258,6 +293,41 @@ var DB = (function (_super) {
     return DB;
 }(events_1.EventEmitter));
 exports.DB = DB;
+(function (DB) {
+    var Statement = (function () {
+        function Statement(pieces, bindings) {
+            this.pieces = pieces;
+            this.bindings = bindings;
+        }
+        return Statement;
+    }());
+    DB.Statement = Statement;
+    var Identifier = (function () {
+        function Identifier(name) {
+            this.name = name;
+        }
+        return Identifier;
+    }());
+    DB.Identifier = Identifier;
+})(DB = exports.DB || (exports.DB = {}));
+exports.DB = DB;
+exports.s = function (callSite) {
+    var bindings = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        bindings[_i - 1] = arguments[_i];
+    }
+    return new DB.Statement(callSite, bindings);
+};
+exports.i = function (callSite) {
+    var bindings = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        bindings[_i - 1] = arguments[_i];
+    }
+    var name = callSite.map(function (str, i) {
+        return i > 0 ? bindings[i - 1] + str : str;
+    }).join("");
+    return new DB.Identifier(name);
+};
 Object.defineProperties(DB.prototype, {
     _dsn: {
         get: function () {

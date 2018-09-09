@@ -63,13 +63,11 @@ export class Table extends DB {
 
     /** Sets the current field to be auto-increment. */
     autoIncrement(): this;
-
     /**
      * Sets the current field to be auto-increment with a `start` number and 
      * an optional `step` length.
      */
     autoIncrement(start: number, step?: number): this;
-
     autoIncrement(start = 1, step = 1) {
         this.schema[this._current].autoIncrement = [start, step];
         return this;
@@ -107,7 +105,6 @@ export class Table extends DB {
 
     /** Sets a foreign key constraint of the current field. */
     foreignKey(config: ForeignKeyConfig): this;
-
     /**
      * @param table A table where the the foreign key is in.
      * @param field A field in the foreign table that related to the current 
@@ -121,7 +118,6 @@ export class Table extends DB {
         onDelete?: ForeignKeyConfig["onDelete"],
         onUpdate?: ForeignKeyConfig["onUpdate"]
     ): this;
-
     foreignKey(input, field?: string, onDelete = "set null", onUpdate = "no action") {
         let foreignKey: ForeignKeyConfig;
 

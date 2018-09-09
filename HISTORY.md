@@ -1,5 +1,10 @@
 **This update log starts from the version 1.0.2 of Modelar.**
 
+## 3.1.5
+
+1. Support ES6 `tagged template` string, add tags `i` and `s` to produce 
+    Identifier and Statement objects.
+
 ## 3.1.0
 
 1. Add `model.throwNotFoundError` to control whether the model should throw 

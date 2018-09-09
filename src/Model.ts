@@ -27,13 +27,19 @@ const inspect: string | symbol = require("util").inspect.custom || "inspect";
  * for...of... loop, like `for(let { key, value } of model)`.
  */
 export class Model extends Query {
+    /** @private */
     private _proto: this;
+    /** @private */
     private _caller: Model;
+    /** @private */
     private _foreignKey: string;
+    /** @private */
     private _type: string;
+    /** @private */
     private _pivot: string[];
 
     /**
+     * @private
      * Sets an extra `where...` clause for the SQL statement when updating or 
      * deleting the model.
      */
@@ -42,7 +48,7 @@ export class Model extends Query {
     /** Primary key of the table. */
     primary: string;
 
-    /** Fields in the table */
+    /** @private Fields in the table */
     private _fields: string[];
 
     /**
@@ -59,10 +65,10 @@ export class Model extends Query {
     /** The real data of the model. */
     data: { [field: string]: any } = {};
 
-    /** The initial data provided to the constructor. */
+    /** @property The initial data provided to the constructor. */
     private _initData: this["data"];
 
-    /** The data that needs to be updated to the database. */
+    /** @private The data that needs to be updated to the database. */
     private _modified: { [field: string]: any } = {};
 
     /**
@@ -71,6 +77,8 @@ export class Model extends Query {
      * When calling `model.assign()`, those data which are not defined in the 
      * `model.fields` will be stored in this property, and they won't be used
      * when inserting or updating the model.
+     * 
+     * @readonly
      */
     readonly extra: { [field: string]: any } = {};
 
@@ -121,14 +129,17 @@ export class Model extends Query {
         return this.data[this.primary] == undefined;
     }
 
+    /** @private */
     private get _isModel(): boolean {
         return true;
     }
 
+    /** @private */
     private _protoProp(name: string): any {
         return this._proto.hasOwnProperty(name) ? this._proto[name] : undefined;
     }
 
+    /** @private */
     private _defineProperties(fields: string[]): void {
         let props: { [prop: string]: PropertyDescriptor } = {};
 
@@ -280,10 +291,8 @@ export class Model extends Query {
 
     /** Increases a specified field with an optional step. */
     increase(field: string, step?: number): Promise<this>;
-
     /** Increases multiple fields at one time. */
     increase(fields: { [field: string]: number }): Promise<this>;
-
     increase(field: string | object, step = 1) {
         this._resetWhere();
         if (this._whereState.where) {
@@ -296,10 +305,8 @@ export class Model extends Query {
 
     /** Decreases a specified field with an optional step. */
     decrease(field: string, step?: number): Promise<this>;
-
     /** Decreases multiple fields at one time. */
     decrease(fields: { [field: string]: number }): Promise<this>;
-
     decrease(field: string | object, step = 1) {
         this._resetWhere();
         if (this._whereState.where) {
@@ -310,7 +317,12 @@ export class Model extends Query {
         return this._handleCrease2(field, step, "-");
     }
 
-    private _handleCrease2(field: string | object, step: number, type: "+" | "-"): Promise<this> {
+    /** @private */
+    private _handleCrease2(
+        field: string | object,
+        step: number,
+        type: "+" | "-"
+    ): Promise<this> {
         let data: { [field: string]: any },
             parts: string[] = [],
             bindings = [];
@@ -318,8 +330,7 @@ export class Model extends Query {
         if (typeof field == "object") {
             data = field;
         } else {
-            data = {};
-            data[field] = step;
+            data = { [field]: step };
         }
 
         delete data[this.primary];
@@ -353,6 +364,7 @@ export class Model extends Query {
         });
     }
 
+    /** @private */
     private _resetWhere(resetState = false): this {
         this["_where"] = "";
         this["_limit"] = 0;
@@ -477,7 +489,10 @@ export class Model extends Query {
      *  carry.
      * @param cb A function for processing every chunked data.
      */
-    chunk(length: number, cb: (this: this, models: this[]) => false | void): Promise<this[]> {
+    chunk(
+        length: number,
+        cb: (this: this, models: this[]) => false | void
+    ): Promise<this[]> {
         return super.chunk(length, cb);
     }
 
@@ -561,10 +576,10 @@ export class Model extends Query {
      * Unlike `query.where()` or other alike methods, this method can be
      * called only once.
      */
-    whereState(extra: (this: Query, query: Query) => void): this;
     whereState(field: string, value: any): this;
     whereState(field: string, operator: string, value: any): this;
     whereState(fields: { [field: string]: any }): this;
+    whereState(extra: (this: Query, query: Query) => void): this;
     whereState(...args) {
         let query = new Query().use(this);
         query.where.apply(query, args);
@@ -609,17 +624,15 @@ export class Model extends Query {
 
     [Symbol.iterator](): IterableIterator<{ key: string, value: any }> {
         let data = this.valueOf();
-        let Class = <typeof Model>this.constructor;
 
         return (function* () {
             for (let key in data) {
-                let value = data[key];
-                yield { key, value };
+                yield { key, value: data[key] };
             }
         })();
     }
 
-    private [inspect]() {
+    [inspect]() {
         let res = super[inspect]();
 
         // delete properties
@@ -668,73 +681,111 @@ export class Model extends Query {
         return (new this).transaction(cb);
     }
 
-    static select(fields: string[]): Model;
     static select(...fields: string[]): Model;
-    static select(...args) {
-        return (new this).select(...args);
+    static select(fields: string[]): Model;
+    static select() {
+        return (new this).select(...Array.from(arguments));
     }
 
-    static join(table: string, nested: (this: Query, query: Query) => void): Model;
-    static join(table: string, fields: {
-        [field: string]: any;
-    }): Model;
     static join(table: string, field1: string, field2: string): Model;
-    static join(table: string, field1: string, operator: string, field2: string): Model;
-    static join(...args) {
+    static join(
+        table: string,
+        field1: string,
+        operator: string,
+        field2: string
+    ): Model;
+    static join(table: string, fields: { [field: string]: any; }): Model;
+    static join(
+        table: string,
+        nested: (this: Query, query: Query) => void
+    ): Model;
+    static join() {
         let model = new this;
-        return model.join.apply(model, args);
+        return model.join.apply(model, Array.from(arguments));
     }
 
-    static leftJoin(table: string, nested: (this: Query, query: Query) => void): Model;
-    static leftJoin(table: string, fields: {
-        [field: string]: any;
-    }): Model;
     static leftJoin(table: string, field1: string, field2: string): Model;
-    static leftJoin(table: string, field1: string, operator: string, field2: string): Model;
-    static leftJoin(...args) {
+    static leftJoin(
+        table: string,
+        field1: string,
+        operator: string,
+        field2: string
+    ): Model;
+    static leftJoin(table: string, fields: { [field: string]: any; }): Model;
+    static leftJoin(
+        table: string,
+        nested: (this: Query, query: Query) => void
+    ): Model;
+    static leftJoin() {
         let model = new this;
-        return model.leftJoin.apply(model, args);
+        return model.leftJoin.apply(model, Array.from(arguments));
     }
 
-    static rightJoin(table: string, nested: (this: Query, query: Query) => void): Model;
-    static rightJoin(table: string, fields: {
-        [field: string]: any;
-    }): Model;
     static rightJoin(table: string, field1: string, field2: string): Model;
-    static rightJoin(table: string, field1: string, operator: string, field2: string): Model;
-    static rightJoin(...args) {
+    static rightJoin(
+        table: string,
+        field1: string,
+        operator: string,
+        field2: string
+    ): Model;
+    static rightJoin(table: string, fields: { [field: string]: any; }): Model;
+    static rightJoin(
+        table: string,
+        nested: (this: Query, query: Query) => void
+    ): Model;
+    static rightJoin() {
         let model = new this;
-        return model.rightJoin.apply(model, args);
+        return model.rightJoin.apply(model, Array.from(arguments));
     }
 
-    static fullJoin(table: string, nested: (this: Query, query: Query) => void): Model;
-    static fullJoin(table: string, fields: {
-        [field: string]: any;
-    }): Model;
     static fullJoin(table: string, field1: string, field2: string): Model;
-    static fullJoin(table: string, field1: string, operator: string, field2: string): Model;
-    static fullJoin(...args) {
+    static fullJoin(
+        table: string,
+        field1: string,
+        operator: string,
+        field2: string
+    ): Model;
+    static fullJoin(table: string, fields: { [field: string]: any; }): Model;
+    static fullJoin(
+        table: string,
+        nested: (this: Query, query: Query) => void
+    ): Model;
+    static fullJoin() {
         let model = new this;
-        return model.fullJoin.apply(model, args);
+        return model.fullJoin.apply(model, Array.from(arguments));
     }
 
-    static crossJoin(table: string, nested: (this: Query, query: Query) => void): Model;
-    static crossJoin(table: string, fields: {
-        [field: string]: any;
-    }): Model;
     static crossJoin(table: string, field1: string, field2: string): Model;
-    static crossJoin(table: string, field1: string, operator: string, field2: string): Model;
-    static crossJoin(...args) {
+    static crossJoin(
+        table: string,
+        field1: string,
+        operator: string,
+        field2: string
+    ): Model;
+    static crossJoin(table: string, fields: { [field: string]: any; }): Model;
+    static crossJoin(
+        table: string,
+        nested: (this: Query, query: Query) => void
+    ): Model;
+    static crossJoin() {
         let model = new this;
-        return model.fullJoin.apply(model, args);
+        return model.fullJoin.apply(model, Array.from(arguments));
     }
 
+    static where(clause: DB.Statement): Model;
+    static where(nested: (this: Query, query: Query) => void): Model;
+    static where(
+        field: string,
+        nested: (this: Query, query: Query) => void
+    ): Model;
     static where(field: string, value: any): Model;
+    static where(
+        field: string,
+        operator: string,
+        nested: (this: Query, query: Query) => void
+    ): Model;
     static where(field: string, operator: string, value: any): Model;
     static where(fields: { [field: string]: any }): Model;
-    static where(nested: (this: Query, query: Query) => void): Model;
-    static where(field: string, nested: (this: Query, query: Query) => void): Model;
-    static where(field: string, operator: string, nested: (this: Query, query: Query) => void): Model;
     static where(field, operator = null, value = undefined) {
         return (new this).where(field, operator, value);
     }
@@ -743,12 +794,27 @@ export class Model extends Query {
         return (new this).whereBetween(field, [min, max]);
     }
 
-    static whereNotBetween(field: string, [min, max]: [number, number]): Model {
+    static whereNotBetween(
+        field: string,
+        [min, max]: [number, number]
+    ): Model {
         return (new this).whereNotBetween(field, [min, max]);
     }
 
+    static whereNotIn(field: string, values: string[] | number[]): Model;
+    static whereNotIn(
+        field: string,
+        nested: (this: Query, query: Query) => void
+    ): Model;
+    static whereNotIn(field, values) {
+        return (new this).whereNotIn(field, values);
+    }
+
     static whereIn(field: string, values: string[] | number[]): Model;
-    static whereIn(field: string, nested: (this: Query, query: Query) => void): Model;
+    static whereIn(
+        field: string,
+        nested: (this: Query, query: Query) => void
+    ): Model;
     static whereIn(field, values) {
         return (new this).whereIn(field, values);
     }
@@ -779,12 +845,12 @@ export class Model extends Query {
 
     static groupBy(fields: string[]): Model;
     static groupBy(...fields: string[]): Model;
-    static groupBy(...fields) {
-        return (new this).groupBy(...fields);
+    static groupBy() {
+        return (new this).groupBy(...Array.from(arguments));
     }
 
-    static having(raw: string): Model {
-        return (new this).having(raw);
+    static having(clause: string | DB.Statement): Model {
+        return (new this).having(clause);
     }
 
     static limit(length: number, offset?: number): Model {
@@ -811,7 +877,7 @@ export class Model extends Query {
         return (new this).all();
     }
 
-    static count(field = "*"): Promise<number> {
+    static count(field?: string): Promise<number> {
         return (new this).count(field);
     }
 
@@ -831,7 +897,10 @@ export class Model extends Query {
         return (new this).sum(field);
     }
 
-    static chunk(length: number, cb: (this: Model, models: Model[]) => false | void): Promise<Model[]> {
+    static chunk(
+        length: number,
+        cb: (this: Model, models: Model[]) => false | void
+    ): Promise<Model[]> {
         return (new this).chunk(length, cb);
     }
 
@@ -843,13 +912,13 @@ export class Model extends Query {
         return (new this).getMany(options);
     }
 
-    static whereState(extra: (this: Query, query: Query) => void): Model;
     static whereState(field: string, value: any): Model;
     static whereState(field: string, operator: string, value: any): Model;
     static whereState(fields: { [field: string]: any }): Model;
-    static whereState(...args) {
+    static whereState(extra: (this: Query, query: Query) => void): Model;
+    static whereState() {
         let model = new this;
-        return model.whereState.apply(model, args);
+        return model.whereState.apply(model, Array.from(arguments));
     }
 
     static createTable(): Promise<Model> {
@@ -859,20 +928,16 @@ export class Model extends Query {
     // Associations
 
     /**
-     * Defines a `has (many)` association.
+     * @protected Defines a `has (many)` association.
      * @param foreignKey A foreign key in the associated model.
+     * @param type A field in the associated model that stores the current model
+     *  name, used to defines a polymorphic association.
      */
-    protected has(ModelClass: typeof Model, foreignKey: string): Model;
-
-    /**
-     * Defines a polymorphic `has (many)` association.
-     * @param foreignKey A foreign key in the associated model.
-     * @param type A field name in the associated model that stores the 
-     *  current model name.
-     */
-    protected has(ModelClass: typeof Model, foreignKey: string, type: string): Model;
-
-    protected has(ModelClass: typeof Model, foreignKey: string, type = ""): Model {
+    protected has(
+        ModelClass: typeof Model,
+        foreignKey: string,
+        type?: string
+    ): Model {
         let model = ModelClass.use(this);
         model.where(foreignKey, this.data[this.primary]);
         if (type) {
@@ -882,20 +947,16 @@ export class Model extends Query {
     }
 
     /**
-     * Defines a `belongs-to` association.
+     * @protected Defines a `belongs-to` association.
      * @param foreignKey A foreign key in the current model.
+     * @param type A field in the current model that stores the associated model
+     *  name, used to define a polymorphic association.
      */
-    protected belongsTo(ModelClass: typeof Model, foreignKey: string): Model;
-
-    /**
-     * Defines a polymorphic `belongs-to` association.
-     * @param foreignKey A foreign key in the current model.
-     * @param type A field name in the current model that stores the 
-     *  associated model name.
-     */
-    protected belongsTo(ModelClass: typeof Model, foreignKey: string, type: string): Model;
-
-    protected belongsTo(ModelClass: typeof Model, foreignKey: string, type = ""): Model {
+    protected belongsTo(
+        ModelClass: typeof Model,
+        foreignKey: string,
+        type?: string
+    ): Model {
         let model = ModelClass.use(this);
         model._caller = this;
         model._foreignKey = foreignKey;
@@ -907,14 +968,19 @@ export class Model extends Query {
     }
 
     /**
-     * Defines a `has (many)` association through a middle model.
+     * @protected Defines a `has (many)` association through a middle model.
      * @param MiddleClass The class of the middle model.
      * @param foreignKey1 A foreign key in the associated model that points 
      *  to the middle model.
      * @param foreignKey2 A foreign key in the middle model that points to the
      *  current model.
      */
-    protected hasThrough(ModelClass: typeof Model, MiddleClass: typeof Model, foreignKey1: string, foreignKey2: string): Model {
+    protected hasThrough(
+        ModelClass: typeof Model,
+        MiddleClass: typeof Model,
+        foreignKey1: string,
+        foreignKey2: string
+    ): Model {
         let model = new MiddleClass().use(this);
         return ModelClass.use(this).whereIn(foreignKey1, query => {
             query.select(model.primary).from(model.table)
@@ -923,14 +989,19 @@ export class Model extends Query {
     }
 
     /**
-     * Defines a `belongs-to` association through a middle model.
+     * @protected Defines a `belongs-to` association through a middle model.
      * @param MiddleClass The class of the middle model.
      * @param foreignKey1 A foreign key in the current model that points to 
      *  the middle model.
      * @param foreignKey2 A foreign key in the middle model that points to the
      *  associated model.
      */
-    protected belongsToThrough(ModelClass: typeof Model, MiddleClass: typeof Model, foreignKey1: string, foreignKey2: string): Model {
+    protected belongsToThrough(
+        ModelClass: typeof Model,
+        MiddleClass: typeof Model,
+        foreignKey1: string,
+        foreignKey2: string
+    ): Model {
         let model = new ModelClass().use(this),
             _model = new MiddleClass().use(this);
         return model.where(model.primary, query => {
@@ -940,28 +1011,22 @@ export class Model extends Query {
     }
 
     /**
-     * Defines a `has many` association via a pivot table.
+     * @protected Defines a `has many` association via a pivot table.
      * @param pivotTable The name of the pivot table.
      * @param foreignKey1 A foreign key in the pivot table that points to the 
      *  associated model.
      * @param foreignKey2 A foreign key in the pivot table that points to the
      *  current model.
+     * @param type A field in the pivot table that stores the current model 
+     *  name, used to define a polymorphic association.
      */
-    protected hasVia(ModelClass: typeof Model, pivotTable: string, foreignKey1: string, foreignKey2: string): Model;
-
-    /**
-     * Defines a polymorphic `has many` association via a pivot table.
-     * @param pivotTable The name of the pivot table.
-     * @param foreignKey1 A foreign key in the pivot table that points to the 
-     *  associated model.
-     * @param foreignKey2 A foreign key in the pivot table that points to the
-     *  current model.
-     * @param type A field name in the pivot table that stores the current
-     *  model name.
-     */
-    protected hasVia(ModelClass: typeof Model, pivotTable: string, foreignKey1: string, foreignKey2: string, type: string): Model;
-
-    protected hasVia(ModelClass: typeof Model, pivotTable: string, foreignKey1: string, foreignKey2: string, type = ""): Model {
+    protected hasVia(
+        ModelClass: typeof Model,
+        pivotTable: string,
+        foreignKey1: string,
+        foreignKey2: string,
+        type?: string
+    ): Model {
         let model = new ModelClass().use(this);
         model._caller = this;
         model._pivot = [
@@ -975,28 +1040,22 @@ export class Model extends Query {
     }
 
     /**
-     * Defines a `belongs-to many` association via a pivot table.
+     * @protected Defines a `belongs-to many` association via a pivot table.
      * @param pivotTable  The name of the pivot table.
      * @param foreignKey1 A foreign key in the pivot table that points to the
      *  current model.
      * @param foreignKey2 A foreign key in the pivot table that points to the 
      *  associated model.
+     * @param type A field in the pivot table that stores the associated model 
+     *  name, used to define a polymorphic association.
      */
-    protected belongsToVia(ModelClass: typeof Model, pivotTable: string, foreignKey1: string, foreignKey2: string): Model;
-
-    /**
-     * Defines a polymorphic `belongs-to many` association via a pivot table.
-     * @param pivotTable  The name of the pivot table.
-     * @param foreignKey1 A foreign key in the pivot table that points to the
-     *  current model.
-     * @param foreignKey2 A foreign key in the pivot table that points to the 
-     *  associated model.
-     * @param type A field name in the pivot table that stores the 
-     *  associated model name.
-     */
-    protected belongsToVia(ModelClass: typeof Model, pivotTable: string, foreignKey1: string, foreignKey2: string, type: string): Model;
-
-    protected belongsToVia(ModelClass: typeof Model, pivotTable: string, foreignKey1: string, foreignKey2: string, type = ""): Model {
+    protected belongsToVia(
+        ModelClass: typeof Model,
+        pivotTable: string,
+        foreignKey1: string,
+        foreignKey2: string,
+        type?: string
+    ): Model {
         let model = new ModelClass().use(this);
         model._caller = this;
         model._pivot = [
@@ -1009,7 +1068,7 @@ export class Model extends Query {
         return this._handleVia(model);
     }
 
-    /** Handles `model.hasVia()` or `model.belongsToVia()`. */
+    /** @private Handles `model.hasVia()` or `model.belongsToVia()`. */
     private _handleVia(model: Model, extra?: Query): Model {
         return model.whereIn(model.primary, query => {
             query.select(model._pivot[1]).from(model._pivot[0])
@@ -1032,18 +1091,18 @@ export class Model extends Query {
      * Can only be called after calling `model.hasVia()` or 
      * `model.belongsToVia()`, and can be called only once.
      */
-    wherePivot(extra: (this: Query, query: Query) => void): this;
     wherePivot(field: string, value: any): this;
     wherePivot(field: string, operator: string, value: any): this;
     wherePivot(fields: { [field: string]: any }): this;
-    wherePivot(...args) {
+    wherePivot(extra: (this: Query, query: Query) => void): this;
+    wherePivot() {
         if (!(this._caller instanceof Model)) {
             throw new ReferenceError("Model.withPivot() can only be called "
                 + "after calling Model.hasVia() or Model.belongsToVia().");
         }
 
         let query = new Query().use(this);
-        query.where.apply(query, args);
+        query.where.apply(query, Array.from(arguments));
         // reset where clause
         this["_where"] = "";
         this["_bindings"] = [];
@@ -1056,9 +1115,9 @@ export class Model extends Query {
      * Can only be called after calling `model.hasVia()`, 
      * `model.belongsToVia()`, or `model.wherePivot()`.
      */
-    withPivot(fields: string[]): this;
     withPivot(...fields: string[]): this;
-    withPivot(...args): this {
+    withPivot(fields: string[]): this;
+    withPivot(): this {
         if (!(this._caller instanceof Model)) {
             throw new ReferenceError("Model.withPivot() can only be called "
                 + "after calling Model.hasVia(), Model.belongsToVia(), or "
@@ -1070,7 +1129,9 @@ export class Model extends Query {
             foreignKey1 = pivotTable + "." + this._pivot[1],
             foreignKey2 = pivotTable + "." + this._pivot[2],
             primary = this.table + "." + this.primary,
-            fields: string[] = args[0] instanceof Array ? args[0] : args;
+            fields: string[] = arguments[0] instanceof Array
+                ? arguments[0]
+                : Array.from(arguments);
 
         fields = fields.map(field => pivotTable + "." + field);
         fields.unshift(this.table + ".*");
@@ -1085,16 +1146,9 @@ export class Model extends Query {
      * 
      * Can only be called after calling `model.belongsTo()`.
      * 
-     * @param id The value of associative primary key.
+     * @param model Associative model instance or its ID.
      */
-    associate(id: number): Promise<Model>;
-
-    /**
-     * @param model Associative model instance.
-     */
-    associate(model: Model): Promise<Model>;
-
-    associate(input: number | Model): Promise<Model> {
+    associate(model: number | Model): Promise<Model> {
         if (!(this._caller instanceof Model)) {
             throw new ReferenceError("Model.associate() can only be called "
                 + "after calling Model.belongsTo().");
@@ -1103,10 +1157,10 @@ export class Model extends Query {
         let target = this._caller,
             id: number = null;
 
-        if (typeof input === "number") {
-            id = input;
-        } else if (input instanceof Model) {
-            id = input.data[input.primary];
+        if (typeof model === "number") {
+            id = model;
+        } else if (model instanceof Model) {
+            id = model.data[model.primary];
         } else {
             throw new TypeError("The only argument passed to "
                 + "Model.associate() must be a number or an instance of "
@@ -1153,25 +1207,14 @@ export class Model extends Query {
      * Can only be called after calling `model.hasVia()` or
      * `model.belongsToVia()`.
      * 
-     * @param ids Values of associative models' primary keys.
+     * @param models Associative model instances or their IDs.
      */
-    attach(ids: number[]): Promise<Model>;
-
-    /**
-     * @param models Associative model instances.
-     */
-    attach(models: Model[]): Promise<Model>;
-
+    attach(models: (number | Model)[]): Promise<Model>;
     /**
      * @param pairs The keys represents the values of associative models' 
      *  primary keys, and values sets extra fields in the pivot table.
      */
-    attach(pairs: {
-        [id: number]: {
-            [field: string]: any
-        }
-    }): Promise<Model>;
-
+    attach(pairs: { [id: number]: { [field: string]: any } }): Promise<Model>;
     attach(models): Promise<Model> {
         let notArray = !(models instanceof Array);
         if (notArray && typeof models !== "object") {
@@ -1331,16 +1374,9 @@ export class Model extends Query {
      * Can only be called after calling `model.hasVia()` or
      * `model.belongsToVia()`.
      * 
-     * @param ids Values of associative models' primary keys.
+     * @param models Associative model instances or their IDs.
      */
-    detach(ids?: number[]): Promise<Model>;
-
-    /**
-     * @param models Associative model instances.
-     */
-    detach(models?: Model[]): Promise<Model>;
-
-    detach(models: number[] | Model[] = []): Promise<Model> {
+    detach(models: (number | Model)[] = []): Promise<Model> {
         if (!(models instanceof Array)) {
             throw new TypeError("The only argument passed to Model.detach()"
                 + " must be an array.");
@@ -1377,6 +1413,14 @@ export class Model extends Query {
 
         return query.delete().then(() => target);
     }
+}
+
+export interface Model {
+    on(
+        event: "query" | "save" | "saved" | "insert" | "inserted" | "update" | "updated" | "delete" | "deleted" | "get",
+        listener: (thisObj: this) => void
+    ): this;
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
 }
 
 // Compatible for version 2.x.

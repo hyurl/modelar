@@ -7,6 +7,7 @@ import { NotFoundError } from './Errors';
 export class User extends Model {
     table = "users";
 
+    /** @readonly */
     @field
     @primary
     @autoIncrement
@@ -27,10 +28,8 @@ export class User extends Model {
     static loginable: string[] = ["name", "email"];
 
     constructor(data?: { [field: string]: any });
-
     /**  Creates a new instance with initial data and model configurations. */
     constructor(data: { [field: string]: any }, config: ModelConfig);
-
     constructor(data?: { [field: string]: any }, config?: ModelConfig) {
         super(data, config);
         this.on("save", () => {
@@ -139,4 +138,9 @@ export class User extends Model {
     }): Promise<User> {
         return (new this).login(options);
     }
+}
+
+export interface User {
+    on(event: "query" | "save" | "saved" | "insert" | "inserted" | "update" | "updated" | "delete" | "deleted" | "get" | "login", listener: (thisObj: this) => void): this;
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
 }

@@ -1,5 +1,5 @@
 import { __extends } from "tslib";
-import assign = require("lodash/assign");
+// import assign = require("lodash/assign");
 const inspect: string | symbol = require("util").inspect.custom || "inspect";
 
 // In ES5, class inheritance of Error won't get the correct name and 

@@ -205,13 +205,13 @@ var Model = (function (_super) {
     };
     Model.prototype._handleCrease2 = function (field, step, type) {
         var _this = this;
+        var _a;
         var data, parts = [], bindings = [];
         if (typeof field == "object") {
             data = field;
         }
         else {
-            data = {};
-            data[field] = step;
+            data = (_a = {}, _a[field] = step, _a);
         }
         delete data[this.primary];
         for (var field_1 in data) {
@@ -437,9 +437,8 @@ var Model = (function (_super) {
     };
     Model.prototype[Symbol.iterator] = function () {
         var data = this.valueOf();
-        var Class = this.constructor;
         return (function () {
-            var _a, _b, _i, key, value;
+            var _a, _b, _i, key;
             return tslib_1.__generator(this, function (_c) {
                 switch (_c.label) {
                     case 0:
@@ -451,8 +450,7 @@ var Model = (function (_super) {
                     case 1:
                         if (!(_i < _a.length)) return [3, 4];
                         key = _a[_i];
-                        value = data[key];
-                        return [4, { key: key, value: value }];
+                        return [4, { key: key, value: data[key] }];
                     case 2:
                         _c.sent();
                         _c.label = 3;
@@ -502,52 +500,28 @@ var Model = (function (_super) {
         return (new this).transaction(cb);
     };
     Model.select = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
         var _a;
-        return (_a = (new this)).select.apply(_a, args);
+        return (_a = (new this)).select.apply(_a, Array.from(arguments));
     };
     Model.join = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
         var model = new this;
-        return model.join.apply(model, args);
+        return model.join.apply(model, Array.from(arguments));
     };
     Model.leftJoin = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
         var model = new this;
-        return model.leftJoin.apply(model, args);
+        return model.leftJoin.apply(model, Array.from(arguments));
     };
     Model.rightJoin = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
         var model = new this;
-        return model.rightJoin.apply(model, args);
+        return model.rightJoin.apply(model, Array.from(arguments));
     };
     Model.fullJoin = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
         var model = new this;
-        return model.fullJoin.apply(model, args);
+        return model.fullJoin.apply(model, Array.from(arguments));
     };
     Model.crossJoin = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
         var model = new this;
-        return model.fullJoin.apply(model, args);
+        return model.fullJoin.apply(model, Array.from(arguments));
     };
     Model.where = function (field, operator, value) {
         if (operator === void 0) { operator = null; }
@@ -561,6 +535,9 @@ var Model = (function (_super) {
     Model.whereNotBetween = function (field, _a) {
         var min = _a[0], max = _a[1];
         return (new this).whereNotBetween(field, [min, max]);
+    };
+    Model.whereNotIn = function (field, values) {
+        return (new this).whereNotIn(field, values);
     };
     Model.whereIn = function (field, values) {
         return (new this).whereIn(field, values);
@@ -584,15 +561,11 @@ var Model = (function (_super) {
         return (new this).random();
     };
     Model.groupBy = function () {
-        var fields = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            fields[_i] = arguments[_i];
-        }
         var _a;
-        return (_a = (new this)).groupBy.apply(_a, fields);
+        return (_a = (new this)).groupBy.apply(_a, Array.from(arguments));
     };
-    Model.having = function (raw) {
-        return (new this).having(raw);
+    Model.having = function (clause) {
+        return (new this).having(clause);
     };
     Model.limit = function (length, offset) {
         return (new this).limit(length, offset);
@@ -613,7 +586,6 @@ var Model = (function (_super) {
         return (new this).all();
     };
     Model.count = function (field) {
-        if (field === void 0) { field = "*"; }
         return (new this).count(field);
     };
     Model.max = function (field) {
@@ -639,18 +611,13 @@ var Model = (function (_super) {
         return (new this).getMany(options);
     };
     Model.whereState = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
         var model = new this;
-        return model.whereState.apply(model, args);
+        return model.whereState.apply(model, Array.from(arguments));
     };
     Model.createTable = function () {
         return (new this).createTable();
     };
     Model.prototype.has = function (ModelClass, foreignKey, type) {
-        if (type === void 0) { type = ""; }
         var model = ModelClass.use(this);
         model.where(foreignKey, this.data[this.primary]);
         if (type) {
@@ -659,7 +626,6 @@ var Model = (function (_super) {
         return model;
     };
     Model.prototype.belongsTo = function (ModelClass, foreignKey, type) {
-        if (type === void 0) { type = ""; }
         var model = ModelClass.use(this);
         model._caller = this;
         model._foreignKey = foreignKey;
@@ -686,7 +652,6 @@ var Model = (function (_super) {
         });
     };
     Model.prototype.hasVia = function (ModelClass, pivotTable, foreignKey1, foreignKey2, type) {
-        if (type === void 0) { type = ""; }
         var model = new ModelClass().use(this);
         model._caller = this;
         model._pivot = [
@@ -699,7 +664,6 @@ var Model = (function (_super) {
         return this._handleVia(model);
     };
     Model.prototype.belongsToVia = function (ModelClass, pivotTable, foreignKey1, foreignKey2, type) {
-        if (type === void 0) { type = ""; }
         var model = new ModelClass().use(this);
         model._caller = this;
         model._pivot = [
@@ -726,48 +690,42 @@ var Model = (function (_super) {
         });
     };
     Model.prototype.wherePivot = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
         if (!(this._caller instanceof Model)) {
             throw new ReferenceError("Model.withPivot() can only be called "
                 + "after calling Model.hasVia() or Model.belongsToVia().");
         }
         var query = new Query_1.Query().use(this);
-        query.where.apply(query, args);
+        query.where.apply(query, Array.from(arguments));
         this["_where"] = "";
         this["_bindings"] = [];
         return this._caller._handleVia(this, query);
     };
     Model.prototype.withPivot = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
         if (!(this._caller instanceof Model)) {
             throw new ReferenceError("Model.withPivot() can only be called "
                 + "after calling Model.hasVia(), Model.belongsToVia(), or "
                 + "Model.wherePivot().");
         }
-        var caller = this._caller, pivotTable = this._pivot[0], foreignKey1 = pivotTable + "." + this._pivot[1], foreignKey2 = pivotTable + "." + this._pivot[2], primary = this.table + "." + this.primary, fields = args[0] instanceof Array ? args[0] : args;
+        var caller = this._caller, pivotTable = this._pivot[0], foreignKey1 = pivotTable + "." + this._pivot[1], foreignKey2 = pivotTable + "." + this._pivot[2], primary = this.table + "." + this.primary, fields = arguments[0] instanceof Array
+            ? arguments[0]
+            : Array.from(arguments);
         fields = fields.map(function (field) { return pivotTable + "." + field; });
         fields.unshift(this.table + ".*");
         return this.select(fields)
             .join(pivotTable, foreignKey1, primary)
             .where(foreignKey2, caller.data[caller.primary]);
     };
-    Model.prototype.associate = function (input) {
+    Model.prototype.associate = function (model) {
         if (!(this._caller instanceof Model)) {
             throw new ReferenceError("Model.associate() can only be called "
                 + "after calling Model.belongsTo().");
         }
         var target = this._caller, id = null;
-        if (typeof input === "number") {
-            id = input;
+        if (typeof model === "number") {
+            id = model;
         }
-        else if (input instanceof Model) {
-            id = input.data[input.primary];
+        else if (model instanceof Model) {
+            id = model.data[model.primary];
         }
         else {
             throw new TypeError("The only argument passed to "

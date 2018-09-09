@@ -23,69 +23,43 @@ var Query = (function (_super) {
         return _this;
     }
     Query.prototype.field = function (name) {
-        return new Query.Field(name);
+        return DB_1.i(templateObject_1 || (templateObject_1 = tslib_1.__makeTemplateObject(["", ""], ["", ""])), name);
     };
     Query.prototype.select = function () {
         var _this = this;
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        var fields = args[0] instanceof Array ? args[0] : args;
+        var fields = arguments[0] instanceof Array
+            ? arguments[0]
+            : Array.from(arguments);
         fields = fields.map(function (field) { return _this.backquote(field); });
         this._selects = fields.join(", ");
         return this;
     };
     Query.prototype.from = function () {
-        var tables = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            tables[_i] = arguments[_i];
+        if (arguments.length > 1) {
+            this.table = Array.from(arguments).join(", ");
         }
-        if (tables.length > 1) {
-            this.table = tables.join(", ");
-        }
-        else if (tables[0] instanceof Array) {
-            this.table = tables[0].join(", ");
+        else if (arguments[0] instanceof Array) {
+            this.table = arguments[0].join(", ");
         }
         else {
-            this.table = tables[0];
+            this.table = arguments[0];
         }
         return this;
     };
     Query.prototype.join = function (table) {
-        var args = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            args[_i - 1] = arguments[_i];
-        }
-        return this._handleJoin.apply(this, [table, "inner"].concat(args));
+        return this._handleJoin.apply(this, [table, "inner"].concat(Array.from(arguments).slice(1)));
     };
     Query.prototype.leftJoin = function (table) {
-        var args = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            args[_i - 1] = arguments[_i];
-        }
-        return this._handleJoin.apply(this, [table, "left"].concat(args));
+        return this._handleJoin.apply(this, [table, "left"].concat(Array.from(arguments).slice(1)));
     };
     Query.prototype.rightJoin = function (table) {
-        var args = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            args[_i - 1] = arguments[_i];
-        }
-        return this._handleJoin.apply(this, [table, "right"].concat(args));
+        return this._handleJoin.apply(this, [table, "right"].concat(Array.from(arguments).slice(1)));
     };
     Query.prototype.fullJoin = function (table) {
-        var args = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            args[_i - 1] = arguments[_i];
-        }
-        return this._handleJoin.apply(this, [table, "full"].concat(args));
+        return this._handleJoin.apply(this, [table, "full"].concat(Array.from(arguments).slice(1)));
     };
     Query.prototype.crossJoin = function (table) {
-        var args = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            args[_i - 1] = arguments[_i];
-        }
-        return this._handleJoin.apply(this, [table, "cross"].concat(args));
+        return this._handleJoin.apply(this, [table, "cross"].concat(Array.from(arguments).slice(1)));
     };
     Query.prototype._handleJoin = function (table, type) {
         var args = [];
@@ -104,8 +78,8 @@ var Query = (function (_super) {
                 var joins = [];
                 for (var field in args[0]) {
                     var value = args[0][field], statement = this.backquote(field) + " = ";
-                    if (value instanceof Query.Field) {
-                        statement += this.backquote(value.name);
+                    if (value instanceof DB_1.DB.Identifier) {
+                        statement += this.backquote(value);
                     }
                     else {
                         statement += "?";
@@ -124,20 +98,19 @@ var Query = (function (_super) {
                 }
             }
         }
-        else if (args.length == 2) {
-            this._join += this.backquote(args[0]) + " = " + this.backquote(args[1]);
-        }
-        else if (args.length == 3) {
-            this._join += this.backquote(args[0])
-                + " " + this.backquote(args[1]) + " "
-                + this.backquote(args[2]);
+        else {
+            var field1 = args[0], op = args.length == 2 ? "=" : args[1], field2 = args.length == 2 ? args[1] : args[2];
+            this._join += this.backquote(field1)
+                + " " + op + " "
+                + this.backquote(field2);
         }
         return this;
     };
     Query.prototype.where = function (field, operator, value) {
         if (operator === void 0) { operator = null; }
         if (value === void 0) { value = undefined; }
-        if (typeof field === "object") {
+        var isTpl = field instanceof DB_1.DB.Statement;
+        if (typeof field === "object" && !isTpl) {
             for (var key in field) {
                 this.where(key, "=", field[key]);
             }
@@ -145,7 +118,12 @@ var Query = (function (_super) {
         else {
             if (this._where)
                 this._where += " and ";
-            if (field instanceof Function) {
+            if (isTpl) {
+                var _a = this.processStatement(field), sql = _a.sql, bindings = _a.bindings;
+                this._where += sql;
+                this._bindings = this._bindings.concat(bindings);
+            }
+            else if (field instanceof Function) {
                 this._handleNestedWhere(field);
             }
             else if (operator instanceof Function) {
@@ -163,7 +141,8 @@ var Query = (function (_super) {
     Query.prototype.orWhere = function (field, operator, value) {
         if (operator === void 0) { operator = null; }
         if (value === void 0) { value = undefined; }
-        if (typeof field === "object") {
+        var isTpl = field instanceof DB_1.DB.Statement;
+        if (typeof field == "object" && !isTpl) {
             for (var key in field) {
                 this.orWhere(key, "=", field[key]);
             }
@@ -171,7 +150,12 @@ var Query = (function (_super) {
         else {
             if (this._where)
                 this._where += " or ";
-            if (field instanceof Function) {
+            if (isTpl) {
+                var _a = this.processStatement(field), sql = _a.sql, bindings = _a.bindings;
+                this._where += sql;
+                this._bindings = this._bindings.concat(bindings);
+            }
+            else if (field instanceof Function) {
                 this._handleNestedWhere(field);
             }
             else if (operator instanceof Function) {
@@ -192,8 +176,8 @@ var Query = (function (_super) {
             operator = "=";
         }
         this._where += this.backquote(field) + " " + operator;
-        if (value instanceof Query.Field) {
-            this._where += " " + this.backquote(value.name);
+        if (value instanceof DB_1.DB.Identifier) {
+            this._where += " " + this.backquote(value);
         }
         else {
             this._where += " ?";
@@ -245,8 +229,8 @@ var Query = (function (_super) {
         if (conj === void 0) { conj = "and"; }
         if (this._where)
             this._where += " " + conj + " ";
-        this._where += this.backquote(field) + (between ? "" : " not") +
-            " between ? and ?";
+        this._where += this.backquote(field) + (between ? "" : " not")
+            + " between ? and ?";
         this._bindings = this._bindings.concat([min, max]);
         return this;
     };
@@ -272,8 +256,8 @@ var Query = (function (_super) {
         }
         else {
             var _values = fill(Array(values.length), "?");
-            this._where += this.backquote(field) + (isIn ? "" : " not") +
-                " in (" + _values.join(", ") + ")";
+            this._where += this.backquote(field) + (isIn ? "" : " not")
+                + " in (" + _values.join(", ") + ")";
             this._bindings = this._bindings.concat(values);
             return this;
         }
@@ -281,8 +265,8 @@ var Query = (function (_super) {
     Query.prototype._handleInChild = function (field, cb, isIn) {
         if (isIn === void 0) { isIn = true; }
         var query = this._getQueryBy(cb);
-        this._where += this.backquote(field) + (isIn ? "" : " not") +
-            " in (" + query.sql + ")";
+        this._where += this.backquote(field) + (isIn ? "" : " not")
+            + " in (" + query.sql + ")";
         this._bindings = this._bindings.concat(query._bindings);
         return this;
     };
@@ -303,8 +287,8 @@ var Query = (function (_super) {
         if (conj === void 0) { conj = "and"; }
         if (this._where)
             this._where += " " + conj + " ";
-        this._where += this.backquote(field) + " is " +
-            (isNull ? "" : "not ") + "null";
+        this._where += this.backquote(field) + " is " + (isNull ? "" : "not ")
+            + "null";
         return this;
     };
     Query.prototype.whereExists = function (nested) {
@@ -351,8 +335,15 @@ var Query = (function (_super) {
         this._groupBy = fields.join(", ");
         return this;
     };
-    Query.prototype.having = function (raw) {
-        this._having += (this._having ? " and " : "") + raw;
+    Query.prototype.having = function (clause) {
+        if (clause instanceof DB_1.DB.Statement) {
+            var _a = this.processStatement(clause), sql = _a.sql, bindings = _a.bindings;
+            this._having += (this._having ? " and " : "") + sql;
+            this._bindings = this._bindings.concat(bindings);
+        }
+        else {
+            this._having += (this._having ? " and " : "") + clause;
+        }
         return this;
     };
     Query.prototype.limit = function (length, offset) {
@@ -370,6 +361,11 @@ var Query = (function (_super) {
             query.sql = query.getSelectSQL();
             this._union += (all ? "all " : "") + query.sql;
             this._bindings = this._bindings.concat(query._bindings);
+        }
+        else if (query instanceof DB_1.DB.Statement) {
+            var _a = this.processStatement(query), sql = _a.sql, bindings = _a.bindings;
+            this._union += (all ? "all " : "") + sql;
+            this._bindings = this._bindings.concat(bindings);
         }
         else {
             this._union += (all ? "all " : "") + query;
@@ -417,13 +413,13 @@ var Query = (function (_super) {
         return this._handleCrease(field, step, "-");
     };
     Query.prototype._handleCrease = function (field, step, type) {
+        var _a;
         var data, parts = [], bindings = [];
         if (typeof field == "object") {
             data = field;
         }
         else {
-            data = {};
-            data[field] = step;
+            data = (_a = {}, _a[field] = step, _a);
         }
         for (var field_1 in data) {
             if (data[field_1] > 0) {
@@ -474,6 +470,21 @@ var Query = (function (_super) {
             return data instanceof Array ? data : [data];
         });
     };
+    Query.prototype._handleSelect = function () {
+        var _this = this;
+        this.sql = this.getSelectSQL();
+        return this.query(this.sql, this._bindings).then(function (query) {
+            _this.bindings = [].concat(_this._bindings);
+            return query.data;
+        });
+    };
+    Query.prototype._handleAggregate = function (name, field) {
+        this._selects = name + "(" + this.backquote(field) + ") as "
+            + this.backquote("num");
+        return this._handleSelect().then(function (data) {
+            return parseFloat(data[0].num);
+        });
+    };
     Query.prototype.count = function (field) {
         if (field === void 0) { field = "*"; }
         if (field != "*" && this._distinct)
@@ -503,12 +514,10 @@ var Query = (function (_super) {
                 return _this.limit(length, offset).all().then(function (data) {
                     var ok = cb.call(_this, data);
                     offset += length;
-                    if (data.length == length && ok !== false && offset < total) {
+                    if (data.length == length && ok !== false && offset < total)
                         return loop();
-                    }
-                    else {
+                    else
                         return data;
-                    }
                 });
             };
             return loop();
@@ -545,35 +554,11 @@ var Query = (function (_super) {
             }
         });
     };
-    Query.prototype._handleAggregate = function (name, field) {
-        this._selects = name + "(" + this.backquote(field) + ") as " +
-            this.backquote("num");
-        return this._handleSelect().then(function (data) {
-            return parseFloat(data[0].num);
-        });
-    };
-    Query.prototype._handleSelect = function () {
-        var _this = this;
-        this.sql = this.getSelectSQL();
-        return this.query(this.sql, this._bindings).then(function (query) {
-            _this.bindings = [].concat(_this._bindings);
-            return query.data;
-        });
-    };
     Query.prototype.getSelectSQL = function () {
         return this.adapter.getSelectSQL(this);
     };
     return Query;
 }(DB_1.DB));
 exports.Query = Query;
-(function (Query) {
-    var Field = (function () {
-        function Field(name) {
-            this.name = name;
-        }
-        return Field;
-    }());
-    Query.Field = Field;
-})(Query = exports.Query || (exports.Query = {}));
-exports.Query = Query;
+var templateObject_1;
 //# sourceMappingURL=Query.js.map

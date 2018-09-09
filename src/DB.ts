@@ -44,10 +44,14 @@ export class DB extends EventEmitter {
     /** The data fetched by executing a select statement. */
     data: any[] | { [field: string]: any };
 
+    /** @private */
     private _events: { [event: string]: any };
+    /** @private */
     private _eventsCount: number;
+    /** @private */
     private _adapter: Adapter;
 
+    /** @private */
     private static _events: { [event: string]: any } = {};
     static config = DBConfig;
     static adapters: { [type: string]: typeof Adapter | any } = {
@@ -58,10 +62,8 @@ export class DB extends EventEmitter {
 
     /** Creates a new DB instance with a specified database name. */
     constructor(database: string);
-
     /** Creates a new DB instance with specified configurations. */
     constructor(config?: DBConfig);
-
     constructor(config: string | DBConfig) {
         super();
         if (typeof config == "string")
@@ -76,6 +78,7 @@ export class DB extends EventEmitter {
         this._eventsCount = Object.keys(this._events).length;
     }
 
+    /** @protected */
     protected get adapter(): Adapter {
         let Class = <typeof DB>this.constructor;
         if (!this._adapter) {
@@ -89,6 +92,7 @@ export class DB extends EventEmitter {
         this._adapter = v;
     }
 
+    /** @private */
     private _getDSN(): string {
         if (this.config.connectionString)
             return this.config.connectionString;
@@ -142,6 +146,9 @@ export class DB extends EventEmitter {
         let quote = this.adapter.quote || "'",
             re = new RegExp(quote, "g");
 
+        if (value instanceof DB.Identifier)
+            return this.backquote(value);
+
         switch (typeof value) {
             case "string":
                 value = value.replace(/\\/g, "\\\\").replace(re, "\\" + quote);
@@ -166,9 +173,13 @@ export class DB extends EventEmitter {
      * @param identifier An identifier (table name or field name) that needs 
      *  to be quoted.
      */
-    backquote(identifier: string): string {
-        if (typeof identifier !== "string")
-            return identifier;
+    backquote(identifier: string | DB.Identifier): string {
+        identifier = identifier instanceof DB.Identifier
+            ? identifier.name
+            : identifier;
+
+        if (typeof identifier != "string")
+            return String(identifier);
 
         let sep = identifier.indexOf(",") > 0 ? "," : ".",
             parts = identifier.split(sep).map(part => part.trim()),
@@ -233,7 +244,7 @@ export class DB extends EventEmitter {
         return this;
     }
 
-    /** Opens connection if it's not opened. */
+    /** @private Opens connection if it's not opened. */
     private ensureConnect(): Promise<this> {
         if (!this.adapter.connection) {
             return this.connect();
@@ -250,13 +261,24 @@ export class DB extends EventEmitter {
      */
     query(sql: string, bindings?: any[]): Promise<this>;
     query(sql: string, ...bindings: any[]): Promise<this>;
-    query(sql: string, ...bindings: any[]) {
+    /**
+     * Executes a SQL statement written in an ES6 `tagged template` string.
+     * @example db.query(s`select from article where ${i`id`} = ${1}`)
+     */
+    query(sql: DB.Statement): Promise<this>;
+    query(sql: string | DB.Statement, ...bindings: any[]) {
         return this.ensureConnect().then(() => {
-            if (bindings[0] instanceof Array)
-                bindings = bindings[0];
+            if (sql instanceof DB.Statement) {
+                let res = this.processStatement(sql);
+                this.sql = res.sql.trim();
+                this.bindings = [].concat(res.bindings);
+            } else {
+                if (bindings[0] instanceof Array)
+                    bindings = bindings[0];
 
-            this.sql = sql.trim();
-            this.bindings = [].concat(bindings);
+                this.sql = (<string>sql).trim();
+                this.bindings = [].concat(bindings);
+            }
 
             // remove the trailing ';' in the sql.
             if (this.sql[this.sql.length - 1] == ";")
@@ -268,27 +290,22 @@ export class DB extends EventEmitter {
             this.command = command;
             this.emit("query", this);
 
-            return this.adapter.query(this, sql, bindings);
+            return this.adapter.query(this, this.sql, this.bindings);
         });
     }
 
-    /** Begins transaction. */
-    transaction(): Promise<this>;
-
     /**
-     * Begins transaction and handle actions in a callback function.
+     * Begins transaction.
      * 
-     * @param cb The actions in this function will be automatically handled, 
-     *  that means if the program goes well, the transaction will be 
+     * @param cb If provided, the actions in this function will be automatically
+     *  handled, that means if the program goes well, the transaction will be 
      *  automatically committed, otherwise it will be automatically rolled 
      *  back.
      */
-    transaction(cb: (db: this) => any): Promise<this>;
-
-    transaction(cb?: (db: this) => any) {
+    transaction(cb?: (db: this) => any): Promise<this> {
         return this.ensureConnect().then(() => {
             return this.adapter.transaction(this, cb);
-        });
+        }) as Promise<this>;
     }
 
     /** Commits the transaction when things going well. */
@@ -305,7 +322,10 @@ export class DB extends EventEmitter {
         });
     }
 
-    /** Releases the connection. */
+    /**
+     * Releases the connection.
+     * @alias DB.recycle()
+     */
     release(): void {
         return this.adapter.release();
     }
@@ -318,6 +338,37 @@ export class DB extends EventEmitter {
     /** Closes the connection. */
     close(): void {
         return this.adapter.close();
+    }
+
+    /** @protected */
+    protected processStatement(callSite: DB.Statement): {
+        sql: string;
+        bindings: any[]
+    } {
+        let sql = "",
+            bindings: any[] = [];
+
+        callSite.pieces.forEach((piece, i) => {
+            if (i > 0) {
+                let j = i - 1;
+
+                if (callSite.bindings[j] instanceof DB.Statement) {
+                    // dealing with nested statement.
+                    let res = this.processStatement(callSite.bindings[j]);
+                    sql += res.sql;
+                    bindings = bindings.concat(res.bindings);
+                } else if (callSite.bindings[j] instanceof DB.Identifier) {
+                    sql += this.backquote(callSite.bindings[j].name);
+                } else {
+                    sql += "?";
+                    bindings.push(callSite.bindings[j]);
+                }
+            }
+
+            sql += piece
+        });
+
+        return { sql, bindings };
     }
 
     /** Initiates database configurations for all instances. */
@@ -375,6 +426,81 @@ export class DB extends EventEmitter {
     static destroy(): void {
         return this.close();
     }
+}
+
+export interface DB {
+    on(event: "query", listener: (thisObj: this) => void): this;
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
+}
+
+export namespace DB {
+    /**
+     * Represents an statement object which contains both the information of SQL
+     * statement and binding parameters.
+     * The statement should be produced via tag `s` and a template string 
+     * instead of instantiating this class.
+     * @example
+     *  var statement = s`select * from articles where id = ${1}`;
+     */
+    export class Statement {
+        constructor(
+            public readonly pieces: TemplateStringsArray,
+            public readonly bindings: any[]
+        ) { }
+    }
+
+    /**
+     * Represents a database identifier object.
+     * The identifier should be produced via tag `i` and a template string 
+     * instead of instantiating this class.
+     * @example
+     *  var table = i`articles`;
+     *  var field = i`id`;
+     *  var statement = s`select * from ${table} where ${field} = ${1}`;
+     */
+    export class Identifier {
+        constructor(public readonly name: string) { }
+    }
+
+    export type StatementTag = (
+        callSite: TemplateStringsArray,
+        ...bindings: any[]
+    ) => Statement;
+
+    export type IdentifierTag = (
+        callSite: TemplateStringsArray,
+        ...bindings: any[]
+    ) => Identifier;
+}
+
+/**
+ * Produces a DB.Statement instance via an ES6 `tagged template` string, the 
+ * variables will be automatically bound as parameters or as fields.
+ * @example
+ *  var statement = s`select * from articles where id = ${1}`;
+ */
+export const s: DB.StatementTag = (
+    callSite: TemplateStringsArray,
+    ...bindings: any[]
+) => {
+    return new DB.Statement(callSite, bindings);
+}
+
+/**
+ * Produces a DB.Identifier instance via an ES6 `tagged template` string.
+ * @example
+ *  var table = i`articles`;
+ *  var field = i`id`;
+ *  var statement = s`select * from ${table} where ${field} = ${1}`;
+ */
+export const i: DB.IdentifierTag = (
+    callSite: TemplateStringsArray,
+    ...bindings: any[]
+) => {
+    let name = callSite.map((str, i) => {
+        return i > 0 ? bindings[i - 1] + str : str;
+    }).join("");
+    return new DB.Identifier(name);
 }
 
 // Compatible for version 2.x.

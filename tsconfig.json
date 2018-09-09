@@ -15,13 +15,16 @@
         "lib": [
             "es5",
             "es2015.promise",
-            "es2015.symbol"
+            "es2015.symbol",
+            "es2015.iterable",
+            "es2015.generator"
         ]
     },
-    "files": [
+    "includes": [
         "src/index.ts"
     ],
     "exclude": [
-        "node_modules/*"
+        "examples/*",
+        "./node_modules/*"
     ]
 }
