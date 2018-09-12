@@ -109,24 +109,25 @@ export const ModelConfig: ModelConfig = {
     searchable: null
 };
 
-export interface PaginatedRecords {
-    /** The current page. */
-    page: number;
+export interface PaginatedArray<T> extends Array<T> {
+    readonly page: number;
     /** A number of all record pages. */
-    pages: number;
+    readonly pages: number;
     /** The top limit of per page. */
-    limit: number;
+    readonly limit: number;
     /** A number of all record counts. */
-    total: number;
-    data: any[]
+    readonly total: number;
 }
 
-export interface PaginatedModels<T extends Model> extends PaginatedRecords {
-    orderBy?: string,
-    sequence?: "asc" | "desc" | "rand",
+export interface PaginatedRecords<T = any> extends PaginatedArray<T> {
+    readonly data: T[]
+}
+
+export interface PaginatedModels<T extends Model> extends PaginatedRecords<T> {
+    readonly orderBy?: string,
+    readonly sequence?: "asc" | "desc" | "rand",
     /** Used for vague searching. */
-    keywords?: string | string[]
-    data: T[]
+    readonly keywords?: string | string[]
 }
 
 export interface ModelGetManyOptions {

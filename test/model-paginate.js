@@ -33,17 +33,14 @@ describe("Model.prototype.paginate()", function () {
             var offset = 0;
 
             return (new Model(null, modelConf)).use(db).whereIn("id", ids)
-                .paginate(1, 5).then(function (res) {
-                    var info = Object.assign({}, res),
-                        models = res.data;
+                .paginate(1, 5).then(function (models) {
+                    assert.strictEqual(models.page, 1);
+                    assert.strictEqual(models.pages, 2);
+                    assert.strictEqual(models.limit, 5);
+                    assert.strictEqual(models.total, 10);
+                    assert.ok(models.data instanceof Array);
+                    assert.strictEqual(models.data.length, models.length);
 
-                    delete info.data;
-                    assert.deepStrictEqual(info, {
-                        page: 1,
-                        pages: 2,
-                        limit: 5,
-                        total: 10,
-                    });
                     for (var i in models) {
                         assert(models[i] instanceof Model);
                         assert.deepStrictEqual(models[i].data, Object.assign({

@@ -913,22 +913,33 @@ export class Query extends DB {
         // Get all counts of records.
         return query.count().then(total => {
             if (!total) { // If there is no record, return immediately.
-                return {
-                    page,
-                    pages: 0,
-                    limit: length,
-                    total,
-                    data: [],
-                }
+                let res = [];
+                Object.defineProperties(res, {
+                    page: { value: page },
+                    pages: { value: 0 },
+                    limit: { value: length },
+                    total: { value: total },
+                    data: {
+                        get() {
+                            return Array.from(this);
+                        }
+                    }
+                });
+                return <any>res;
             } else { // If the are records, continue fetching data.
                 return this.limit(length, offset).all().then(data => {
-                    return {
-                        page,
-                        pages: Math.ceil(total / length),
-                        limit: length,
-                        total,
-                        data,
-                    };
+                    Object.defineProperties(data, {
+                        page: { value: page },
+                        pages: { value: Math.ceil(total / length) },
+                        limit: { value: length },
+                        total: { value: total },
+                        data: {
+                            get() {
+                                return Array.from(this);
+                            }
+                        }
+                    });
+                    return data;
                 });
             }
         });

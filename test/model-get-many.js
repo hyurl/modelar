@@ -33,22 +33,18 @@ describe("Model.prototype.getMany()", function () {
             var _model = new Model(null, modelConf);
 
             return _model.use(db).whereIn("id", ids)
-                .getMany().then(function (res) {
+                .getMany().then(function (models) {
                     assert.equal(_model.sql, "select * from `users` where `id` in (" + Array(10).fill("?").join(", ") + ") order by `id` asc limit 10");
+                    assert.strictEqual(models.page, 1);
+                    assert.strictEqual(models.pages, 1);
+                    assert.strictEqual(models.limit, 10);
+                    assert.strictEqual(models.total, 10);
+                    assert.strictEqual(models.keywords, "");
+                    assert.strictEqual(models.orderBy, "id");
+                    assert.strictEqual(models.sequence, "asc");
+                    assert.ok(Array.isArray(models.data))
+                    assert.strictEqual(models.data.length, models.length);
 
-                    var info = Object.assign({}, res),
-                        models = res.data;
-
-                    delete info.data;
-                    assert.deepStrictEqual(info, {
-                        page: 1,
-                        pages: 1,
-                        limit: 10,
-                        total: 10,
-                        keywords: "",
-                        orderBy: "id",
-                        sequence: "asc"
-                    });
                     for (var i in models) {
                         assert(models[i] instanceof Model);
                         assert.deepStrictEqual(models[i].data, Object.assign({
@@ -65,23 +61,18 @@ describe("Model.prototype.getMany()", function () {
                     limit: 5,
                     sequence: "desc",
                     keywords: "i@hyurl.com"
-                }).then(function (res) {
+                }).then(function (models) {
                     assert.equal(_model.sql, "select * from `users` where `id` in (" + Array(10).fill("?").join(", ") + ") and ((`name` like ?) or (`email` like ?)) order by `id` desc limit 5,5");
                     assert.deepStrictEqual(_model.bindings, [].concat(ids, ["%i@hyurl.com%", "%i@hyurl.com%"]));
-
-                    var info = Object.assign({}, res),
-                        models = res.data;
-
-                    delete info.data;
-                    assert.deepStrictEqual(info, {
-                        page: 2,
-                        pages: 2,
-                        limit: 5,
-                        total: 10,
-                        keywords: "i@hyurl.com",
-                        orderBy: "id",
-                        sequence: "desc"
-                    });
+                    assert.strictEqual(models.page, 2);
+                    assert.strictEqual(models.pages, 2);
+                    assert.strictEqual(models.limit, 5);
+                    assert.strictEqual(models.total, 10);
+                    assert.strictEqual(models.keywords, "i@hyurl.com");
+                    assert.strictEqual(models.orderBy, "id");
+                    assert.strictEqual(models.sequence, "desc");
+                    assert.ok(Array.isArray(models.data))
+                    assert.strictEqual(models.data.length, models.length);
 
                     var _ids = [].concat(ids).slice(0, 5);
                     _ids.reverse();

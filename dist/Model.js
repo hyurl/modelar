@@ -395,7 +395,12 @@ var Model = (function (_super) {
             });
         }
         return this.paginate(options.page, options.limit).then(function (info) {
-            return assign(info, options);
+            Object.defineProperties(info, {
+                orderBy: { value: options.orderBy },
+                sequence: { value: options.sequence },
+                keywords: { value: options.keywords }
+            });
+            return info;
         });
     };
     Model.prototype.whereState = function () {

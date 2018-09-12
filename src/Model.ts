@@ -5,7 +5,8 @@ import {
     DBConfig,
     PaginatedModels,
     ModelGetManyOptions,
-    FieldConfig
+    FieldConfig,
+    PaginatedRecords
 } from "./interfaces";
 import { Table } from "./Table";
 import { UpdateError, DeletionError, NotFoundError } from "./Errors";
@@ -502,7 +503,7 @@ export class Model extends Query {
      * @param length The top limit of how many records that each page will
      *  carry.
      */
-    paginate(page: number, length?: number): Promise<PaginatedModels<this>> {
+    paginate(page: number, length?: number): Promise<PaginatedRecords<this>> {
         return super.paginate(page, length);
     }
 
@@ -565,7 +566,13 @@ export class Model extends Query {
 
         // Get paginated information.
         return this.paginate(options.page, options.limit).then(info => {
-            return assign(info, options);
+            Object.defineProperties(info, {
+                orderBy: { value: options.orderBy },
+                sequence: { value: options.sequence },
+                keywords: { value: options.keywords }
+            });
+            return info;
+            // return assign(info, options);
         });
     }
 

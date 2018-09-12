@@ -29,3 +29,7 @@ export class User extends _User {
         return this.has(Comment, "commentable_id", "commentable_type");
     }
 }
+
+new User().getMany().then(users => {
+    users.keywords
+})

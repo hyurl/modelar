@@ -24,39 +24,42 @@ describe("Query.prototype.paginate()", function () {
                 ids.push(query.insertId);
             }
 
+            /** @type {any[]} */
             var res = yield query.whereIn("id", ids).limit(10).paginate(1);
             assert.equal(query.sql, "select * from `users` where `id` in (" + Array(20).fill("?").join(", ") + ") limit 10");
 
             var _data = Array(10).fill({});
             for (var i in _data) {
                 _data[i] = Object.assign({
-                    id: res.data[0].id + parseInt(i)
+                    id: res[0].id + parseInt(i)
                 }, data);
             }
-            assert.deepStrictEqual(res, {
-                page: 1,
-                pages: 2,
-                limit: 10,
-                total: 20,
-                data: _data
-            });
 
-            var res2 = yield query2.whereIn("id", ids).paginate(3, 5);
+            assert.strictEqual(res.page, 1);
+            assert.strictEqual(res.pages, 2);
+            assert.strictEqual(res.limit, 10);
+            assert.strictEqual(res.total, 20);
+            assert.ok(res.data instanceof Array);
+            assert.strictEqual(res.data.length, res.length);
+            assert.deepStrictEqual(res.data, _data);
+
+            res = yield query2.whereIn("id", ids).paginate(3, 5);
             assert.equal(query2.sql, "select * from `users` where `id` in (" + Array(20).fill("?").join(", ") + ") limit 10,5");
 
-            var _data = Array(5).fill({});
+            _data = Array(5).fill({});
             for (var i in _data) {
                 _data[i] = Object.assign({
-                    id: res2.data[0].id + parseInt(i)
+                    id: res[0].id + parseInt(i)
                 }, data);
             }
-            assert.deepStrictEqual(res2, {
-                page: 3,
-                pages: 4,
-                limit: 5,
-                total: 20,
-                data: _data
-            });
+
+            assert.strictEqual(res.page, 3);
+            assert.strictEqual(res.pages, 4);
+            assert.strictEqual(res.limit, 5);
+            assert.strictEqual(res.total, 20);
+            assert.ok(res.data instanceof Array);
+            assert.strictEqual(res.data.length, res.length);
+            assert.deepStrictEqual(res.data, _data);
         }).then(function () {
             db.close();
             done();

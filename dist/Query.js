@@ -533,23 +533,34 @@ var Query = (function (_super) {
         query._bindings = this._bindings;
         return query.count().then(function (total) {
             if (!total) {
-                return {
-                    page: page,
-                    pages: 0,
-                    limit: length,
-                    total: total,
-                    data: [],
-                };
+                var res = [];
+                Object.defineProperties(res, {
+                    page: { value: page },
+                    pages: { value: 0 },
+                    limit: { value: length },
+                    total: { value: total },
+                    data: {
+                        get: function () {
+                            return Array.from(this);
+                        }
+                    }
+                });
+                return res;
             }
             else {
                 return _this.limit(length, offset).all().then(function (data) {
-                    return {
-                        page: page,
-                        pages: Math.ceil(total / length),
-                        limit: length,
-                        total: total,
-                        data: data,
-                    };
+                    Object.defineProperties(data, {
+                        page: { value: page },
+                        pages: { value: Math.ceil(total / length) },
+                        limit: { value: length },
+                        total: { value: total },
+                        data: {
+                            get: function () {
+                                return Array.from(this);
+                            }
+                        }
+                    });
+                    return data;
                 });
             }
         });
