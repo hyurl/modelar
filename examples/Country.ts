@@ -14,10 +14,10 @@ export class Country extends Model {
     name: string;
 
     get users() {
-        return <User>this.has(User, "country_id");
+        return this.has(User, "country_id");
     }
 
     get articles() {
-        return <Article>this.hasThrough(Article, User, "user_id", "country_id");
+        return this.hasThrough(Article, User, "user_id", "country_id");
     }
 }

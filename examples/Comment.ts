@@ -21,10 +21,10 @@ export class Comment extends Model {
     commentable_type: string;
 
     get user() {
-        return <User>this.belongsTo(User, "commentable_id", "commentable_type");
+        return this.belongsTo(User, "commentable_id", "commentable_type");
     }
 
     get article() {
-        return <Article>this.belongsTo(Article, "commentable_id", "commentable_type");
+        return this.belongsTo(Article, "commentable_id", "commentable_type");
     }
 }

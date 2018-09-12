@@ -13,6 +13,6 @@ export class Role extends Model {
     name: string;
 
     get users() {
-        return <User>this.belongsToVia(User, "userroles", "role_id", "user_id");
+        return this.belongsToVia(User, "userroles", "role_id", "user_id");
     }
 }

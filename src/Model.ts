@@ -502,12 +502,12 @@ export class Model extends Query {
      * @param length The top limit of how many records that each page will
      *  carry.
      */
-    paginate(page: number, length?: number): Promise<PaginatedModels> {
+    paginate(page: number, length?: number): Promise<PaginatedModels<this>> {
         return super.paginate(page, length);
     }
 
     /** Gets multiple models that suit the given condition. */
-    getMany(options?: ModelGetManyOptions): Promise<PaginatedModels> {
+    getMany(options?: ModelGetManyOptions): Promise<PaginatedModels<this>> {
         let defaults = assign({}, ModelGetManyOptions, {
             orderBy: this.primary
         });
@@ -662,8 +662,8 @@ export class Model extends Query {
 
     // Static Wrappers    
 
-    static set(config: DBConfig): Model;
-    static set(name: string, value: any): Model;
+    static set<T extends Model>(config: DBConfig): T;
+    static set<T extends Model>(name: string, value: any): T;
     static set(...args) {
         if (typeof args[0] === "string")
             return (new this).set(args[0], args[1]);
@@ -671,210 +671,264 @@ export class Model extends Query {
             return (new this).set(args[0]);
     }
 
-    static use(db: DB): Model {
-        return (new this).use(db);
+    static use<T extends Model>(db: DB) {
+        return (new this).use(db) as T;
     }
 
-    static transaction(): Promise<Model>;
-    static transaction(cb: (model: Model) => any): Promise<Model>;
+    static transaction<T extends Model>(): Promise<T>;
+    static transaction<T extends Model>(cb: (model: T) => any): Promise<T>;
     static transaction(cb?: (model: Model) => any) {
         return (new this).transaction(cb);
     }
 
-    static select(...fields: string[]): Model;
-    static select(fields: string[]): Model;
+    static select<T extends Model>(...fields: string[]): T;
+    static select<T extends Model>(fields: string[]): T;
     static select() {
         return (new this).select(...Array.from(arguments));
     }
 
-    static join(table: string, field1: string, field2: string): Model;
-    static join(
+    static join<T extends Model>(
+        table: string,
+        field1: string,
+        field2: string
+    ): T;
+    static join<T extends Model>(
         table: string,
         field1: string,
         operator: string,
         field2: string
-    ): Model;
-    static join(table: string, fields: { [field: string]: any; }): Model;
-    static join(
+    ): T;
+    static join<T extends Model>(
+        table: string,
+        fields: { [field: string]: any; }
+    ): T;
+    static join<T extends Model>(
         table: string,
         nested: (this: Query, query: Query) => void
-    ): Model;
+    ): T;
     static join() {
         let model = new this;
         return model.join.apply(model, Array.from(arguments));
     }
 
-    static leftJoin(table: string, field1: string, field2: string): Model;
-    static leftJoin(
+    static leftJoin<T extends Model>(
+        table: string,
+        field1: string,
+        field2: string
+    ): T;
+    static leftJoin<T extends Model>(
         table: string,
         field1: string,
         operator: string,
         field2: string
-    ): Model;
-    static leftJoin(table: string, fields: { [field: string]: any; }): Model;
-    static leftJoin(
+    ): T;
+    static leftJoin<T extends Model>(
+        table: string,
+        fields: { [field: string]: any; }
+    ): T;
+    static leftJoin<T extends Model>(
         table: string,
         nested: (this: Query, query: Query) => void
-    ): Model;
+    ): T;
     static leftJoin() {
         let model = new this;
         return model.leftJoin.apply(model, Array.from(arguments));
     }
 
-    static rightJoin(table: string, field1: string, field2: string): Model;
-    static rightJoin(
+    static rightJoin<T extends Model>(
+        table: string,
+        field1: string,
+        field2: string
+    ): T;
+    static rightJoin<T extends Model>(
         table: string,
         field1: string,
         operator: string,
         field2: string
-    ): Model;
-    static rightJoin(table: string, fields: { [field: string]: any; }): Model;
-    static rightJoin(
+    ): T;
+    static rightJoin<T extends Model>(
+        table: string,
+        fields: { [field: string]: any; }
+    ): T;
+    static rightJoin<T extends Model>(
         table: string,
         nested: (this: Query, query: Query) => void
-    ): Model;
+    ): T;
     static rightJoin() {
         let model = new this;
         return model.rightJoin.apply(model, Array.from(arguments));
     }
 
-    static fullJoin(table: string, field1: string, field2: string): Model;
-    static fullJoin(
+    static fullJoin<T extends Model>(
+        table: string,
+        field1: string,
+        field2: string
+    ): T;
+    static fullJoin<T extends Model>(
         table: string,
         field1: string,
         operator: string,
         field2: string
-    ): Model;
-    static fullJoin(table: string, fields: { [field: string]: any; }): Model;
-    static fullJoin(
+    ): T;
+    static fullJoin<T extends Model>(
+        table: string,
+        fields: { [field: string]: any; }
+    ): T;
+    static fullJoin<T extends Model>(
         table: string,
         nested: (this: Query, query: Query) => void
-    ): Model;
+    ): T;
     static fullJoin() {
         let model = new this;
         return model.fullJoin.apply(model, Array.from(arguments));
     }
 
-    static crossJoin(table: string, field1: string, field2: string): Model;
-    static crossJoin(
+    static crossJoin<T extends Model>(
+        table: string,
+        field1: string,
+        field2: string
+    ): T;
+    static crossJoin<T extends Model>(
         table: string,
         field1: string,
         operator: string,
         field2: string
-    ): Model;
-    static crossJoin(table: string, fields: { [field: string]: any; }): Model;
-    static crossJoin(
+    ): T;
+    static crossJoin<T extends Model>(
+        table: string,
+        fields: { [field: string]: any; }
+    ): T;
+    static crossJoin<T extends Model>(
         table: string,
         nested: (this: Query, query: Query) => void
-    ): Model;
+    ): T;
     static crossJoin() {
         let model = new this;
         return model.fullJoin.apply(model, Array.from(arguments));
     }
 
-    static where(clause: DB.Statement): Model;
-    static where(nested: (this: Query, query: Query) => void): Model;
-    static where(
+    static where<T extends Model>(clause: DB.Statement): T;
+    static where<T extends Model>(
+        nested: (this: Query, query: Query) => void
+    ): T;
+    static where<T extends Model>(
         field: string,
         nested: (this: Query, query: Query) => void
-    ): Model;
-    static where(field: string, value: any): Model;
-    static where(
+    ): T;
+    static where<T extends Model>(field: string, value: any): T;
+    static where<T extends Model>(
         field: string,
         operator: string,
         nested: (this: Query, query: Query) => void
-    ): Model;
-    static where(field: string, operator: string, value: any): Model;
-    static where(fields: { [field: string]: any }): Model;
+    ): T;
+    static where<T extends Model>(
+        field: string,
+        operator: string,
+        value: any
+    ): T;
+    static where<T extends Model>(fields: { [field: string]: any }): T;
     static where(field, operator = null, value = undefined) {
         return (new this).where(field, operator, value);
     }
 
-    static whereBetween(field: string, [min, max]: [number, number]): Model {
-        return (new this).whereBetween(field, [min, max]);
-    }
-
-    static whereNotBetween(
+    static whereBetween<T extends Model>(
         field: string,
         [min, max]: [number, number]
-    ): Model {
-        return (new this).whereNotBetween(field, [min, max]);
+    ) {
+        return (new this).whereBetween(field, [min, max]) as T;
     }
 
-    static whereNotIn(field: string, values: string[] | number[]): Model;
-    static whereNotIn(
+    static whereNotBetween<T extends Model>(
         field: string,
-        nested: (this: Query, query: Query) => void
-    ): Model;
-    static whereNotIn(field, values) {
-        return (new this).whereNotIn(field, values);
+        [min, max]: [number, number]
+    ) {
+        return (new this).whereNotBetween(field, [min, max]) as T;
     }
 
-    static whereIn(field: string, values: string[] | number[]): Model;
-    static whereIn(
+    static whereIn<T extends Model>(
+        field: string,
+        values: string[] | number[]
+    ): T;
+    static whereIn<T extends Model>(
         field: string,
         nested: (this: Query, query: Query) => void
-    ): Model;
+    ): T;
     static whereIn(field, values) {
         return (new this).whereIn(field, values);
     }
 
-    static whereNull(field: string): Model {
-        return (new this).whereNull(field);
+    static whereNotIn<T extends Model>(
+        field: string,
+        values: string[] | number[]
+    ): T;
+    static whereNotIn<T extends Model>(
+        field: string,
+        nested: (this: Query, query: Query) => void
+    ): T;
+    static whereNotIn(field, values) {
+        return (new this).whereNotIn(field, values);
     }
 
-    static whereNotNull(field: string): Model {
-        return (new this).whereNotNull(field);
+    static whereNull<T extends Model>(field: string) {
+        return (new this).whereNull(field) as T;
     }
 
-    static whereExists(nested: (this: Query, query: Query) => void): Model {
-        return (new this).whereExists(nested);
+    static whereNotNull<T extends Model>(field: string) {
+        return (new this).whereNotNull(field) as T;
     }
 
-    static whereNotExists(nested: (this: Query, query: Query) => void): Model {
-        return (new this).whereNotExists(nested);
+    static whereExists<T extends Model>(
+        nested: (this: Query, query: Query) => void
+    ) {
+        return (new this).whereExists(nested) as T;
     }
 
-    static orderBy(field: string, sequence?: "asc" | "desc"): Model {
-        return (new this).orderBy(field, sequence);
+    static whereNotExists<T extends Model>(
+        nested: (this: Query, query: Query) => void
+    ) {
+        return (new this).whereNotExists(nested) as T;
     }
 
-    static random(): Model {
-        return (new this).random();
+    static orderBy<T extends Model>(field: string, sequence?: "asc" | "desc") {
+        return (new this).orderBy(field, sequence) as T;
     }
 
-    static groupBy(fields: string[]): Model;
-    static groupBy(...fields: string[]): Model;
+    static random<T extends Model>() {
+        return (new this).random() as T;
+    }
+
+    static groupBy<T extends Model>(...fields: string[]): T;
+    static groupBy<T extends Model>(fields: string[]): T;
     static groupBy() {
         return (new this).groupBy(...Array.from(arguments));
     }
 
-    static having(clause: string | DB.Statement): Model {
-        return (new this).having(clause);
+    static having<T extends Model>(clause: string | DB.Statement) {
+        return (new this).having(clause) as T;
     }
 
-    static limit(length: number, offset?: number): Model {
-        return (new this).limit(length, offset);
+    static limit<T extends Model>(length: number, offset?: number) {
+        return (new this).limit(length, offset) as T;
     }
 
-    static distinct(): Model {
-        return (new this).distinct();
+    static distinct<T extends Model>() {
+        return (new this).distinct() as T;
     }
 
-    static insert(data: { [field: string]: any }): Promise<Model> {
-        return (new this).insert(data);
+    static insert<T extends Model>(data: { [field: string]: any }) {
+        return (new this).insert(data) as Promise<T>;
     }
 
-    static delete(id: number): Promise<Model> {
-        return (new this).delete(id);
+    static delete<T extends Model>(id: number) {
+        return (new this).delete(id) as Promise<T>;
     }
 
-    static get(id: number): Promise<Model> {
-        return (new this).get(id);
+    static get<T extends Model>(id: number) {
+        return (new this).get(id) as Promise<T>;
     }
 
-    static all(): Promise<Model[]> {
-        return (new this).all();
+    static all<T extends Model>() {
+        return (new this).all() as Promise<T[]>;
     }
 
     static count(field?: string): Promise<number> {
@@ -897,32 +951,38 @@ export class Model extends Query {
         return (new this).sum(field);
     }
 
-    static chunk(
+    static chunk<T extends Model>(
         length: number,
-        cb: (this: Model, models: Model[]) => false | void
-    ): Promise<Model[]> {
-        return (new this).chunk(length, cb);
+        cb: (this: T, models: T[]) => false | void
+    ) {
+        return (new this).chunk(length, cb) as Promise<T[]>;
     }
 
-    static paginate(page: number, length = 10): Promise<PaginatedModels> {
-        return (new this).paginate(page, length);
+    static paginate<T extends Model>(page: number, length = 10) {
+        return (new this).paginate(page, length) as Promise<PaginatedModels<T>>;
     }
 
-    static getMany(options?: ModelGetManyOptions): Promise<PaginatedModels> {
-        return (new this).getMany(options);
+    static getMany<T extends Model>(options?: ModelGetManyOptions) {
+        return (new this).getMany(options) as Promise<PaginatedModels<T>>;
     }
 
-    static whereState(field: string, value: any): Model;
-    static whereState(field: string, operator: string, value: any): Model;
-    static whereState(fields: { [field: string]: any }): Model;
-    static whereState(extra: (this: Query, query: Query) => void): Model;
+    static whereState<T extends Model>(field: string, value: any): T;
+    static whereState<T extends Model>(
+        field: string,
+        operator: string,
+        value: any
+    ): T;
+    static whereState<T extends Model>(fields: { [field: string]: any }): T;
+    static whereState<T extends Model>(
+        extra: (this: Query, query: Query) => void
+    ): T;
     static whereState() {
         let model = new this;
         return model.whereState.apply(model, Array.from(arguments));
     }
 
-    static createTable(): Promise<Model> {
-        return (new this).createTable();
+    static createTable<T extends Model>() {
+        return (new this).createTable() as Promise<T>;
     }
 
     // Associations
@@ -933,12 +993,12 @@ export class Model extends Query {
      * @param type A field in the associated model that stores the current model
      *  name, used to defines a polymorphic association.
      */
-    protected has(
-        ModelClass: typeof Model,
+    protected has<T extends Model>(
+        ModelClass: new (...args) => T,
         foreignKey: string,
         type?: string
-    ): Model {
-        let model = ModelClass.use(this);
+    ): T {
+        let model = (new ModelClass).use(this);
         model.where(foreignKey, this.data[this.primary]);
         if (type) {
             model.where(type, this.constructor["name"]);
@@ -952,12 +1012,12 @@ export class Model extends Query {
      * @param type A field in the current model that stores the associated model
      *  name, used to define a polymorphic association.
      */
-    protected belongsTo(
-        ModelClass: typeof Model,
+    protected belongsTo<T extends Model>(
+        ModelClass: new (...args) => T,
         foreignKey: string,
         type?: string
-    ): Model {
-        let model = ModelClass.use(this);
+    ): T {
+        let model = (new ModelClass).use(this);
         model._caller = this;
         model._foreignKey = foreignKey;
         model._type = type;
@@ -975,14 +1035,14 @@ export class Model extends Query {
      * @param foreignKey2 A foreign key in the middle model that points to the
      *  current model.
      */
-    protected hasThrough(
-        ModelClass: typeof Model,
-        MiddleClass: typeof Model,
+    protected hasThrough<T extends Model, K extends Model>(
+        ModelClass: new (...args) => T,
+        MiddleClass: new (...args) => K,
         foreignKey1: string,
         foreignKey2: string
-    ): Model {
-        let model = new MiddleClass().use(this);
-        return ModelClass.use(this).whereIn(foreignKey1, query => {
+    ): T {
+        let model = (new MiddleClass).use(this);
+        return (new ModelClass).use(this).whereIn(foreignKey1, query => {
             query.select(model.primary).from(model.table)
                 .where(foreignKey2, this.data[this.primary]);
         });
@@ -996,14 +1056,14 @@ export class Model extends Query {
      * @param foreignKey2 A foreign key in the middle model that points to the
      *  associated model.
      */
-    protected belongsToThrough(
-        ModelClass: typeof Model,
-        MiddleClass: typeof Model,
+    protected belongsToThrough<T extends Model, K extends Model>(
+        ModelClass: new (...args) => T,
+        MiddleClass: new (...args) => K,
         foreignKey1: string,
         foreignKey2: string
-    ): Model {
-        let model = new ModelClass().use(this),
-            _model = new MiddleClass().use(this);
+    ): T {
+        let model = (new ModelClass).use(this),
+            _model = (new MiddleClass).use(this);
         return model.where(model.primary, query => {
             query.select(foreignKey2).from(_model.table)
                 .where(_model.primary, this.data[foreignKey1]);
@@ -1020,14 +1080,14 @@ export class Model extends Query {
      * @param type A field in the pivot table that stores the current model 
      *  name, used to define a polymorphic association.
      */
-    protected hasVia(
-        ModelClass: typeof Model,
+    protected hasVia<T extends Model>(
+        ModelClass: new (...args) => T,
         pivotTable: string,
         foreignKey1: string,
         foreignKey2: string,
         type?: string
-    ): Model {
-        let model = new ModelClass().use(this);
+    ): T {
+        let model = (new ModelClass).use(this);
         model._caller = this;
         model._pivot = [
             pivotTable,
@@ -1049,14 +1109,14 @@ export class Model extends Query {
      * @param type A field in the pivot table that stores the associated model 
      *  name, used to define a polymorphic association.
      */
-    protected belongsToVia(
-        ModelClass: typeof Model,
+    protected belongsToVia<T extends Model>(
+        ModelClass: new (...args) => T,
         pivotTable: string,
         foreignKey1: string,
         foreignKey2: string,
         type?: string
-    ): Model {
-        let model = new ModelClass().use(this);
+    ): T {
+        let model = (new ModelClass).use(this);
         model._caller = this;
         model._pivot = [
             pivotTable,
@@ -1069,7 +1129,7 @@ export class Model extends Query {
     }
 
     /** @private Handles `model.hasVia()` or `model.belongsToVia()`. */
-    private _handleVia(model: Model, extra?: Query): Model {
+    private _handleVia<T extends Model>(model: T, extra?: Query): T {
         return model.whereIn(model.primary, query => {
             query.select(model._pivot[1]).from(model._pivot[0])
                 .where(model._pivot[2], this.data[this.primary]);
@@ -1148,7 +1208,7 @@ export class Model extends Query {
      * 
      * @param model Associative model instance or its ID.
      */
-    associate(model: number | Model): Promise<Model> {
+    associate<T extends Model>(model: number | Model): Promise<T> {
         if (!(this._caller instanceof Model)) {
             throw new ReferenceError("Model.associate() can only be called "
                 + "after calling Model.belongsTo().");
@@ -1175,7 +1235,7 @@ export class Model extends Query {
             target._modified[this._type] = this.constructor["name"];
         }
 
-        return target.save();
+        return target.save() as Promise<T>;
     }
 
     /**
@@ -1183,7 +1243,7 @@ export class Model extends Query {
      *
      * Can only be called after calling `model.belongsTo()`.
      */
-    dissociate(): Promise<Model> {
+    dissociate<T extends Model>(): Promise<T> {
         if (!(this._caller instanceof Model)) {
             throw new ReferenceError("Model.dissociate() can only be called "
                 + "after calling Model.belongsTo().");
@@ -1198,7 +1258,7 @@ export class Model extends Query {
             target._modified[this._type] = null;
         }
 
-        return target.save();
+        return target.save() as Promise<T>;
     }
 
     /**
@@ -1209,13 +1269,15 @@ export class Model extends Query {
      * 
      * @param models Associative model instances or their IDs.
      */
-    attach(models: (number | Model)[]): Promise<Model>;
+    attach<T extends Model>(models: (number | Model)[]): Promise<T>;
     /**
      * @param pairs The keys represents the values of associative models' 
      *  primary keys, and values sets extra fields in the pivot table.
      */
-    attach(pairs: { [id: number]: { [field: string]: any } }): Promise<Model>;
-    attach(models): Promise<Model> {
+    attach<T extends Model>(
+        pairs: { [id: number]: { [field: string]: any } }
+    ): Promise<T>;
+    attach<T extends Model>(models): Promise<T> {
         let notArray = !(models instanceof Array);
         if (notArray && typeof models !== "object") {
             throw new TypeError("The only argument passed to Model.attach()"
@@ -1365,7 +1427,7 @@ export class Model extends Query {
             } else {
                 return target;
             }
-        });
+        }) as Promise<T>;
     }
 
     /**
@@ -1376,7 +1438,7 @@ export class Model extends Query {
      * 
      * @param models Associative model instances or their IDs.
      */
-    detach(models: (number | Model)[] = []): Promise<Model> {
+    detach<T extends Model>(models: (number | Model)[] = []): Promise<T> {
         if (!(models instanceof Array)) {
             throw new TypeError("The only argument passed to Model.detach()"
                 + " must be an array.");
@@ -1411,7 +1473,7 @@ export class Model extends Query {
                 query.whereIn(this._pivot[1], ids);
         }
 
-        return query.delete().then(() => target);
+        return query.delete().then(() => target) as Promise<T>;
     }
 }
 

@@ -25,19 +25,19 @@ export class Article extends Model {
     user_id: number;
 
     get user() {
-        return <User>this.belongsTo(User, "user_id");
+        return this.belongsTo(User, "user_id");
     }
 
     get country() {
-        return <Country>this.belongsToThrough(Country, User, "user_id", "country_id");
+        return this.belongsToThrough(Country, User, "user_id", "country_id");
     }
 
     get tags() {
-        return <Tag>this.hasVia(Tag, "taggables", "tag_id", "taggable_id", "taggable_type");
+        return this.hasVia(Tag, "taggables", "tag_id", "taggable_id", "taggable_type");
     }
 
     get comments() {
         // Pass the argument `type` to define a polymorphic association.
-        return <Comment>this.has(Comment, "commentable_id", "commentable_type");
+        return this.has(Comment, "commentable_id", "commentable_type");
     }
 }

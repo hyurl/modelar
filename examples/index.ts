@@ -26,9 +26,9 @@ const db: DB = require("modelar/test/db");
         await createRoles();
 
         var user = await loginUser();
-        var country = <Country>await Country.use(db).get(1);
+        var country = await Country.use<Country>(db).get(1);
 
-        await user.country.associate(country);
+        await user.country.associate<User>(country);
 
         var country = await user.country.get();
 
@@ -40,9 +40,9 @@ const db: DB = require("modelar/test/db");
             console.log(user.valueOf());
         }
 
-        var articles = <Article[]>await Article.use(db).all();
+        var articles = await Article.use<Article>(db).all();
         for (const article of articles) {
-            await article.user.associate(user);
+            await article.user.associate<Article>(user);
         }
 
         articles = await country.articles.all();
@@ -50,9 +50,9 @@ const db: DB = require("modelar/test/db");
             console.log(article.valueOf());
         }
 
-        var roles = <Role[]>await Role.use(db).all();
+        var roles = await Role.use<Role>(db).all();
 
-        await user.roles.attach(roles);
+        await user.roles.attach<Role>(roles);
 
         roles = await user.roles.all();
         for (const role of roles) {
@@ -64,9 +64,9 @@ const db: DB = require("modelar/test/db");
             console.log(user.valueOf());
         }
 
-        var tags = <Tag[]>await Tag.use(db).all();
+        var tags = await Tag.use<Tag>(db).all();
 
-        await user.tags.attach(tags);
+        await user.tags.attach<User>(tags);
 
         tags = await user.tags.all();
         for (const tag of tags) {
@@ -81,7 +81,7 @@ const db: DB = require("modelar/test/db");
         articles = await users[0].articles.all();
         for (const article of articles) {
             console.log(article.valueOf());
-            await article.tags.attach(tags);
+            await article.tags.attach<Article>(tags);
         }
 
         articles = await tags[0].articles.all();
@@ -89,14 +89,14 @@ const db: DB = require("modelar/test/db");
             console.log(article.valueOf());
         }
 
-        var comments = <Comment[]>await Comment.use(db).all();
+        var comments = await Comment.use<Comment>(db).all();
         for (const comment of comments) {
             console.log(comment.valueOf());
 
             if (comment.id % 2) {
-                await comment.user.associate(user);
+                await comment.user.associate<Comment>(user);
             } else {
-                await comment.article.associate(articles[0]);
+                await comment.article.associate<Comment>(articles[0]);
             }
         }
 
@@ -106,12 +106,12 @@ const db: DB = require("modelar/test/db");
         var article = await comments[1].article.get();
         console.log(article.valueOf());
 
-        await user.roles.detach(roles);
-        await user.tags.detach(tags.slice(1, 3));
-        await comments[0].user.dissociate();
-        await comments[1].article.dissociate();
-        await tags[0].articles.detach();
-        await article.tags.detach();
+        await user.roles.detach<User>(roles);
+        await user.tags.detach<User>(tags.slice(1, 3));
+        await comments[0].user.dissociate<Comment>();
+        await comments[1].article.dissociate<Comment>();
+        await tags[0].articles.detach<Tag>();
+        await article.tags.detach<Article>();
 
         console.log("All procedures are run properly.");
     } catch (e) {

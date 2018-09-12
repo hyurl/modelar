@@ -10,22 +10,22 @@ export class User extends _User {
     country_id: number;
 
     get country() {
-        return <Country>this.belongsTo(Country, "country_id");
+        return this.belongsTo(Country, "country_id");
     }
 
     get roles() {
-        return <Role>this.hasVia(Role, "userroles", "role_id", "user_id").withPivot("activated");
+        return this.hasVia(Role, "userroles", "role_id", "user_id").withPivot("activated");
     }
 
     get tags() {
-        return <Tag>this.hasVia(Tag, "taggables", "tag_id", "taggable_id", "taggable_type");
+        return this.hasVia(Tag, "taggables", "tag_id", "taggable_id", "taggable_type");
     }
 
     get articles() {
-        return <Article>this.has(Article, "user_id");
+        return this.has(Article, "user_id");
     }
 
     get comments() {
-        return <Comment>this.has(Comment, "commentable_id", "commentable_type");
+        return this.has(Comment, "commentable_id", "commentable_type");
     }
 }

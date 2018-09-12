@@ -536,11 +536,11 @@ var Model = (function (_super) {
         var min = _a[0], max = _a[1];
         return (new this).whereNotBetween(field, [min, max]);
     };
-    Model.whereNotIn = function (field, values) {
-        return (new this).whereNotIn(field, values);
-    };
     Model.whereIn = function (field, values) {
         return (new this).whereIn(field, values);
+    };
+    Model.whereNotIn = function (field, values) {
+        return (new this).whereNotIn(field, values);
     };
     Model.whereNull = function (field) {
         return (new this).whereNull(field);
@@ -618,7 +618,7 @@ var Model = (function (_super) {
         return (new this).createTable();
     };
     Model.prototype.has = function (ModelClass, foreignKey, type) {
-        var model = ModelClass.use(this);
+        var model = (new ModelClass).use(this);
         model.where(foreignKey, this.data[this.primary]);
         if (type) {
             model.where(type, this.constructor["name"]);
@@ -626,7 +626,7 @@ var Model = (function (_super) {
         return model;
     };
     Model.prototype.belongsTo = function (ModelClass, foreignKey, type) {
-        var model = ModelClass.use(this);
+        var model = (new ModelClass).use(this);
         model._caller = this;
         model._foreignKey = foreignKey;
         model._type = type;
@@ -637,22 +637,22 @@ var Model = (function (_super) {
     };
     Model.prototype.hasThrough = function (ModelClass, MiddleClass, foreignKey1, foreignKey2) {
         var _this = this;
-        var model = new MiddleClass().use(this);
-        return ModelClass.use(this).whereIn(foreignKey1, function (query) {
+        var model = (new MiddleClass).use(this);
+        return (new ModelClass).use(this).whereIn(foreignKey1, function (query) {
             query.select(model.primary).from(model.table)
                 .where(foreignKey2, _this.data[_this.primary]);
         });
     };
     Model.prototype.belongsToThrough = function (ModelClass, MiddleClass, foreignKey1, foreignKey2) {
         var _this = this;
-        var model = new ModelClass().use(this), _model = new MiddleClass().use(this);
+        var model = (new ModelClass).use(this), _model = (new MiddleClass).use(this);
         return model.where(model.primary, function (query) {
             query.select(foreignKey2).from(_model.table)
                 .where(_model.primary, _this.data[foreignKey1]);
         });
     };
     Model.prototype.hasVia = function (ModelClass, pivotTable, foreignKey1, foreignKey2, type) {
-        var model = new ModelClass().use(this);
+        var model = (new ModelClass).use(this);
         model._caller = this;
         model._pivot = [
             pivotTable,
@@ -664,7 +664,7 @@ var Model = (function (_super) {
         return this._handleVia(model);
     };
     Model.prototype.belongsToVia = function (ModelClass, pivotTable, foreignKey1, foreignKey2, type) {
-        var model = new ModelClass().use(this);
+        var model = (new ModelClass).use(this);
         model._caller = this;
         model._pivot = [
             pivotTable,

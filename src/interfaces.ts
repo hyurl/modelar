@@ -121,12 +121,12 @@ export interface PaginatedRecords {
     data: any[]
 }
 
-export interface PaginatedModels extends PaginatedRecords {
+export interface PaginatedModels<T extends Model> extends PaginatedRecords {
     orderBy?: string,
     sequence?: "asc" | "desc" | "rand",
     /** Used for vague searching. */
     keywords?: string | string[]
-    data: Model[]
+    data: T[]
 }
 
 export interface ModelGetManyOptions {

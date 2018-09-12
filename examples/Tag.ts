@@ -14,10 +14,10 @@ export class Tag extends Model {
     name: string;
 
     get users() {
-        return <User>this.belongsToVia(User, "taggables", "tag_id", "taggable_id", "taggable_type");
+        return this.belongsToVia(User, "taggables", "tag_id", "taggable_id", "taggable_type");
     }
     
     get articles() {
-        return <Article>this.belongsToVia(Article, "taggables", "tag_id", "taggable_id", "taggable_type");
+        return this.belongsToVia(Article, "taggables", "tag_id", "taggable_id", "taggable_type");
     }
 }

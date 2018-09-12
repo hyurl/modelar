@@ -372,9 +372,9 @@ export class DB extends EventEmitter {
     }
 
     /** Initiates database configurations for all instances. */
-    static init(config: DBConfig): typeof DB {
+    static init<T extends DB>(config: DBConfig): new (...args) => T {
         this.config = assign({}, this.config, config);
-        return this;
+        return <any>this;
     }
 
     /**
@@ -383,7 +383,10 @@ export class DB extends EventEmitter {
      * @param event The event name.
      * @param listener A function called when the event fires.
      */
-    static on(event: string, listener: (...args: any[]) => void): typeof DB {
+    static on<T extends DB>(
+        event: string,
+        listener: (...args: any[]) => void
+    ): new (...args) => T {
         if (!this.hasOwnProperty("_events")) {
             this._events = assign({}, this._events);
         }
@@ -396,7 +399,7 @@ export class DB extends EventEmitter {
             this._events[event] = listener;
         }
 
-        return this;
+        return <any>this;
     }
 
     /**
@@ -405,13 +408,16 @@ export class DB extends EventEmitter {
      * @param type Database type.
      * @param AdapterClass The adapter class.
      */
-    static setAdapter(type: string, AdapterClass: typeof Adapter): typeof DB {
+    static setAdapter<T extends DB, K extends Adapter>(
+        type: string,
+        AdapterClass: new (...args) => K
+    ): new (...args) => T {
         if (!this.hasOwnProperty("adapters")) {
             this.adapters = assign({}, this.adapters);
         }
 
         this.adapters[type] = AdapterClass;
-        return this;
+        return <any>this;
     }
 
     /** Closes all connections in all pools. */
