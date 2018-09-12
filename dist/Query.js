@@ -532,11 +532,10 @@ var Query = (function (_super) {
         query._join = this._join;
         query._bindings = this._bindings;
         return query.count().then(function (total) {
-            if (!total) {
-                var res = [];
+            var setUpResult = function (res, pages) {
                 Object.defineProperties(res, {
                     page: { value: page },
-                    pages: { value: 0 },
+                    pages: { value: pages },
                     limit: { value: length },
                     total: { value: total },
                     data: {
@@ -546,21 +545,13 @@ var Query = (function (_super) {
                     }
                 });
                 return res;
+            };
+            if (!total) {
+                return setUpResult([], 0);
             }
             else {
                 return _this.limit(length, offset).all().then(function (data) {
-                    Object.defineProperties(data, {
-                        page: { value: page },
-                        pages: { value: Math.ceil(total / length) },
-                        limit: { value: length },
-                        total: { value: total },
-                        data: {
-                            get: function () {
-                                return Array.from(this);
-                            }
-                        }
-                    });
-                    return data;
+                    return setUpResult(data, Math.ceil(total / length));
                 });
             }
         });

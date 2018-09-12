@@ -912,11 +912,10 @@ export class Query extends DB {
 
         // Get all counts of records.
         return query.count().then(total => {
-            if (!total) { // If there is no record, return immediately.
-                let res = [];
+            let setUpResult = (res: any[], pages: number) => {
                 Object.defineProperties(res, {
                     page: { value: page },
-                    pages: { value: 0 },
+                    pages: { value: pages },
                     limit: { value: length },
                     total: { value: total },
                     data: {
@@ -925,21 +924,14 @@ export class Query extends DB {
                         }
                     }
                 });
-                return <any>res;
+                return res;
+            };
+
+            if (!total) { // If there is no record, return immediately.
+                return <any>setUpResult([], 0);
             } else { // If the are records, continue fetching data.
                 return this.limit(length, offset).all().then(data => {
-                    Object.defineProperties(data, {
-                        page: { value: page },
-                        pages: { value: Math.ceil(total / length) },
-                        limit: { value: length },
-                        total: { value: total },
-                        data: {
-                            get() {
-                                return Array.from(this);
-                            }
-                        }
-                    });
-                    return data;
+                    return setUpResult(data, Math.ceil(total / length));
                 });
             }
         });
