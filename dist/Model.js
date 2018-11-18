@@ -20,7 +20,7 @@ var Model = (function (_super) {
         _this._proto = Object.getPrototypeOf(_this);
         _this._initData = data;
         _this.primary = config.primary || _this._protoProp("primary") || "";
-        _this.fields = config.fields || _this._protoProp("fields") || [];
+        _this.fields = config.fields || _this._protoProp("_fields") || [];
         _this.searchable = config.searchable || _this._protoProp("searchable") || [];
         _this.schema = _this._protoProp("schema") || {};
         return _this;

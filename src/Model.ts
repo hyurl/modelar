@@ -101,7 +101,7 @@ export class Model extends Query {
         this._proto = Object.getPrototypeOf(this);
         this._initData = data;
         this.primary = config.primary || this._protoProp("primary") || "";
-        this.fields = config.fields || this._protoProp("fields") || [];
+        this.fields = config.fields || this._protoProp("_fields") || [];
         this.searchable = config.searchable || this._protoProp("searchable") || [];
         this.schema = this._protoProp("schema") || {};
     }

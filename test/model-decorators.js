@@ -18,7 +18,7 @@ describe("Using @decorator", function () {
                 super(data, {
                     table: "users",
                     primary: "id",
-                    fields: fields,
+                    // fields: fields,
                     searchable: ["name", "email"]
                 });
             }
