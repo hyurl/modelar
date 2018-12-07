@@ -1,6 +1,6 @@
 {
     "name": "modelar",
-    "version": "3.2.1",
+    "version": "3.2.2",
     "description": "An expressive ORM with query builder and supports multiple databases.",
     "main": "dist/index.js",
     "types": "src/index.ts",
@@ -16,7 +16,6 @@
         "hide-protected-properties": "^0.1.1",
         "lodash": "^4.17.10",
         "modelar-mysql-adapter": "^3.0.6",
-        "source-map-support": "^0.5.6",
         "tslib": "^1.9.2"
     },
     "keywords": [

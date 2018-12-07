@@ -1,4 +1,3 @@
-import "source-map-support/register";
 export * from "./Errors";
 export * from "./Adapter";
 export * from "./DB";
