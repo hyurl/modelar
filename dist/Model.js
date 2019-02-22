@@ -48,7 +48,7 @@ var Model = (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Model.prototype, "_isModel", {
+    Object.defineProperty(Model.prototype, "isModel", {
         get: function () {
             return true;
         },

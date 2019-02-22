@@ -72,10 +72,11 @@ export class DB extends EventEmitter {
         let Class = <typeof DB>this.constructor;
 
         this.set(assign({}, Class.config, config));
-        this.dsn = this._getDSN();
+        this.dsn = this.getDSN();
         this.data = [];
         this._events = assign({}, Class._events);
         this._eventsCount = Object.keys(this._events).length;
+        this._eventsCount;
     }
 
     /** @protected */
@@ -93,7 +94,7 @@ export class DB extends EventEmitter {
     }
 
     /** @private */
-    private _getDSN(): string {
+    getDSN(): string {
         if (this.config.connectionString)
             return this.config.connectionString;
 

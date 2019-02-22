@@ -20,6 +20,8 @@ var Query = (function (_super) {
         _this._union = "";
         _this._bindings = [];
         _this.from(table);
+        _this._selects;
+        _this._groupBy;
         return _this;
     }
     Query.prototype.field = function (name) {
@@ -458,13 +460,13 @@ var Query = (function (_super) {
     };
     Query.prototype.get = function () {
         var promise = this.limit(1)._handleSelect().then(function (data) { return data[0]; });
-        if (!this["_isModel"])
+        if (!this["isModel"])
             this.emit("get", this);
         return promise;
     };
     Query.prototype.all = function () {
         var promise = this._handleSelect();
-        if (!this["_isModel"])
+        if (!this["isModel"])
             this.emit("get", this);
         return promise.then(function (data) {
             return data instanceof Array ? data : [data];

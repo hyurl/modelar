@@ -21,10 +21,11 @@ var DB = (function (_super) {
             config = { database: config };
         var Class = _this.constructor;
         _this.set(assign({}, Class.config, config));
-        _this.dsn = _this._getDSN();
+        _this.dsn = _this.getDSN();
         _this.data = [];
         _this._events = assign({}, Class._events);
         _this._eventsCount = Object.keys(_this._events).length;
+        _this._eventsCount;
         return _this;
     }
     DB_1 = DB;
@@ -43,7 +44,7 @@ var DB = (function (_super) {
         enumerable: true,
         configurable: true
     });
-    DB.prototype._getDSN = function () {
+    DB.prototype.getDSN = function () {
         if (this.config.connectionString)
             return this.config.connectionString;
         var config = this.config, dsn = config.type + ":";

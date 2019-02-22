@@ -8,6 +8,7 @@
         "experimentalDecorators": true,
         "newLine": "LF",
         "noUnusedParameters": true,
+        "noUnusedLocals": true,
         "importHelpers": true,
         "pretty": true,
         "removeComments": true,

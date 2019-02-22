@@ -130,8 +130,7 @@ export class Model extends Query {
         return this.data[this.primary] == undefined;
     }
 
-    /** @private */
-    private get _isModel(): boolean {
+    get isModel(): boolean {
         return true;
     }
 

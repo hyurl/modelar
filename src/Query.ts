@@ -38,6 +38,8 @@ export class Query extends DB {
     constructor(table = "") {
         super();
         this.from(table);
+        this._selects;
+        this._groupBy;
     }
 
     /**
@@ -792,7 +794,7 @@ export class Query extends DB {
 
         // Fire event and call its listeners only if the current instance is 
         // the Query instance, not its subclasses' instances.
-        if (!this["_isModel"])
+        if (!this["isModel"])
             this.emit("get", this);
 
         return promise;
@@ -804,7 +806,7 @@ export class Query extends DB {
 
         // Fire event and call its listeners only if the current instance is 
         // the Query instance, not its subclasses' instances.
-        if (!this["_isModel"])
+        if (!this["isModel"])
             this.emit("get", this);
 
         return promise.then(data => {
