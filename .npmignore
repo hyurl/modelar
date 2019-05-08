@@ -1,2 +1,5 @@
 examples/
 test/
+*.tgz
+tsconfig.json
+.*
