@@ -68,11 +68,11 @@ var Adapter = (function () {
             (!join ? query.backquote(query.table) : "") +
             join +
             (where ? " where " + where : "") +
-            (orderBy ? " order by " + orderBy : "") +
             (groupBy ? " group by " + groupBy : "") +
             (having ? " having " + having : "") +
-            (limit ? " limit " + limit : "") +
-            (union ? " union " + union : "");
+            (union ? " union " + union : "") +
+            (orderBy ? " order by " + orderBy : "") +
+            (limit ? " limit " + limit : "");
     };
     Adapter = tslib_1.__decorate([
         HideProtectedProperties
