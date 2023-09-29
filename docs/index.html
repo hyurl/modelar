@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Modelar - An expressive ORM with query builder and supports multiple databases.</title>
+    <link rel="stylesheet" href="/css/highlightjs-theme/monokai.css" />
+    <link rel="stylesheet" href="/css/vivify.min.css">
+    <link rel="stylesheet" href="/css/common.css">
+</head>
+
+<body>
+    <div id="app">
+        <layout file="/layout.html"></layout>
+        <import target="fork-github, jumbotron" from="/components.html"></import>
+        <fork-github></fork-github>
+        <div class="container vivify fadeIn" id="container">
+            <div class="content">
+                <jumbotron data="jumbotronDesc"></jumbotron>
+                <div class="box">
+                    <div class="vivify popInBottom">
+                        <h1>@{ fast }</h1>
+                        <p>
+                            @{ fastDesc }
+                        </p>
+                    </div>
+                    <div class="vivify popInBottom">
+                        <h1>@{ easy }</h1>
+                        <p>
+                            @{ easyDesc }
+                        </p>
+                    </div>
+                    <div class="vivify popInBottom">
+                        <h1>@{ functional }</h1>
+                        <p>
+                            @{ functionalDesc }
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/js/marked.min.js"></script>
+    <script src="/js/highlight.pack.min.js"></script>
+    <script src="/js/string-trimmer.js"></script>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery.typein.js"></script>
+    <script src="/js/soft-loader.js"></script>
+    <script src="/js/whatstpl.min.js"></script>
+    <script src="/js/common.js"></script>
+    <script src="/js/config.js"></script>
+</body>
+
+</html>
