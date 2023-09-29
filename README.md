@@ -2,8 +2,7 @@
 
 **An expressive ORM with query builder and supports multiple databases.**
 
-See [API documentation](https://modelarjs.com) on official website. Or on 
-[GitHub Pages](https://hyurl.github.io/modelar).
+Check out the API documentation in the [Wiki](https://github.com/hyurl/modelar/wiki).
 
 ## Prerequisites
 
@@ -121,7 +120,7 @@ class Article extends Model {
 
 Above gives a very simple example that shows the convenience and expressive 
 functionality that this package carries, you can go into the real depth of it 
-by checking the [API documentation](https://modelarjs.com).
+by checking the [API documentation](https://github.com/hyurl/modelar/wiki).
 
 This package is written in TypeScript and compiled to ES5 standard (since 
 3.0.4) with some ES2015 features, so it can run in any version of NodeJS that 
